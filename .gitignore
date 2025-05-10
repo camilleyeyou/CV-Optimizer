@@ -1,0 +1,51 @@
+# Dependencies
+node_modules/
+*/node_modules/
+
+# Environment variables
+.env
+.env.*
+!.env.example
+server/.env
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Build directories
+build/
+dist/
+
+# Test coverage
+coverage/
+
+# Temporary files
+tmp/
+temp/
+
+# Generated PDFs for testing
+*.pdf
+!public/*.pdf
+
+# Debug and test files
+debug-*.js
+test-*.js
+diagnose-*.js
+update-*.js
+preview-response.json
+
+# Backup files
+*.backup
