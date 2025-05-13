@@ -37,6 +37,7 @@ try {
   app.use('/api/auth', require('./routes/auth-simple'));
   app.use('/api/resume', require('./routes/resume'));
   app.use('/api/ai', require('./routes/ai'));
+  app.use("/api/ai-test", require("./routes/ai-test"));
   app.use('/api/pdf', require('./routes/pdf'));
   console.log('All routes loaded successfully');
 } catch (error) {
