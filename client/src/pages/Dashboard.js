@@ -1,193 +1,185 @@
 import React, { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { getUserResumes, deleteResume } from '../services/resumeService';
-import { FaPlus, FaFileAlt, FaTrash, FaEdit, FaDownload, FaEye, FaClone } from 'react-icons/fa';
+import { useNavigate } from 'react-router-dom';
+import { useResume } from '../context/ResumeContext';
+import OnboardingTutorial from '../components/tutorial/OnboardingTutorial';
+import './Dashboard.css';
 
 const Dashboard = () => {
-  const [resumes, setResumes] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState(null);
   const navigate = useNavigate();
-  
-  // Fetch user's resumes on component mount
+  const { resumeList, fetchResumes, deleteResume, isLoading } = useResume();
+  const [showTutorial, setShowTutorial] = useState(false);
+  const [resumeStats, setResumeStats] = useState({
+    total: 0,
+    recent: 0,
+    downloaded: 0
+  });
+
   useEffect(() => {
-    const fetchResumes = async () => {
-      try {
-        setIsLoading(true);
-        
-        // In a real app, we'd call getUserResumes() to get data from the API
-        // For now, let's create some mock data
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        
-        const mockResumes = [
-          {
-            _id: '1',
-            name: 'Software Developer Resume',
-            updatedAt: new Date().toISOString(),
-            template: 'modern'
-          },
-          {
-            _id: '2',
-            name: 'Project Manager Resume',
-            updatedAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(), // 7 days ago
-            template: 'professional'
-          }
-        ];
-        
-        setResumes(mockResumes);
-      } catch (err) {
-        console.error('Error fetching resumes:', err);
-        setError('Failed to load your resumes. Please try again later.');
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    
-    // If user is not logged in, redirect to login
-    const token = localStorage.getItem('token');
-    if (!token) {
-      navigate('/login');
-    } else {
-      fetchResumes();
+    fetchResumes();
+    // Check if it's the user's first visit
+    const isFirstVisit = localStorage.getItem('firstVisit') !== 'false';
+    if (isFirstVisit) {
+      setShowTutorial(true);
+      localStorage.setItem('firstVisit', 'false');
     }
-  }, [navigate]);
-  
-  // Handle resume deletion
+    
+    // Calculate resume stats
+    if (resumeList) {
+      const now = new Date();
+      const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+      
+      setResumeStats({
+        total: resumeList.length,
+        recent: resumeList.filter(resume => new Date(resume.updatedAt) > thirtyDaysAgo).length,
+        downloaded: resumeList.filter(resume => resume.downloads > 0).length
+      });
+    }
+  }, [fetchResumes, resumeList]);
+
+  const handleCreateNew = () => {
+    navigate('/templates');
+  };
+
+  const handleEditResume = (id) => {
+    navigate(`/builder/${id}`);
+  };
+
   const handleDeleteResume = async (id, event) => {
     event.stopPropagation();
-    
     if (window.confirm('Are you sure you want to delete this resume?')) {
       try {
-        // In a real app, we'd call deleteResume(id)
-        // For now, let's just update our state
-        setResumes(prevResumes => prevResumes.filter(resume => resume._id !== id));
-      } catch (err) {
-        setError('Failed to delete resume. Please try again.');
-        console.error('Error deleting resume:', err);
+        await deleteResume(id);
+      } catch (error) {
+        console.error('Error deleting resume:', error);
       }
     }
   };
-  
-  // Handle resume duplication
-  const handleDuplicateResume = async (resume, event) => {
-    event.stopPropagation();
-    
-    // Clone the resume data and modify name
-    const duplicatedResume = {
-      ...resume,
-      _id: Date.now().toString(), // Generate a new ID
-      name: `${resume.name} (Copy)`,
-      updatedAt: new Date().toISOString()
-    };
-    
-    // Add to resumes list
-    setResumes(prevResumes => [...prevResumes, duplicatedResume]);
+
+  const formatDate = (dateString) => {
+    const options = { year: 'numeric', month: 'short', day: 'numeric' };
+    return new Date(dateString).toLocaleDateString(undefined, options);
   };
 
   return (
-    <div className="dashboard-container">
+    <div className="dashboard-page">
+      {showTutorial && <OnboardingTutorial onComplete={() => setShowTutorial(false)} />}
+      
       <div className="dashboard-header">
-        <h1>My Resumes</h1>
-        <Link to="/builder" className="btn btn-primary">
-          <FaPlus /> Create New Resume
-        </Link>
+        <h1>Your Resume Dashboard</h1>
+        <button className="create-button" onClick={handleCreateNew}>
+          Create New Resume
+        </button>
       </div>
       
-      {error && (
-        <div className="alert alert-danger">
-          <p>{error}</p>
+      <div className="dashboard-stats">
+        <div className="stat-card">
+          <div className="stat-value">{resumeStats.total}</div>
+          <div className="stat-label">Total Resumes</div>
         </div>
-      )}
+        <div className="stat-card">
+          <div className="stat-value">{resumeStats.recent}</div>
+          <div className="stat-label">Updated Recently</div>
+        </div>
+        <div className="stat-card">
+          <div className="stat-value">{resumeStats.downloaded}</div>
+          <div className="stat-label">Downloaded</div>
+        </div>
+      </div>
       
-      {isLoading ? (
-        <div className="loading-container">
-          <div className="loading-spinner"></div>
-          <p>Loading your resumes...</p>
-        </div>
-      ) : (
-        <div className="resumes-grid">
-          {resumes.length === 0 ? (
-            <div className="no-resumes">
-              <FaFileAlt size={48} />
-              <h2>No resumes yet</h2>
-              <p>Create your first resume to get started</p>
-              <Link to="/builder" className="btn btn-primary">
-                <FaPlus /> Create Resume
-              </Link>
+      <div className="dashboard-content">
+        <div className="resumes-section">
+          <h2>Your Resumes</h2>
+          
+          {isLoading ? (
+            <div className="loading-indicator">Loading your resumes...</div>
+          ) : resumeList && resumeList.length > 0 ? (
+            <div className="resumes-grid">
+              {resumeList.map((resume) => (
+                <div 
+                  key={resume._id} 
+                  className="resume-card"
+                  onClick={() => handleEditResume(resume._id)}
+                >
+                  <div className="resume-preview">
+                    <img 
+                      src={`/templates/${resume.template || 'modern'}.png`} 
+                      alt={`${resume.title} preview`} 
+                    />
+                  </div>
+                  <div className="resume-info">
+                    <h3>{resume.title}</h3>
+                    <div className="resume-meta">
+                      <span className="template-badge">{resume.template || 'modern'}</span>
+                      <span className="date-info">Updated: {formatDate(resume.updatedAt)}</span>
+                    </div>
+                    <div className="resume-actions">
+                      <button 
+                        className="edit-button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleEditResume(resume._id);
+                        }}
+                      >
+                        Edit
+                      </button>
+                      <button 
+                        className="delete-button"
+                        onClick={(e) => handleDeleteResume(resume._id, e)}
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+              <div className="resume-card add-new" onClick={handleCreateNew}>
+                <div className="add-icon">+</div>
+                <p>Create New Resume</p>
+              </div>
             </div>
           ) : (
-            resumes.map(resume => (
-              <div 
-                key={resume._id} 
-                className="resume-card" 
-                onClick={() => navigate(`/builder/${resume._id}`)}
-              >
-                <div className="resume-card-preview">
-                  {/* Placeholder for resume thumbnail/preview */}
-                  <div className="resume-preview-placeholder">
-                    <FaFileAlt size={24} />
-                  </div>
-                </div>
-                
-                <div className="resume-card-footer">
-                  <div className="resume-info">
-                    <h3>{resume.name || 'Untitled Resume'}</h3>
-                    <p>Last updated: {new Date(resume.updatedAt).toLocaleDateString()}</p>
-                  </div>
-                  
-                  <div className="resume-actions">
-                    <button 
-                      className="btn-icon" 
-                      title="Edit Resume"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        navigate(`/builder/${resume._id}`);
-                      }}
-                    >
-                      <FaEdit />
-                    </button>
-                    
-                    <button 
-                      className="btn-icon" 
-                      title="Preview Resume"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        navigate(`/preview/${resume._id}`);
-                      }}
-                    >
-                      <FaEye />
-                    </button>
-                    
-                    <button 
-                      className="btn-icon" 
-                      title="Download PDF"
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      <FaDownload />
-                    </button>
-                    
-                    <button 
-                      className="btn-icon" 
-                      title="Duplicate Resume"
-                      onClick={(e) => handleDuplicateResume(resume, e)}
-                    >
-                      <FaClone />
-                    </button>
-                    
-                    <button 
-                      className="btn-icon btn-danger" 
-                      title="Delete Resume"
-                      onClick={(e) => handleDeleteResume(resume._id, e)}
-                    >
-                      <FaTrash />
-                    </button>
-                  </div>
-                </div>
-              </div>
-            ))
+            <div className="empty-state">
+              <div className="empty-icon">📄</div>
+              <h3>No Resumes Yet</h3>
+              <p>Create your first resume to get started</p>
+              <button className="create-button" onClick={handleCreateNew}>
+                Create New Resume
+              </button>
+            </div>
           )}
         </div>
-      )}
+        
+        <div className="tips-section">
+          <h2>Resume Tips</h2>
+          <div className="tips-card">
+            <h3>ATS Optimization</h3>
+            <ul>
+              <li>Use keywords from the job description</li>
+              <li>Avoid tables, images, and fancy formatting</li>
+              <li>Use standard section headings</li>
+              <li>Include measurable achievements</li>
+            </ul>
+          </div>
+          <div className="tips-card">
+            <h3>Tailoring Your Resume</h3>
+            <ul>
+              <li>Customize each resume for the specific job</li>
+              <li>Highlight relevant experience and skills</li>
+              <li>Use industry-specific terminology</li>
+              <li>Focus on achievements, not just responsibilities</li>
+            </ul>
+          </div>
+          <div className="tips-card">
+            <h3>Resume Mistakes to Avoid</h3>
+            <ul>
+              <li>Typos and grammatical errors</li>
+              <li>Including irrelevant information</li>
+              <li>Being too generic</li>
+              <li>Using an unprofessional email address</li>
+            </ul>
+          </div>
+        </div>
+      </div>
     </div>
   );
 };

@@ -1,0 +1,146 @@
+.skill-match-analytics {
+  background-color: #ffffff;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.analytics-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+}
+
+.analytics-header h3 {
+  margin: 0;
+  color: #2d3748;
+}
+
+.match-percentage-circle {
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  background: conic-gradient(
+    #4a6cf7 0% calc(var(--percentage) * 1%),
+    #edf2f7 calc(var(--percentage) * 1%) 100%
+  );
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+}
+
+.match-percentage-circle::before {
+  content: '';
+  position: absolute;
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background-color: white;
+}
+
+.percentage-text {
+  position: relative;
+  z-index: 1;
+  text-align: center;
+}
+
+.percentage-value {
+  display: block;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #2d3748;
+}
+
+.percentage-label {
+  display: block;
+  font-size: 0.75rem;
+  color: #718096;
+}
+
+.skills-breakdown {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.5rem;
+}
+
+@media (max-width: 768px) {
+  .skills-breakdown {
+    grid-template-columns: 1fr;
+  }
+}
+
+.skills-column {
+  background-color: #f8f9fa;
+  border-radius: 6px;
+  padding: 1rem;
+}
+
+.skills-column h4 {
+  margin-top: 0;
+  margin-bottom: 1rem;
+  color: #4a5568;
+  font-size: 1rem;
+  border-bottom: 1px solid #e2e8f0;
+  padding-bottom: 0.5rem;
+}
+
+.skills-list {
+  list-style-type: none;
+  padding: 0;
+  margin: 0;
+  max-height: 250px;
+  overflow-y: auto;
+}
+
+.skill-item {
+  padding: 0.5rem 0.75rem;
+  margin-bottom: 0.5rem;
+  border-radius: 4px;
+  font-size: 0.875rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.skill-item.matched {
+  background-color: #c6f6d5;
+  color: #276749;
+}
+
+.skill-item.missing {
+  background-color: #fed7d7;
+  color: #c53030;
+}
+
+.skill-item.additional {
+  background-color: #e2e8f0;
+  color: #4a5568;
+}
+
+.add-skill-button {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background-color: #4a6cf7;
+  color: white;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.add-skill-button:hover {
+  background-color: #3a5ce5;
+}
+
+.no-skills-message {
+  color: #a0aec0;
+  font-style: italic;
+  font-size: 0.875rem;
+}

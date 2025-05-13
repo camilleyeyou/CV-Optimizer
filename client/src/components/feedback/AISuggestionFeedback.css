@@ -1,0 +1,134 @@
+.feedback-container {
+  background-color: #f8f9fa;
+  border-radius: 6px;
+  padding: 0.75rem;
+  margin-top: 1rem;
+  font-size: 0.875rem;
+}
+
+.feedback-container.submitted {
+  background-color: #e6fffa;
+  border: 1px solid #81e6d9;
+}
+
+.feedback-message {
+  color: #2c7a7b;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.feedback-prompt {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.prompt-text {
+  color: #718096;
+}
+
+.feedback-buttons {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.feedback-button {
+  background: none;
+  border: 1px solid #e2e8f0;
+  border-radius: 4px;
+  padding: 0.375rem 0.5rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.feedback-button:hover {
+  background-color: #edf2f7;
+}
+
+.feedback-button.active.like {
+  background-color: #c6f6d5;
+  border-color: #9ae6b4;
+  color: #276749;
+}
+
+.feedback-button.active.dislike {
+  background-color: #fed7d7;
+  border-color: #feb2b2;
+  color: #c53030;
+}
+
+.feedback-icon {
+  font-size: 1rem;
+}
+
+.feedback-comment {
+  display: flex;
+  flex-direction: column;
+}
+
+.feedback-comment label {
+  margin-bottom: 0.5rem;
+  font-weight: 500;
+  color: #4a5568;
+}
+
+.feedback-comment textarea {
+  width: 100%;
+  border: 1px solid #e2e8f0;
+  border-radius: 4px;
+  padding: 0.5rem;
+  margin-bottom: 0.75rem;
+  font-family: inherit;
+  font-size: 0.875rem;
+  resize: vertical;
+}
+
+.feedback-comment textarea:focus {
+  outline: none;
+  border-color: #4a6cf7;
+  box-shadow: 0 0 0 3px rgba(74, 108, 247, 0.1);
+}
+
+.comment-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+}
+
+.cancel-button, .submit-button {
+  padding: 0.375rem 0.75rem;
+  border-radius: 4px;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.cancel-button {
+  background-color: transparent;
+  border: 1px solid #cbd5e0;
+  color: #4a5568;
+}
+
+.cancel-button:hover {
+  background-color: #edf2f7;
+}
+
+.submit-button {
+  background-color: #4a6cf7;
+  color: white;
+  border: none;
+}
+
+.submit-button:hover {
+  background-color: #3a5ce5;
+}
+
+.cancel-button:disabled, .submit-button:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
