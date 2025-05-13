@@ -1,0 +1,45 @@
+.templates-page {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem 1rem;
+}
+
+.page-header {
+  text-align: center;
+  margin-bottom: 2.5rem;
+}
+
+.page-header h1 {
+  font-size: 2.25rem;
+  color: #2d3748;
+  margin-bottom: 0.5rem;
+}
+
+.page-header p {
+  color: #718096;
+  font-size: 1.125rem;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.templates-actions {
+  display: flex;
+  justify-content: center;
+  margin-top: 3rem;
+}
+
+.continue-button {
+  background-color: #4a6cf7;
+  color: white;
+  border: none;
+  padding: 0.875rem 2rem;
+  border-radius: 4px;
+  font-weight: 600;
+  font-size: 1.125rem;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.continue-button:hover {
+  background-color: #3a5ce5;
+}

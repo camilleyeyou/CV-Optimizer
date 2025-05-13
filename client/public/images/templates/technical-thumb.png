@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Template Placeholder</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      background-color: #f0f2f5;
+      font-family: Arial, sans-serif;
+    }
+    .placeholder {
+      text-align: center;
+      padding: 20px;
+      background-color: white;
+      border-radius: 8px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    }
+    h1 {
+      margin-top: 0;
+      color: #4a6cf7;
+    }
+    p {
+      color: #6c757d;
+    }
+  </style>
+</head>
+<body>
+  <div class="placeholder">
+    <h1>Template Placeholder</h1>
+    <p>Replace this with your actual template image</p>
+  </div>
+</body>
+</html>

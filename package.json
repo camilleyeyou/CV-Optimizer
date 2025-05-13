@@ -1,0 +1,23 @@
+{
+  "name": "cv-optimizer",
+  "version": "1.0.0",
+  "description": "A full-stack web application for creating ATS-optimized resumes with AI-powered suggestions and professional PDF export.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/camilleyeyou/CV-Optimizer.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/camilleyeyou/CV-Optimizer/issues"
+  },
+  "homepage": "https://github.com/camilleyeyou/CV-Optimizer#readme",
+  "dependencies": {
+    "concurrently": "^9.1.2"
+  }
+}

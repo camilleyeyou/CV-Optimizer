@@ -1,0 +1,100 @@
+.builder-page {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem 1rem;
+}
+
+.builder-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+  position: relative;
+}
+
+.builder-header h1 {
+  font-size: 2rem;
+  margin: 0;
+  color: #2d3748;
+}
+
+.builder-actions {
+  display: flex;
+  gap: 1rem;
+}
+
+.save-button, .download-button {
+  padding: 0.75rem 1.25rem;
+  border-radius: 4px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.save-button {
+  background-color: #4a6cf7;
+  color: white;
+  border: none;
+}
+
+.save-button:hover {
+  background-color: #3a5ce5;
+}
+
+.save-button:disabled {
+  background-color: #a0aec0;
+  cursor: not-allowed;
+}
+
+.download-button {
+  background-color: #2d3748;
+  color: white;
+  border: none;
+}
+
+.download-button:hover {
+  background-color: #1a202c;
+}
+
+.save-success {
+  position: absolute;
+  bottom: -25px;
+  right: 0;
+  background-color: #48bb78;
+  color: white;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  font-size: 0.875rem;
+}
+
+.builder-tabs {
+  display: flex;
+  margin-bottom: 2rem;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.tab-button {
+  padding: 0.75rem 1.5rem;
+  background: none;
+  border: none;
+  border-bottom: 3px solid transparent;
+  font-weight: 600;
+  color: #718096;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.tab-button:hover {
+  color: #4a6cf7;
+}
+
+.tab-button.active {
+  color: #4a6cf7;
+  border-bottom-color: #4a6cf7;
+}
+
+.builder-content {
+  background-color: #f8f9fa;
+  border-radius: 8px;
+  min-height: 50vh;
+}

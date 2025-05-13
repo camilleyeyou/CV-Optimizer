@@ -1,0 +1,95 @@
+.template-selector {
+  padding: 2rem;
+  background-color: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.template-selector h2 {
+  margin-top: 0;
+  color: #2d3748;
+}
+
+.selector-description {
+  color: #718096;
+  margin-bottom: 2rem;
+}
+
+.templates-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 2rem;
+}
+
+.template-card {
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+.template-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.template-card.active {
+  border: 2px solid #4a6cf7;
+}
+
+.template-preview {
+  position: relative;
+  height: 280px;
+  overflow: hidden;
+  background-color: #f7fafc;
+}
+
+.template-preview img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.3s ease;
+}
+
+.template-card:hover .template-preview img {
+  transform: scale(1.05);
+}
+
+.selected-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(74, 108, 247, 0.2);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.selected-overlay span {
+  background-color: #4a6cf7;
+  color: white;
+  padding: 0.5rem 1rem;
+  border-radius: 100px;
+  font-weight: 600;
+  font-size: 0.875rem;
+}
+
+.template-info {
+  padding: 1.25rem;
+}
+
+.template-info h3 {
+  margin-top: 0;
+  margin-bottom: 0.5rem;
+  color: #2d3748;
+}
+
+.template-info p {
+  margin: 0;
+  color: #718096;
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
