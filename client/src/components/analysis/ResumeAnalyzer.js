@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useResume } from '../../context/ResumeContext';
 import JobDescriptionAnalyzer from './JobDescriptionAnalyzer';
 import SkillMatchAnalytics from './SkillMatchAnalytics';

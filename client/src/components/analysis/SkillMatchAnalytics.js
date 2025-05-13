@@ -9,40 +9,36 @@ const SkillMatchAnalytics = ({ resumeSkills, jobSkills }) => {
 
   useEffect(() => {
     if (resumeSkills && jobSkills) {
-      analyzeSkills();
+      // Convert to lowercase and trim for better matching
+      const normalizedResumeSkills = resumeSkills.map(skill => skill.toLowerCase().trim());
+      const normalizedJobSkills = jobSkills.map(skill => skill.toLowerCase().trim());
+
+      // Find matched skills
+      const matched = normalizedResumeSkills.filter(skill => 
+        normalizedJobSkills.some(jobSkill => jobSkill.includes(skill) || skill.includes(jobSkill))
+      );
+      
+      // Find missing skills
+      const missing = normalizedJobSkills.filter(skill => 
+        !normalizedResumeSkills.some(resumeSkill => resumeSkill.includes(skill) || skill.includes(resumeSkill))
+      );
+      
+      // Find additional skills not in job description
+      const additional = normalizedResumeSkills.filter(skill => 
+        !normalizedJobSkills.some(jobSkill => jobSkill.includes(skill) || skill.includes(jobSkill))
+      );
+      
+      // Calculate match percentage
+      const matchPercent = jobSkills.length > 0 
+        ? Math.round((matched.length / jobSkills.length) * 100) 
+        : 0;
+      
+      setMatchPercentage(matchPercent);
+      setMatchedSkills(matched);
+      setMissingSkills(missing);
+      setAdditionalSkills(additional);
     }
   }, [resumeSkills, jobSkills]);
-
-  const analyzeSkills = () => {
-    // Convert to lowercase and trim for better matching
-    const normalizedResumeSkills = resumeSkills.map(skill => skill.toLowerCase().trim());
-    const normalizedJobSkills = jobSkills.map(skill => skill.toLowerCase().trim());
-
-    // Find matched skills
-    const matched = normalizedResumeSkills.filter(skill => 
-      normalizedJobSkills.some(jobSkill => jobSkill.includes(skill) || skill.includes(jobSkill))
-    );
-    
-    // Find missing skills
-    const missing = normalizedJobSkills.filter(skill => 
-      !normalizedResumeSkills.some(resumeSkill => resumeSkill.includes(skill) || skill.includes(resumeSkill))
-    );
-    
-    // Find additional skills not in job description
-    const additional = normalizedResumeSkills.filter(skill => 
-      !normalizedJobSkills.some(jobSkill => jobSkill.includes(skill) || skill.includes(jobSkill))
-    );
-    
-    // Calculate match percentage
-    const matchPercent = jobSkills.length > 0 
-      ? Math.round((matched.length / jobSkills.length) * 100) 
-      : 0;
-    
-    setMatchPercentage(matchPercent);
-    setMatchedSkills(matched);
-    setMissingSkills(missing);
-    setAdditionalSkills(additional);
-  };
 
   return (
     <div className="skill-match-analytics">

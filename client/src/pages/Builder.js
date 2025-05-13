@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import { useResume } from '../context/ResumeContext';
 import ResumeForm from '../components/builder/ResumeForm';
 import ResumePreview from '../components/builder/ResumePreview';
@@ -8,8 +8,7 @@ import './Builder.css';
 
 const Builder = () => {
   const { id } = useParams();
-  const navigate = useNavigate();
-  const { resumeData, loadResume, saveResume, generatePDF } = useResume();
+  const { loadResume, saveResume } = useResume();
   const [activeTab, setActiveTab] = useState('edit');
   const [jobDescription, setJobDescription] = useState('');
   const [isSaving, setIsSaving] = useState(false);
@@ -38,7 +37,10 @@ const Builder = () => {
   const handleDownloadPDF = async () => {
     setIsGeneratingPDF(true);
     try {
-      await generatePDF();
+      await saveResume(); // Save before generating PDF
+      // PDF generation logic will be implemented through the context
+      // For now, we'll just alert
+      alert('PDF download functionality will be implemented soon!');
     } catch (error) {
       console.error('Error generating PDF:', error);
       alert('Failed to generate PDF. Please try again.');
@@ -95,10 +97,7 @@ const Builder = () => {
         {activeTab === 'edit' && <ResumeForm />}
         {activeTab === 'preview' && <ResumePreview />}
         {activeTab === 'analyze' && (
-          <ResumeAnalyzer 
-            jobDescription={jobDescription} 
-            onJobDescriptionChange={setJobDescription} 
-          />
+          <ResumeAnalyzer />
         )}
       </div>
     </div>

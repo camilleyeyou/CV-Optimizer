@@ -1,9 +1,9 @@
 import React from 'react';
 import './Templates.css';
 
-const ModernTemplate = ({ resumeData }) => {
+const ClassicTemplate = ({ resumeData }) => {
   return (
-    <div className="resume-template modern-template">
+    <div className="resume-template classic-template">
       <header className="template-header">
         <h1>{resumeData.personalInfo.firstName} {resumeData.personalInfo.lastName}</h1>
         <div className="contact-info">
@@ -17,14 +17,14 @@ const ModernTemplate = ({ resumeData }) => {
       
       {resumeData.summary && (
         <section className="template-section">
-          <h2>Professional Summary</h2>
+          <h2>PROFESSIONAL SUMMARY</h2>
           <p>{resumeData.summary}</p>
         </section>
       )}
       
       {resumeData.workExperience.length > 0 && (
         <section className="template-section">
-          <h2>Experience</h2>
+          <h2>EXPERIENCE</h2>
           {resumeData.workExperience.map((exp, index) => (
             <div key={index} className="template-item">
               <div className="item-header">
@@ -47,7 +47,7 @@ const ModernTemplate = ({ resumeData }) => {
       
       {resumeData.education.length > 0 && (
         <section className="template-section">
-          <h2>Education</h2>
+          <h2>EDUCATION</h2>
           {resumeData.education.map((edu, index) => (
             <div key={index} className="template-item">
               <div className="item-header">
@@ -63,22 +63,10 @@ const ModernTemplate = ({ resumeData }) => {
       
       {resumeData.skills.length > 0 && (
         <section className="template-section">
-          <h2>Skills</h2>
-          <div className="skills-container">
+          <h2>SKILLS</h2>
+          <div className="skills-list">
             {resumeData.skills.map((skill, index) => (
-              <div key={index} className="skill-item">
-                <span className="skill-name">{skill.name}</span>
-                <div className="skill-level">
-                  <div 
-                    className="skill-level-bar" 
-                    style={{ 
-                      width: skill.level === 'Beginner' ? '25%' : 
-                             skill.level === 'Intermediate' ? '50%' : 
-                             skill.level === 'Advanced' ? '75%' : '100%' 
-                    }}
-                  ></div>
-                </div>
-              </div>
+              <span key={index} className="skill-tag">{skill.name}</span>
             ))}
           </div>
         </section>
@@ -86,12 +74,11 @@ const ModernTemplate = ({ resumeData }) => {
       
       {resumeData.certifications.length > 0 && (
         <section className="template-section">
-          <h2>Certifications</h2>
+          <h2>CERTIFICATIONS</h2>
           {resumeData.certifications.map((cert, index) => (
             <div key={index} className="template-item">
               <h3>{cert.name}</h3>
               <div className="item-subheader">{cert.issuer} - {cert.date}</div>
-              {cert.url && <a href={cert.url} className="cert-link">{cert.url}</a>}
             </div>
           ))}
         </section>
@@ -100,4 +87,4 @@ const ModernTemplate = ({ resumeData }) => {
   );
 };
 
-export default ModernTemplate;
+export default ClassicTemplate;
