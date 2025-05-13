@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import axios from 'axios';
+import { analyzeJobDescription } from '../../services/aiService';
 import './JobDescriptionAnalyzer.css';
 
 const JobDescriptionAnalyzer = ({ onKeywordsExtracted }) => {
@@ -18,15 +18,12 @@ const JobDescriptionAnalyzer = ({ onKeywordsExtracted }) => {
     setError(null);
     
     try {
-      const response = await axios.post('/api/analyze-job-description', {
-        jobDescription
-      });
-      
-      setKeywordData(response.data);
+      const result = await analyzeJobDescription(jobDescription);
+      setKeywordData(result);
       
       // Pass the extracted keywords to parent component
       if (onKeywordsExtracted) {
-        onKeywordsExtracted(response.data);
+        onKeywordsExtracted(result);
       }
     } catch (err) {
       console.error('Error analyzing job description:', err);

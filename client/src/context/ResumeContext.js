@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import axios from 'axios';
+import * as resumeService from '../services/resumeService';
+import { isAuthenticated } from '../services/authService';
 
 const ResumeContext = createContext();
 
@@ -36,24 +37,20 @@ export const ResumeProvider = ({ children }) => {
 
   // Fetch user's resumes when component mounts
   useEffect(() => {
-    fetchResumes();
+    if (isAuthenticated()) {
+      fetchResumes();
+    }
   }, []);
 
   const fetchResumes = async () => {
+    if (!isAuthenticated()) {
+      return;
+    }
+    
     setIsLoading(true);
     try {
-      const token = localStorage.getItem('token');
-      if (!token) {
-        return;
-      }
-
-      const response = await axios.get('/api/resumes', {
-        headers: {
-          Authorization: `Bearer ${token}`
-        }
-      });
-
-      setResumeList(response.data);
+      const resumes = await resumeService.getResumes();
+      setResumeList(resumes);
     } catch (err) {
       console.error('Error fetching resumes:', err);
       setError('Failed to load your resumes');
@@ -65,22 +62,14 @@ export const ResumeProvider = ({ children }) => {
   const loadResume = async (resumeId) => {
     setIsLoading(true);
     try {
-      const token = localStorage.getItem('token');
-      if (!token) {
-        return;
-      }
-
-      const response = await axios.get(`/api/resumes/${resumeId}`, {
-        headers: {
-          Authorization: `Bearer ${token}`
-        }
-      });
-
-      setResumeData(response.data.content);
-      setActiveTemplate(response.data.template || 'modern');
+      const resume = await resumeService.getResumeById(resumeId);
+      setResumeData(resume.content);
+      setActiveTemplate(resume.template || 'modern');
+      return resume;
     } catch (err) {
       console.error('Error loading resume:', err);
       setError('Failed to load resume');
+      throw err;
     } finally {
       setIsLoading(false);
     }
@@ -89,42 +78,29 @@ export const ResumeProvider = ({ children }) => {
   const saveResume = async () => {
     setIsLoading(true);
     try {
-      const token = localStorage.getItem('token');
-      if (!token) {
-        throw new Error('You must be logged in to save a resume');
-      }
-
       const resumeToSave = {
         content: resumeData,
         template: activeTemplate,
         title: `${resumeData.personalInfo.firstName} ${resumeData.personalInfo.lastName} - Resume`
       };
 
-      let response;
+      let result;
       if (resumeData._id) {
-        response = await axios.put(`/api/resumes/${resumeData._id}`, resumeToSave, {
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
-        });
+        result = await resumeService.updateResume(resumeData._id, resumeToSave);
       } else {
-        response = await axios.post('/api/resumes', resumeToSave, {
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
-        });
+        result = await resumeService.createResume(resumeToSave);
 
         // Update the resume with the ID from the server
         setResumeData({
           ...resumeData,
-          _id: response.data._id
+          _id: result._id
         });
       }
 
       // Refresh the resume list
-      fetchResumes();
+      await fetchResumes();
       
-      return response.data;
+      return result;
     } catch (err) {
       console.error('Error saving resume:', err);
       setError('Failed to save resume');
@@ -137,19 +113,10 @@ export const ResumeProvider = ({ children }) => {
   const deleteResume = async (resumeId) => {
     setIsLoading(true);
     try {
-      const token = localStorage.getItem('token');
-      if (!token) {
-        throw new Error('You must be logged in to delete a resume');
-      }
-
-      await axios.delete(`/api/resumes/${resumeId}`, {
-        headers: {
-          Authorization: `Bearer ${token}`
-        }
-      });
-
+      await resumeService.deleteResume(resumeId);
+      
       // Refresh the resume list
-      fetchResumes();
+      await fetchResumes();
     } catch (err) {
       console.error('Error deleting resume:', err);
       setError('Failed to delete resume');
@@ -162,24 +129,10 @@ export const ResumeProvider = ({ children }) => {
   const generatePDF = async () => {
     setIsLoading(true);
     try {
-      const token = localStorage.getItem('token');
-      if (!token) {
-        throw new Error('You must be logged in to generate a PDF');
-      }
-
-      const response = await axios.post('/api/generate-pdf', {
-        resumeData,
-        template: activeTemplate
-      }, {
-        headers: {
-          Authorization: `Bearer ${token}`
-        },
-        responseType: 'blob' // Important for handling the PDF binary data
-      });
-
+      const pdfBlob = await resumeService.generatePDF(resumeData, activeTemplate);
+      
       // Create a blob URL and trigger download
-      const blob = new Blob([response.data], { type: 'application/pdf' });
-      const url = window.URL.createObjectURL(blob);
+      const url = window.URL.createObjectURL(pdfBlob);
       const a = document.createElement('a');
       a.href = url;
       a.download = `${resumeData.personalInfo.firstName}-${resumeData.personalInfo.lastName}-resume.pdf`;
@@ -259,7 +212,8 @@ export const ResumeProvider = ({ children }) => {
     loadResume,
     saveResume,
     deleteResume,
-    generatePDF
+    generatePDF,
+    fetchResumes
   };
 
   return (

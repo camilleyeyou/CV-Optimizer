@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import axios from 'axios';
+import { submitFeedback } from '../../services/aiService';
 import './AISuggestionFeedback.css';
 
 const AISuggestionFeedback = ({ suggestionId, suggestionType }) => {
@@ -15,15 +15,15 @@ const AISuggestionFeedback = ({ suggestionId, suggestionType }) => {
     if (rating === 'dislike') {
       setShowComment(true);
     } else {
-      await submitFeedback(rating);
+      await handleSubmitFeedback(rating);
     }
   };
 
-  const submitFeedback = async (rating = feedback) => {
+  const handleSubmitFeedback = async (rating = feedback) => {
     setSubmitting(true);
     
     try {
-      await axios.post('/api/feedback', {
+      await submitFeedback({
         suggestionId,
         suggestionType,
         rating,
@@ -92,7 +92,7 @@ const AISuggestionFeedback = ({ suggestionId, suggestionType }) => {
             </button>
             <button 
               className="submit-button"
-              onClick={() => submitFeedback()}
+              onClick={() => handleSubmitFeedback()}
               disabled={submitting}
             >
               {submitting ? 'Submitting...' : 'Submit Feedback'}

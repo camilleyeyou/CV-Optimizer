@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import axios from 'axios';
 import { useResume } from '../../context/ResumeContext';
+import { generateCoverLetter } from '../../services/aiService';
 import './CoverLetterGenerator.css';
 
 const CoverLetterGenerator = () => {
@@ -23,7 +23,7 @@ const CoverLetterGenerator = () => {
     }));
   };
 
-  const generateCoverLetter = async () => {
+  const handleGenerateCoverLetter = async () => {
     if (!jobDetails.title || !jobDetails.company) {
       setError('Please provide at least the job title and company name.');
       return;
@@ -33,12 +33,8 @@ const CoverLetterGenerator = () => {
     setError(null);
     
     try {
-      const response = await axios.post('/api/generate-cover-letter', {
-        resume: resumeData,
-        jobDetails
-      });
-      
-      setCoverLetter(response.data.coverLetter);
+      const result = await generateCoverLetter(resumeData, jobDetails);
+      setCoverLetter(result.coverLetter);
     } catch (err) {
       console.error('Error generating cover letter:', err);
       setError('Failed to generate cover letter. Please try again.');
@@ -115,7 +111,7 @@ const CoverLetterGenerator = () => {
         
         <button 
           className="generate-button" 
-          onClick={generateCoverLetter}
+          onClick={handleGenerateCoverLetter}
           disabled={loading}
         >
           {loading ? 'Generating...' : 'Generate Cover Letter'}

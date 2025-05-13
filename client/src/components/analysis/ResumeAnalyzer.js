@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
 import { useResume } from '../../context/ResumeContext';
 import JobDescriptionAnalyzer from './JobDescriptionAnalyzer';
 import SkillMatchAnalytics from './SkillMatchAnalytics';
+import { analyzeResume, analyzeJobDescription } from '../../services/aiService';
 import './ResumeAnalyzer.css';
 
 const ResumeAnalyzer = () => {
@@ -21,7 +21,7 @@ const ResumeAnalyzer = () => {
     setJobKeywords(data);
   };
 
-  const analyzeResume = async () => {
+  const handleAnalyzeResume = async () => {
     if (!jobDescription.trim()) {
       setError('Please provide a job description for analysis');
       return;
@@ -31,15 +31,31 @@ const ResumeAnalyzer = () => {
     setError(null);
     
     try {
-      const response = await axios.post('/api/analyze-resume', {
-        resume: resumeData,
-        jobDescription
-      });
-      
-      setAnalysis(response.data);
+      const result = await analyzeResume(resumeData, jobDescription);
+      setAnalysis(result);
     } catch (err) {
       console.error('Error analyzing resume:', err);
       setError('Failed to analyze resume. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleAnalyzeJobDescription = async () => {
+    if (!jobDescription.trim()) {
+      setError('Please provide a job description to analyze');
+      return;
+    }
+
+    setLoading(true);
+    setError(null);
+    
+    try {
+      const result = await analyzeJobDescription(jobDescription);
+      setJobKeywords(result);
+    } catch (err) {
+      console.error('Error analyzing job description:', err);
+      setError('Failed to analyze job description. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -84,7 +100,7 @@ const ResumeAnalyzer = () => {
             
             <button 
               className="analyze-button" 
-              onClick={analyzeResume}
+              onClick={handleAnalyzeResume}
               disabled={loading}
             >
               {loading ? 'Analyzing...' : 'Analyze My Resume'}
@@ -165,11 +181,13 @@ const ResumeAnalyzer = () => {
             
             <button 
               className="analyze-button" 
-              onClick={analyzeResume}
+              onClick={handleAnalyzeJobDescription}
               disabled={loading}
             >
               {loading ? 'Analyzing...' : 'Match My Skills'}
             </button>
+            
+            {error && <div className="error-message">{error}</div>}
             
             {jobKeywords && (
               <SkillMatchAnalytics 

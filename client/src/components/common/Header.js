@@ -1,140 +1,86 @@
 import React, { useState } from 'react';
-import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { FaUser, FaBars, FaTimes, FaFileAlt, FaClipboard } from 'react-icons/fa';
+import { Link, useNavigate } from 'react-router-dom';
+import { useAuth } from '../../context/AuthContext';
+import './Header.css';
 
 const Header = () => {
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const { currentUser, logout } = useAuth();
   const navigate = useNavigate();
-  const location = useLocation();
   
-  // Mock authentication state (replace with actual auth check)
-  const isAuthenticated = localStorage.getItem('token') !== null;
-  
-  const handleLogout = () => {
-    // Clear auth token and user data
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
-    
-    // Navigate to home page
-    navigate('/');
-    
-    // Close menus
-    setIsMenuOpen(false);
-    setIsUserMenuOpen(false);
+  const toggleMobileMenu = () => {
+    setMobileMenuOpen(!mobileMenuOpen);
   };
   
-  // Check if a link is active
-  const isActive = (path) => {
-    return location.pathname === path;
+  const handleLogout = () => {
+    logout();
+    navigate('/login');
+    setMobileMenuOpen(false);
   };
   
   return (
-    <header className="app-header">
+    <header className="header">
       <div className="header-container">
         <div className="logo">
-          <Link to="/">
-            <h1>CV Optimizer</h1>
-          </Link>
+          <Link to="/">CV Optimizer</Link>
         </div>
         
-        <div className="mobile-menu-toggle" onClick={() => setIsMenuOpen(!isMenuOpen)}>
-          {isMenuOpen ? <FaTimes /> : <FaBars />}
-        </div>
+        <button 
+          className="mobile-menu-button" 
+          onClick={toggleMobileMenu}
+          aria-label="Toggle menu"
+        >
+          <span className={`hamburger ${mobileMenuOpen ? 'open' : ''}`}></span>
+        </button>
         
-        <nav className={`main-nav ${isMenuOpen ? 'menu-open' : ''}`}>
-          <ul>
+        <nav className={`nav-menu ${mobileMenuOpen ? 'open' : ''}`}>
+          <ul className="nav-links">
             <li>
-              <Link 
-                to="/" 
-                className={isActive('/') ? 'active' : ''} 
-                onClick={() => setIsMenuOpen(false)}
-              >
-                Home
-              </Link>
+              <Link to="/" onClick={() => setMobileMenuOpen(false)}>Dashboard</Link>
             </li>
             <li>
-              <Link 
-                to="/templates" 
-                className={isActive('/templates') ? 'active' : ''} 
-                onClick={() => setIsMenuOpen(false)}
-              >
-                Templates
-              </Link>
+              <Link to="/templates" onClick={() => setMobileMenuOpen(false)}>Templates</Link>
             </li>
-            <li>
-              <Link 
-                to="/builder" 
-                className={isActive('/builder') ? 'active' : ''} 
-                onClick={() => setIsMenuOpen(false)}
-              >
-                <FaFileAlt /> Resume Builder
-              </Link>
-            </li>
-            {isAuthenticated && (
-              <li>
-                <Link 
-                  to="/cover-letter" 
-                  className={isActive('/cover-letter') ? 'active' : ''} 
-                  onClick={() => setIsMenuOpen(false)}
-                >
-                  <FaClipboard /> Cover Letter
-                </Link>
-              </li>
+            {currentUser && (
+              <>
+                <li>
+                  <Link to="/builder" onClick={() => setMobileMenuOpen(false)}>Resume Builder</Link>
+                </li>
+                <li>
+                  <Link to="/cover-letter" onClick={() => setMobileMenuOpen(false)}>Cover Letter</Link>
+                </li>
+              </>
             )}
-            <li>
-              <Link 
-                to="/pricing" 
-                className={isActive('/pricing') ? 'active' : ''} 
-                onClick={() => setIsMenuOpen(false)}
-              >
-                Pricing
-              </Link>
-            </li>
           </ul>
-        </nav>
-        
-        <div className="user-menu">
-          {isAuthenticated ? (
-            <div className="user-dropdown">
-              <button 
-                className="user-button" 
-                onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
-              >
-                <FaUser />
-              </button>
-              
-              {isUserMenuOpen && (
-                <div className="dropdown-menu">
-                  <Link to="/dashboard" onClick={() => setIsUserMenuOpen(false)}>
-                    My Resumes
-                  </Link>
-                  <Link to="/profile" onClick={() => setIsUserMenuOpen(false)}>
-                    Profile
-                  </Link>
-                  <Link to="/settings" onClick={() => setIsUserMenuOpen(false)}>
-                    Settings
-                  </Link>
-                  <button 
-                    className="logout-button" 
-                    onClick={handleLogout}
-                  >
-                    Log Out
+          
+          <div className="auth-buttons">
+            {currentUser ? (
+              <>
+                <div className="user-menu">
+                  <button className="user-button">
+                    <span className="user-initial">
+                      {currentUser.firstName ? currentUser.firstName.charAt(0) : 'U'}
+                    </span>
+                    <span className="user-name">{currentUser.firstName}</span>
                   </button>
+                  <div className="user-dropdown">
+                    <Link to="/profile" onClick={() => setMobileMenuOpen(false)}>Profile</Link>
+                    <button onClick={handleLogout}>Logout</button>
+                  </div>
                 </div>
-              )}
-            </div>
-          ) : (
-            <div className="auth-buttons">
-              <Link to="/login" className="btn btn-text">
-                Log In
-              </Link>
-              <Link to="/register" className="btn btn-primary">
-                Sign Up
-              </Link>
-            </div>
-          )}
-        </div>
+              </>
+            ) : (
+              <>
+                <Link to="/login" className="login-button" onClick={() => setMobileMenuOpen(false)}>
+                  Log In
+                </Link>
+                <Link to="/register" className="signup-button" onClick={() => setMobileMenuOpen(false)}>
+                  Sign Up
+                </Link>
+              </>
+            )}
+          </div>
+        </nav>
       </div>
     </header>
   );

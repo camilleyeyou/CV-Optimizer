@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import axios from 'axios';
+import { generateEnhancedSuggestions } from '../../services/aiService';
 import './EnhancedAISuggestions.css';
 
 const SuggestionTypes = {
@@ -43,14 +43,14 @@ const EnhancedAISuggestions = ({
     setError(null);
     
     try {
-      const response = await axios.post('/api/enhanced-suggestions', {
-        type,
-        currentContent,
-        jobDescription,
+      const result = await generateEnhancedSuggestions(
+        type, 
+        currentContent, 
+        jobDescription, 
         improvementFocus
-      });
+      );
       
-      setSuggestions(response.data.suggestions);
+      setSuggestions(result.suggestions);
     } catch (err) {
       console.error('Error getting AI suggestions:', err);
       setError('Failed to get AI suggestions. Please try again.');
