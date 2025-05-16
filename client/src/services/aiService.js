@@ -1,7 +1,8 @@
 import api from './api';
 
+// Mapping our frontend functions to the appropriate backend endpoints
 export const analyzeResume = async (resume, jobDescription) => {
-  const response = await api.post('/api/analyze-resume', {
+  const response = await api.post('/api/ai/optimize-ats', {
     resume,
     jobDescription
   });
@@ -9,14 +10,14 @@ export const analyzeResume = async (resume, jobDescription) => {
 };
 
 export const analyzeJobDescription = async (jobDescription) => {
-  const response = await api.post('/api/analyze-job-description', {
+  const response = await api.post('/api/ai/suggest-skills', {
     jobDescription
   });
   return response.data;
 };
 
 export const generateSuggestions = async (fieldType, currentContent, jobDescription) => {
-  const response = await api.post('/api/generate-suggestions', {
+  const response = await api.post('/api/ai/summary', {
     fieldType,
     currentContent,
     jobDescription
@@ -25,7 +26,7 @@ export const generateSuggestions = async (fieldType, currentContent, jobDescript
 };
 
 export const generateEnhancedSuggestions = async (type, currentContent, jobDescription, improvementFocus) => {
-  const response = await api.post('/api/enhanced-suggestions', {
+  const response = await api.post('/api/ai/enhance-experience', {
     type,
     currentContent,
     jobDescription,
@@ -35,7 +36,7 @@ export const generateEnhancedSuggestions = async (type, currentContent, jobDescr
 };
 
 export const generateCoverLetter = async (resume, jobDetails) => {
-  const response = await api.post('/api/generate-cover-letter', {
+  const response = await api.post('/api/ai/cover-letter', {
     resume,
     jobDetails
   });
@@ -43,6 +44,14 @@ export const generateCoverLetter = async (resume, jobDetails) => {
 };
 
 export const submitFeedback = async (feedbackData) => {
-  const response = await api.post('/api/feedback', feedbackData);
+  const response = await api.post('/api/ai/improve-achievement', feedbackData);
+  return response.data;
+};
+
+// Additional methods that match your backend
+export const suggestActionVerbs = async (context) => {
+  const response = await api.post('/api/ai/action-verbs', {
+    context
+  });
   return response.data;
 };

@@ -1,75 +1,95 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { useResume } from '../../context/ResumeContext';
-import './TemplateSelector.css';
-
-// Template preview images - you'll need to add these to your public folder
-const templates = [
-  {
-    id: 'modern',
-    name: 'Modern',
-    description: 'Clean, professional design with subtle color accents',
-    preview: '/templates/modern.png'
-  },
-  {
-    id: 'classic',
-    name: 'Classic',
-    description: 'Traditional layout that works well for conservative industries',
-    preview: '/templates/classic.png'
-  },
-  {
-    id: 'creative',
-    name: 'Creative',
-    description: 'Bold design for standing out in creative fields',
-    preview: '/templates/creative.png'
-  },
-  {
-    id: 'minimal',
-    name: 'Minimal',
-    description: 'Simple, distraction-free layout focused on content',
-    preview: '/templates/minimal.png'
-  },
-  {
-    id: 'professional',
-    name: 'Professional',
-    description: 'Sophisticated design for executives and senior positions',
-    preview: '/templates/professional.png'
-  },
-  {
-    id: 'technical',
-    name: 'Technical',
-    description: 'Optimized for technical roles with skills emphasis',
-    preview: '/templates/technical.png'
-  }
-];
+import { getTemplates } from '../../services/resumeService';
+import { FaCheck, FaArrowRight } from 'react-icons/fa';
 
 const TemplateSelector = () => {
-  const { activeTemplate, setActiveTemplate } = useResume();
-
+  const { resumeData, selectTemplate } = useResume();
+  const [templates, setTemplates] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
+  
+  // Default templates if API fails
+  const defaultTemplates = [
+    { id: 'modern', name: 'Modern', premium: false, thumbnail: '/images/templates/modern-thumb.png' },
+    { id: 'professional', name: 'Professional', premium: false, thumbnail: '/images/templates/professional-thumb.png' },
+    { id: 'minimalist', name: 'Minimalist', premium: false, thumbnail: '/images/templates/minimalist-thumb.png' },
+    { id: 'creative', name: 'Creative', premium: false, thumbnail: '/images/templates/creative-thumb.png' },
+  ];
+  
+  // Fetch available templates on component mount
+  useEffect(() => {
+    const fetchTemplates = async () => {
+      try {
+        setIsLoading(true);
+        const data = await getTemplates();
+        setTemplates(data);
+      } catch (err) {
+        console.error('Error fetching templates:', err);
+        setTemplates(defaultTemplates);
+        setError('Failed to load templates. Showing default options.');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    fetchTemplates();
+  }, []);
+  
+  // Handle template selection
+  const handleSelectTemplate = (templateId) => {
+    selectTemplate(templateId);
+  };
+  
+  if (isLoading) {
+    return (
+      <div className="template-selector-container">
+        <div className="loading-container">
+          <div className="loading-spinner"></div>
+          <p>Loading templates...</p>
+        </div>
+      </div>
+    );
+  }
+  
   return (
-    <div className="template-selector">
-      <h2>Choose a Template</h2>
-      <p className="selector-description">
-        Select a template that best showcases your experience and matches the job you're applying for
-      </p>
+    <div className="template-selector-container">
+      <div className="template-selector-header">
+        <h3>Resume Template</h3>
+        <Link to="/templates" className="btn-text">
+          Browse All Templates <FaArrowRight />
+        </Link>
+      </div>
       
-      <div className="templates-grid">
-        {templates.map(template => (
+      {error && (
+        <div className="alert alert-info">
+          <p>{error}</p>
+        </div>
+      )}
+      
+      <div className="template-thumbnails">
+        {templates.slice(0, 4).map(template => (
           <div 
             key={template.id} 
-            className={`template-card ${activeTemplate === template.id ? 'active' : ''}`}
-            onClick={() => setActiveTemplate(template.id)}
+            className={`template-thumbnail ${resumeData.selectedTemplate === template.id ? 'selected' : ''}`}
+            onClick={() => handleSelectTemplate(template.id)}
           >
-            <div className="template-preview">
-              <img src={template.preview} alt={`${template.name} template preview`} />
-              {activeTemplate === template.id && (
-                <div className="selected-overlay">
-                  <span>Selected</span>
+            <div className="thumbnail-image">
+              <img 
+                src={template.thumbnail} 
+                alt={`${template.name} template`} 
+              />
+              
+              {resumeData.selectedTemplate === template.id && (
+                <div className="thumbnail-selected">
+                  <FaCheck />
                 </div>
               )}
             </div>
-            <div className="template-info">
-              <h3>{template.name}</h3>
-              <p>{template.description}</p>
+            
+            <div className="thumbnail-info">
+              <span>{template.name}</span>
             </div>
           </div>
         ))}

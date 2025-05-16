@@ -4,8 +4,8 @@ module.exports = function(app) {
   app.use(
     '/api',
     createProxyMiddleware({
-      target: 'http://localhost:5000', // Change this to your backend URL
-      changeOrigin: true,
+      target: 'http://localhost:5002', // Your backend port
+      changeOrigin: true
     })
   );
 };

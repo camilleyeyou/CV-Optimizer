@@ -1,10 +1,138 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import * as resumeService from '../services/resumeService';
-import { isAuthenticated } from '../services/authService';
+import { resumeService } from '../services/serviceFactory';
+import { authService } from '../services/serviceFactory';
 
 const ResumeContext = createContext();
 
 export const useResume = () => useContext(ResumeContext);
+
+// Helper function to map backend resume format to frontend format
+const mapResumeToFrontendFormat = (backendResume) => {
+  // This function adapts the backend resume structure to what the frontend expects
+  // Customize this based on exact differences between your backend and frontend models
+  
+  return {
+    _id: backendResume._id,
+    personalInfo: {
+      firstName: backendResume.personalInfo?.firstName || '',
+      lastName: backendResume.personalInfo?.lastName || '',
+      email: backendResume.personalInfo?.email || '',
+      phone: backendResume.personalInfo?.phone || '',
+      address: backendResume.personalInfo?.location?.split(',')[0] || '',
+      city: backendResume.personalInfo?.location?.split(',')[1]?.trim() || '',
+      state: backendResume.personalInfo?.location?.split(',')[2]?.trim() || '',
+      zipCode: '',
+      linkedIn: backendResume.personalInfo?.linkedin || '',
+      website: backendResume.personalInfo?.website || ''
+    },
+    summary: backendResume.summary || '',
+    workExperience: backendResume.workExperience?.map(exp => ({
+      title: exp.position || '',
+      company: exp.company || '',
+      location: exp.location || '',
+      startDate: exp.startDate ? new Date(exp.startDate).toLocaleDateString('en-US', { year: 'numeric', month: 'long' }) : '',
+      endDate: exp.endDate ? new Date(exp.endDate).toLocaleDateString('en-US', { year: 'numeric', month: 'long' }) : '',
+      current: exp.current || false,
+      description: exp.description?.join('\n') || '',
+      highlights: exp.achievements || []
+    })) || [],
+    education: backendResume.education?.map(edu => ({
+      institution: edu.institution || '',
+      degree: edu.degree || '',
+      field: edu.fieldOfStudy || '',
+      location: edu.location || '',
+      startDate: edu.startDate ? new Date(edu.startDate).toLocaleDateString('en-US', { year: 'numeric', month: 'long' }) : '',
+      endDate: edu.endDate ? new Date(edu.endDate).toLocaleDateString('en-US', { year: 'numeric', month: 'long' }) : '',
+      current: edu.current || false,
+      gpa: edu.gpa || ''
+    })) || [],
+    skills: backendResume.skills ? [
+      ...backendResume.skills.technical?.map(skill => ({ name: skill, level: 'Advanced' })) || [],
+      ...backendResume.skills.soft?.map(skill => ({ name: skill, level: 'Intermediate' })) || [],
+    ] : [],
+    certifications: backendResume.certifications?.map(cert => ({
+      name: cert.name || '',
+      issuer: cert.issuer || '',
+      date: cert.date ? new Date(cert.date).toLocaleDateString('en-US', { year: 'numeric', month: 'long' }) : '',
+      url: cert.url || ''
+    })) || [],
+    projects: backendResume.projects || [],
+    languages: backendResume.skills?.languages || [],
+    customSections: backendResume.customSections || []
+  };
+};
+
+// Helper function to map frontend resume format to backend format
+const mapResumeToBackendFormat = (frontendResume) => {
+  // This function adapts the frontend resume structure to what the backend expects
+  // Customize this based on exact differences between your frontend and backend models
+  
+  return {
+    name: `${frontendResume.personalInfo.firstName} ${frontendResume.personalInfo.lastName} - Resume`,
+    personalInfo: {
+      firstName: frontendResume.personalInfo.firstName,
+      lastName: frontendResume.personalInfo.lastName,
+      email: frontendResume.personalInfo.email,
+      phone: frontendResume.personalInfo.phone,
+      location: [
+        frontendResume.personalInfo.address,
+        frontendResume.personalInfo.city,
+        frontendResume.personalInfo.state,
+        frontendResume.personalInfo.zipCode
+      ].filter(Boolean).join(', '),
+      linkedin: frontendResume.personalInfo.linkedIn,
+      website: frontendResume.personalInfo.website,
+      github: ''
+    },
+    summary: frontendResume.summary,
+    workExperience: frontendResume.workExperience.map(exp => ({
+      company: exp.company,
+      position: exp.title,
+      location: exp.location,
+      startDate: exp.startDate ? new Date(exp.startDate) : null,
+      endDate: exp.current ? null : (exp.endDate ? new Date(exp.endDate) : null),
+      current: exp.current,
+      description: exp.description ? exp.description.split('\n').filter(Boolean) : [],
+      achievements: exp.highlights || []
+    })),
+    education: frontendResume.education.map(edu => ({
+      institution: edu.institution,
+      degree: edu.degree,
+      fieldOfStudy: edu.field,
+      location: edu.location,
+      startDate: edu.startDate ? new Date(edu.startDate) : null,
+      endDate: edu.current ? null : (edu.endDate ? new Date(edu.endDate) : null),
+      current: edu.current,
+      gpa: edu.gpa,
+      honors: []
+    })),
+    skills: {
+      technical: frontendResume.skills
+        .filter(skill => skill.level === 'Advanced' || skill.level === 'Expert')
+        .map(skill => skill.name),
+      soft: frontendResume.skills
+        .filter(skill => skill.level === 'Intermediate' || skill.level === 'Beginner')
+        .map(skill => skill.name),
+      languages: frontendResume.languages || []
+    },
+    projects: frontendResume.projects || [],
+    certifications: frontendResume.certifications.map(cert => ({
+      name: cert.name,
+      issuer: cert.issuer,
+      date: cert.date ? new Date(cert.date) : null,
+      expiryDate: null,
+      credentialId: '',
+      url: cert.url
+    })),
+    achievements: [],
+    customSections: frontendResume.customSections || [],
+    template: frontendResume.template || 'modern',
+    metadata: {
+      lastModified: new Date(),
+      version: 1
+    }
+  };
+};
 
 export const ResumeProvider = ({ children }) => {
   const [resumeData, setResumeData] = useState({
@@ -37,13 +165,13 @@ export const ResumeProvider = ({ children }) => {
 
   // Fetch user's resumes when component mounts
   useEffect(() => {
-    if (isAuthenticated()) {
+    if (authService.isAuthenticated()) {
       fetchResumes();
     }
   }, []);
 
   const fetchResumes = async () => {
-    if (!isAuthenticated()) {
+    if (!authService.isAuthenticated()) {
       return;
     }
     
@@ -63,9 +191,11 @@ export const ResumeProvider = ({ children }) => {
     setIsLoading(true);
     try {
       const resume = await resumeService.getResumeById(resumeId);
-      setResumeData(resume.content);
+      // Transform from backend format to frontend format
+      const frontendResume = mapResumeToFrontendFormat(resume);
+      setResumeData(frontendResume);
       setActiveTemplate(resume.template || 'modern');
-      return resume;
+      return frontendResume;
     } catch (err) {
       console.error('Error loading resume:', err);
       setError('Failed to load resume');
@@ -78,17 +208,15 @@ export const ResumeProvider = ({ children }) => {
   const saveResume = async () => {
     setIsLoading(true);
     try {
-      const resumeToSave = {
-        content: resumeData,
-        template: activeTemplate,
-        title: `${resumeData.personalInfo.firstName} ${resumeData.personalInfo.lastName} - Resume`
-      };
+      // Transform from frontend format to backend format
+      const backendResume = mapResumeToBackendFormat(resumeData);
+      backendResume.template = activeTemplate;
 
       let result;
       if (resumeData._id) {
-        result = await resumeService.updateResume(resumeData._id, resumeToSave);
+        result = await resumeService.updateResume(resumeData._id, backendResume);
       } else {
-        result = await resumeService.createResume(resumeToSave);
+        result = await resumeService.createResume(backendResume);
 
         // Update the resume with the ID from the server
         setResumeData({
@@ -129,7 +257,10 @@ export const ResumeProvider = ({ children }) => {
   const generatePDF = async () => {
     setIsLoading(true);
     try {
-      const pdfBlob = await resumeService.generatePDF(resumeData, activeTemplate);
+      // Transform to backend format for PDF generation
+      const backendResume = mapResumeToBackendFormat(resumeData);
+      
+      const pdfBlob = await resumeService.generatePDF(backendResume, activeTemplate);
       
       // Create a blob URL and trigger download
       const url = window.URL.createObjectURL(pdfBlob);
