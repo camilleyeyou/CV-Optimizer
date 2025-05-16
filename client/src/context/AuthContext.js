@@ -34,7 +34,7 @@ export const AuthProvider = ({ children }) => {
       setCurrentUser(response.user);
       return response;
     } catch (err) {
-      setError(err.response?.data?.message || 'Login failed');
+      setError(err.response?.data?.message || err.message || 'Login failed');
       throw err;
     }
   };
@@ -46,7 +46,7 @@ export const AuthProvider = ({ children }) => {
       setCurrentUser(response.user);
       return response;
     } catch (err) {
-      setError(err.response?.data?.message || 'Registration failed');
+      setError(err.response?.data?.message || err.message || 'Registration failed');
       throw err;
     }
   };

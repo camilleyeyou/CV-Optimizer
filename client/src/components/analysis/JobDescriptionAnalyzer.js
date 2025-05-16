@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { analyzeJobDescription } from '../../services/aiService';
+import * as aiService from '../../services/aiService';
 import './JobDescriptionAnalyzer.css';
 
 const JobDescriptionAnalyzer = ({ onKeywordsExtracted }) => {
@@ -18,7 +18,7 @@ const JobDescriptionAnalyzer = ({ onKeywordsExtracted }) => {
     setError(null);
     
     try {
-      const result = await analyzeJobDescription(jobDescription);
+      const result = await aiService.analyzeJobDescription(jobDescription);
       setKeywordData(result);
       
       // Pass the extracted keywords to parent component

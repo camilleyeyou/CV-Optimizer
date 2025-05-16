@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { generateEnhancedSuggestions } from '../../services/aiService';
+import * as aiService from '../../services/aiService';
 import './EnhancedAISuggestions.css';
 
 const SuggestionTypes = {
@@ -43,7 +43,7 @@ const EnhancedAISuggestions = ({
     setError(null);
     
     try {
-      const result = await generateEnhancedSuggestions(
+      const result = await aiService.generateEnhancedSuggestions(
         type, 
         currentContent, 
         jobDescription, 

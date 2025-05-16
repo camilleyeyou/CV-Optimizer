@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useResume } from '../../context/ResumeContext';
 import JobDescriptionAnalyzer from './JobDescriptionAnalyzer';
 import SkillMatchAnalytics from './SkillMatchAnalytics';
-import { analyzeResume, analyzeJobDescription } from '../../services/aiService';
+import { aiService } from '../../services/serviceFactory';
 import './ResumeAnalyzer.css';
 
 const ResumeAnalyzer = () => {
@@ -31,7 +31,7 @@ const ResumeAnalyzer = () => {
     setError(null);
     
     try {
-      const result = await analyzeResume(resumeData, jobDescription);
+      const result = await aiService.analyzeResume(resumeData, jobDescription);
       setAnalysis(result);
     } catch (err) {
       console.error('Error analyzing resume:', err);
@@ -51,7 +51,7 @@ const ResumeAnalyzer = () => {
     setError(null);
     
     try {
-      const result = await analyzeJobDescription(jobDescription);
+      const result = await aiService.analyzeJobDescription(jobDescription);
       setJobKeywords(result);
     } catch (err) {
       console.error('Error analyzing job description:', err);

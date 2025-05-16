@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { submitFeedback } from '../../services/aiService';
+import * as aiService from '../../services/aiService';
 import './AISuggestionFeedback.css';
 
 const AISuggestionFeedback = ({ suggestionId, suggestionType }) => {
@@ -23,7 +23,7 @@ const AISuggestionFeedback = ({ suggestionId, suggestionType }) => {
     setSubmitting(true);
     
     try {
-      await submitFeedback({
+      await aiService.submitFeedback({
         suggestionId,
         suggestionType,
         rating,

@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { resumeService } from '../services/serviceFactory';
-import { authService } from '../services/serviceFactory';
+import * as resumeService from '../services/resumeService';
+import * as authService from '../services/authService';
 
 const ResumeContext = createContext();
 
