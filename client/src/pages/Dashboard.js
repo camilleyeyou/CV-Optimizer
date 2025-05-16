@@ -24,7 +24,7 @@ const Dashboard = () => {
     }
     
     // Calculate resume stats
-    if (resumeList) {
+    if (resumeList && Array.isArray(resumeList)) {
       const now = new Date();
       const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
       
@@ -33,6 +33,8 @@ const Dashboard = () => {
         recent: resumeList.filter(resume => new Date(resume.updatedAt) > thirtyDaysAgo).length,
         downloaded: resumeList.filter(resume => resume.downloads > 0).length
       });
+    } else {
+      console.log('Resume list is not an array:', resumeList);
     }
   }, [fetchResumes, resumeList]);
 
@@ -92,7 +94,7 @@ const Dashboard = () => {
           
           {isLoading ? (
             <div className="loading-indicator">Loading your resumes...</div>
-          ) : resumeList && resumeList.length > 0 ? (
+          ) : resumeList && Array.isArray(resumeList) && resumeList.length > 0 ? (
             <div className="resumes-grid">
               {resumeList.map((resume) => (
                 <div 

@@ -177,11 +177,16 @@ export const ResumeProvider = ({ children }) => {
     
     setIsLoading(true);
     try {
-      const resumes = await resumeService.getResumes();
+      const response = await resumeService.getResumes();
+      console.log('Resume fetch response:', response);
+      
+      // Ensure we're setting an array, even if the backend returns something else
+      const resumes = Array.isArray(response) ? response : [];
       setResumeList(resumes);
     } catch (err) {
       console.error('Error fetching resumes:', err);
       setError('Failed to load your resumes');
+      setResumeList([]); // Set to empty array on error
     } finally {
       setIsLoading(false);
     }
