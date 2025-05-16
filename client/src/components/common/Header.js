@@ -5,7 +5,11 @@ import './Header.css';
 
 const Header = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const { currentUser, logout } = useAuth();
+  // Add a null check here to handle the case when AuthContext isn't available
+  const auth = useAuth();
+  const currentUser = auth ? auth.currentUser : null;
+  const logout = auth ? auth.logout : () => {};
+  
   const navigate = useNavigate();
   
   const toggleMobileMenu = () => {
