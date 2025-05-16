@@ -1,8 +1,7 @@
 import axios from 'axios';
 
-// Create an axios instance
+// Create a basic axios instance with minimal configuration
 const api = axios.create({
-  baseURL: process.env.REACT_APP_API_URL || '', // Default to empty string to use relative URLs and proxy
   headers: {
     'Content-Type': 'application/json',
   },
@@ -15,6 +14,10 @@ api.interceptors.request.use(
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
+    
+    // Log the request URL for debugging
+    console.log('Request URL:', config.url);
+    
     return config;
   },
   (error) => {
@@ -26,6 +29,7 @@ api.interceptors.request.use(
 api.interceptors.response.use(
   (response) => response,
   (error) => {
+    console.error('API Error:', error);
     if (error.response && error.response.status === 401) {
       // Redirect to login page if unauthorized
       localStorage.removeItem('token');

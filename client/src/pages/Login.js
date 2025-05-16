@@ -8,6 +8,7 @@ const Login = () => {
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
+  const [apiResponse, setApiResponse] = useState(null);
   
   const { login } = useAuth();
   const navigate = useNavigate();
@@ -19,14 +20,32 @@ const Login = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
+    setApiResponse(null);
     setIsLoading(true);
     
     try {
-      await login(email, password);
+      // First, try a direct API call to diagnose the issue
+      try {
+        const directResponse = await fetch('/api/health');
+        const directData = await directResponse.text();
+        console.log('Direct API health check:', directData);
+      } catch (healthErr) {
+        console.warn('Health check failed:', healthErr);
+      }
+      
+      console.log('Attempting login with:', { email, password: '****' });
+      const response = await login(email, password);
+      console.log('Login response:', response);
+      setApiResponse(response);
       navigate(from, { replace: true }); // Redirect to the page they were trying to access
     } catch (err) {
-      console.error('Login error:', err);
-      setError(err.response?.data?.message || 'Failed to login. Please check your credentials.');
+      console.error('Login error details:', err);
+      setError(err.response?.data?.message || err.message || 'Failed to login. Please check your credentials.');
+      setApiResponse({
+        error: err.message,
+        status: err.response?.status,
+        data: err.response?.data
+      });
     } finally {
       setIsLoading(false);
     }
@@ -81,7 +100,24 @@ const Login = () => {
         
         <div className="auth-footer">
           <p>Don't have an account? <Link to="/register">Sign up</Link></p>
+          <Link to="/test-api">Test API Connection</Link>
         </div>
+        
+        {apiResponse && (
+          <div style={{ marginTop: '20px', padding: '10px', background: '#f5f5f5', borderRadius: '4px' }}>
+            <h4>API Response:</h4>
+            <pre style={{ 
+              maxHeight: '200px', 
+              overflow: 'auto', 
+              background: '#eee', 
+              padding: '10px', 
+              borderRadius: '4px',
+              fontSize: '12px'
+            }}>
+              {JSON.stringify(apiResponse, null, 2)}
+            </pre>
+          </div>
+        )}
       </div>
     </div>
   );

@@ -11,6 +11,7 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import CoverLetterPage from './pages/CoverLetterPage';
 import PrivateRoute from './components/common/PrivateRoute';
+import TestApi from './pages/TestApi';
 import './styles.css';
 
 function App() {
@@ -26,6 +27,7 @@ function App() {
                 <Route path="/login" element={<Login />} />
                 <Route path="/register" element={<Register />} />
                 <Route path="/templates" element={<Templates />} />
+                <Route path="/test-api" element={<TestApi />} />
                 <Route 
                   path="/builder" 
                   element={
