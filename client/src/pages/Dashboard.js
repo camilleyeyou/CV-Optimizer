@@ -1,21 +1,43 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useResume } from '../context/ResumeContext';
-import OnboardingTutorial from '../components/tutorial/OnboardingTutorial';
+import { useAuth } from '../context/AuthContext';
 import './Dashboard.css';
 
 const Dashboard = () => {
   const navigate = useNavigate();
   const { resumeList, fetchResumes, deleteResume, isLoading } = useResume();
+  const auth = useAuth();
   const [showTutorial, setShowTutorial] = useState(false);
   const [resumeStats, setResumeStats] = useState({
     total: 0,
     recent: 0,
     downloaded: 0
   });
+  
+  // Use a ref to track if we've already initiated a fetch
+  const hasFetchedRef = useRef(false);
 
+  // Helper to check authentication, whether it's a property or function
+  const isUserAuthenticated = () => {
+    if (!auth) return false;
+    
+    const { isAuthenticated } = auth;
+    return typeof isAuthenticated === 'function' 
+      ? isAuthenticated() 
+      : isAuthenticated;
+  };
+
+  // Only fetch resumes once on initial mount if authenticated
   useEffect(() => {
-    fetchResumes();
+    // Skip if already fetched or not authenticated
+    if (hasFetchedRef.current || !isUserAuthenticated()) {
+      return;
+    }
+    
+    console.log('Dashboard: Initializing data fetch');
+    hasFetchedRef.current = true;
+    
     // Check if it's the user's first visit
     const isFirstVisit = localStorage.getItem('firstVisit') !== 'false';
     if (isFirstVisit) {
@@ -23,20 +45,40 @@ const Dashboard = () => {
       localStorage.setItem('firstVisit', 'false');
     }
     
-    // Calculate resume stats
-    if (resumeList && Array.isArray(resumeList)) {
+    // Fetch resumes with a slight delay to ensure auth is fully processed
+    setTimeout(() => {
+      fetchResumes();
+    }, 100);
+  }, [fetchResumes, auth]); // eslint-disable-line react-hooks/exhaustive-deps
+  // We're intentionally omitting isUserAuthenticated from the deps array to prevent re-renders
+  // This is safe because it's a local helper function that only depends on auth
+
+  // Update resume stats when resumeList changes
+  useEffect(() => {
+    if (!resumeList || !Array.isArray(resumeList)) {
+      return;
+    }
+    
+    try {
       const now = new Date();
       const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
       
       setResumeStats({
         total: resumeList.length,
-        recent: resumeList.filter(resume => new Date(resume.updatedAt) > thirtyDaysAgo).length,
+        recent: resumeList.filter(resume => {
+          try {
+            return new Date(resume.updatedAt) > thirtyDaysAgo;
+          } catch (e) {
+            console.error('Error parsing date:', e);
+            return false;
+          }
+        }).length,
         downloaded: resumeList.filter(resume => resume.downloads > 0).length
       });
-    } else {
-      console.log('Resume list is not an array:', resumeList);
+    } catch (error) {
+      console.error('Error calculating resume stats:', error);
     }
-  }, [fetchResumes, resumeList]);
+  }, [resumeList]);
 
   const handleCreateNew = () => {
     navigate('/templates');
@@ -58,13 +100,35 @@ const Dashboard = () => {
   };
 
   const formatDate = (dateString) => {
-    const options = { year: 'numeric', month: 'short', day: 'numeric' };
-    return new Date(dateString).toLocaleDateString(undefined, options);
+    try {
+      const options = { year: 'numeric', month: 'short', day: 'numeric' };
+      return new Date(dateString).toLocaleDateString(undefined, options);
+    } catch (e) {
+      console.error('Error formatting date:', e);
+      return 'Invalid date';
+    }
   };
+
+  // If not authenticated, the PrivateRoute should handle redirect
+  // This is just a safety check
+  if (!isUserAuthenticated()) {
+    console.log('Dashboard: User not authenticated');
+    return null;
+  }
 
   return (
     <div className="dashboard-page">
-      {showTutorial && <OnboardingTutorial onComplete={() => setShowTutorial(false)} />}
+      {showTutorial && (
+        <div className="tutorial-overlay">
+          <div className="tutorial-content">
+            <h2>Welcome to CV Optimizer!</h2>
+            <p>Let's get started with creating your professional resume.</p>
+            <button onClick={() => setShowTutorial(false)}>
+              Got it!
+            </button>
+          </div>
+        </div>
+      )}
       
       <div className="dashboard-header">
         <h1>Your Resume Dashboard</h1>

@@ -16,7 +16,14 @@ const PrivateRoute = ({ children }) => {
     return <div className="loading-screen">Loading...</div>;
   }
   
-  if (!isAuthenticated()) {
+  // Check if isAuthenticated is a function or a boolean property
+  const isUserAuthenticated = typeof isAuthenticated === 'function' 
+    ? isAuthenticated() 
+    : isAuthenticated;
+  
+  if (!isUserAuthenticated) {
+    // Log for debugging
+    console.log('User not authenticated, redirecting to login');
     return <Navigate to="/login" />;
   }
   

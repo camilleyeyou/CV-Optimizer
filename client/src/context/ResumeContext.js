@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
 import * as resumeService from '../services/resumeService';
 import * as authService from '../services/authService';
 
@@ -6,135 +6,14 @@ const ResumeContext = createContext();
 
 export const useResume = () => useContext(ResumeContext);
 
-// Helper function to map backend resume format to frontend format
-const mapResumeToFrontendFormat = (backendResume) => {
-  // This function adapts the backend resume structure to what the frontend expects
-  // Customize this based on exact differences between your backend and frontend models
-  
-  return {
-    _id: backendResume._id,
-    personalInfo: {
-      firstName: backendResume.personalInfo?.firstName || '',
-      lastName: backendResume.personalInfo?.lastName || '',
-      email: backendResume.personalInfo?.email || '',
-      phone: backendResume.personalInfo?.phone || '',
-      address: backendResume.personalInfo?.location?.split(',')[0] || '',
-      city: backendResume.personalInfo?.location?.split(',')[1]?.trim() || '',
-      state: backendResume.personalInfo?.location?.split(',')[2]?.trim() || '',
-      zipCode: '',
-      linkedIn: backendResume.personalInfo?.linkedin || '',
-      website: backendResume.personalInfo?.website || ''
-    },
-    summary: backendResume.summary || '',
-    workExperience: backendResume.workExperience?.map(exp => ({
-      title: exp.position || '',
-      company: exp.company || '',
-      location: exp.location || '',
-      startDate: exp.startDate ? new Date(exp.startDate).toLocaleDateString('en-US', { year: 'numeric', month: 'long' }) : '',
-      endDate: exp.endDate ? new Date(exp.endDate).toLocaleDateString('en-US', { year: 'numeric', month: 'long' }) : '',
-      current: exp.current || false,
-      description: exp.description?.join('\n') || '',
-      highlights: exp.achievements || []
-    })) || [],
-    education: backendResume.education?.map(edu => ({
-      institution: edu.institution || '',
-      degree: edu.degree || '',
-      field: edu.fieldOfStudy || '',
-      location: edu.location || '',
-      startDate: edu.startDate ? new Date(edu.startDate).toLocaleDateString('en-US', { year: 'numeric', month: 'long' }) : '',
-      endDate: edu.endDate ? new Date(edu.endDate).toLocaleDateString('en-US', { year: 'numeric', month: 'long' }) : '',
-      current: edu.current || false,
-      gpa: edu.gpa || ''
-    })) || [],
-    skills: backendResume.skills ? [
-      ...backendResume.skills.technical?.map(skill => ({ name: skill, level: 'Advanced' })) || [],
-      ...backendResume.skills.soft?.map(skill => ({ name: skill, level: 'Intermediate' })) || [],
-    ] : [],
-    certifications: backendResume.certifications?.map(cert => ({
-      name: cert.name || '',
-      issuer: cert.issuer || '',
-      date: cert.date ? new Date(cert.date).toLocaleDateString('en-US', { year: 'numeric', month: 'long' }) : '',
-      url: cert.url || ''
-    })) || [],
-    projects: backendResume.projects || [],
-    languages: backendResume.skills?.languages || [],
-    customSections: backendResume.customSections || []
-  };
-};
-
-// Helper function to map frontend resume format to backend format
-const mapResumeToBackendFormat = (frontendResume) => {
-  // This function adapts the frontend resume structure to what the backend expects
-  // Customize this based on exact differences between your frontend and backend models
-  
-  return {
-    name: `${frontendResume.personalInfo.firstName} ${frontendResume.personalInfo.lastName} - Resume`,
-    personalInfo: {
-      firstName: frontendResume.personalInfo.firstName,
-      lastName: frontendResume.personalInfo.lastName,
-      email: frontendResume.personalInfo.email,
-      phone: frontendResume.personalInfo.phone,
-      location: [
-        frontendResume.personalInfo.address,
-        frontendResume.personalInfo.city,
-        frontendResume.personalInfo.state,
-        frontendResume.personalInfo.zipCode
-      ].filter(Boolean).join(', '),
-      linkedin: frontendResume.personalInfo.linkedIn,
-      website: frontendResume.personalInfo.website,
-      github: ''
-    },
-    summary: frontendResume.summary,
-    workExperience: frontendResume.workExperience.map(exp => ({
-      company: exp.company,
-      position: exp.title,
-      location: exp.location,
-      startDate: exp.startDate ? new Date(exp.startDate) : null,
-      endDate: exp.current ? null : (exp.endDate ? new Date(exp.endDate) : null),
-      current: exp.current,
-      description: exp.description ? exp.description.split('\n').filter(Boolean) : [],
-      achievements: exp.highlights || []
-    })),
-    education: frontendResume.education.map(edu => ({
-      institution: edu.institution,
-      degree: edu.degree,
-      fieldOfStudy: edu.field,
-      location: edu.location,
-      startDate: edu.startDate ? new Date(edu.startDate) : null,
-      endDate: edu.current ? null : (edu.endDate ? new Date(edu.endDate) : null),
-      current: edu.current,
-      gpa: edu.gpa,
-      honors: []
-    })),
-    skills: {
-      technical: frontendResume.skills
-        .filter(skill => skill.level === 'Advanced' || skill.level === 'Expert')
-        .map(skill => skill.name),
-      soft: frontendResume.skills
-        .filter(skill => skill.level === 'Intermediate' || skill.level === 'Beginner')
-        .map(skill => skill.name),
-      languages: frontendResume.languages || []
-    },
-    projects: frontendResume.projects || [],
-    certifications: frontendResume.certifications.map(cert => ({
-      name: cert.name,
-      issuer: cert.issuer,
-      date: cert.date ? new Date(cert.date) : null,
-      expiryDate: null,
-      credentialId: '',
-      url: cert.url
-    })),
-    achievements: [],
-    customSections: frontendResume.customSections || [],
-    template: frontendResume.template || 'modern',
-    metadata: {
-      lastModified: new Date(),
-      version: 1
-    }
-  };
+// Helper function to check authentication compatibility
+const isUserAuthenticated = () => {
+  const isAuthFn = authService.isAuthenticated;
+  return typeof isAuthFn === 'function' ? isAuthFn() : isAuthFn;
 };
 
 export const ResumeProvider = ({ children }) => {
+  // Initialize with a complete structure to avoid undefined errors
   const [resumeData, setResumeData] = useState({
     personalInfo: {
       firstName: '',
@@ -162,45 +41,125 @@ export const ResumeProvider = ({ children }) => {
   const [resumeList, setResumeList] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
+  
+  // Use refs to track state without triggering re-renders
+  const fetchLockRef = useRef(false);
+  const fetchCountRef = useRef(0);
+  const lastFetchTimeRef = useRef(Date.now());
 
-  // Fetch user's resumes when component mounts
-  useEffect(() => {
-    if (authService.isAuthenticated()) {
-      fetchResumes();
-    }
-  }, []);
-
-  const fetchResumes = async () => {
-    if (!authService.isAuthenticated()) {
+  // CRITICAL: This is the function that was causing the infinite loop
+  const fetchResumes = useCallback(async (force = false) => {
+    // Check authentication first - handle both function and property
+    if (!isUserAuthenticated()) {
+      console.log('User not authenticated, skipping fetch');
       return;
     }
     
+    // Skip if lock is active (another fetch is in progress)
+    if (fetchLockRef.current && !force) {
+      console.log('Fetch already in progress, skipping');
+      return;
+    }
+    
+    // Implement a maximum fetch rate limit
+    const now = Date.now();
+    const timeSinceLastFetch = now - lastFetchTimeRef.current;
+    
+    // If we've already fetched once and it's been less than 5 seconds, skip
+    if (fetchCountRef.current > 0 && timeSinceLastFetch < 5000 && !force) {
+      console.log(`Too soon since last fetch (${timeSinceLastFetch}ms), skipping`);
+      return;
+    }
+    
+    // If we've fetched more than 5 times, stop fetching to break any potential loops
+    if (fetchCountRef.current >= 5 && !force) {
+      console.log('Maximum fetch count reached, stopping');
+      return;
+    }
+    
+    // Set the lock to prevent concurrent fetches
+    fetchLockRef.current = true;
+    lastFetchTimeRef.current = now;
+    fetchCountRef.current += 1;
+    
+    console.log(`Fetching resumes (attempt ${fetchCountRef.current})...`);
     setIsLoading(true);
+    
     try {
       const response = await resumeService.getResumes();
       console.log('Resume fetch response:', response);
       
-      // Ensure we're setting an array, even if the backend returns something else
-      const resumes = Array.isArray(response) ? response : [];
-      setResumeList(resumes);
+      // Handle different response formats
+      if (response) {
+        if (Array.isArray(response)) {
+          setResumeList(response);
+        } else if (response.resumes && Array.isArray(response.resumes)) {
+          setResumeList(response.resumes);
+        } else {
+          console.warn('Unexpected response format:', response);
+          setResumeList([]);
+        }
+        setError(null);
+      }
     } catch (err) {
       console.error('Error fetching resumes:', err);
       setError('Failed to load your resumes');
       setResumeList([]); // Set to empty array on error
     } finally {
       setIsLoading(false);
+      // Release the lock
+      fetchLockRef.current = false;
     }
-  };
+  }, []); // No dependencies to prevent recreation
 
+  // Reset fetch counter every 30 seconds to allow fetching again
+  useEffect(() => {
+    const resetTimer = setInterval(() => {
+      if (fetchCountRef.current > 0) {
+        console.log('Resetting fetch counter');
+        fetchCountRef.current = 0;
+      }
+    }, 30000);
+    
+    return () => clearInterval(resetTimer);
+  }, []);
+
+  // Implement all the required methods
   const loadResume = async (resumeId) => {
     setIsLoading(true);
     try {
       const resume = await resumeService.getResumeById(resumeId);
-      // Transform from backend format to frontend format
-      const frontendResume = mapResumeToFrontendFormat(resume);
-      setResumeData(frontendResume);
+      
+      // Ensure all required fields exist in the loaded resume
+      const completeResume = {
+        personalInfo: {
+          firstName: '',
+          lastName: '',
+          email: '',
+          phone: '',
+          address: '',
+          city: '',
+          state: '',
+          zipCode: '',
+          linkedIn: '',
+          website: '',
+          ...resume.personalInfo
+        },
+        summary: resume.summary || '',
+        workExperience: resume.workExperience || [],
+        education: resume.education || [],
+        skills: resume.skills || [],
+        certifications: resume.certifications || [],
+        projects: resume.projects || [],
+        languages: resume.languages || [],
+        customSections: resume.customSections || [],
+        ...resume
+      };
+      
+      // Set the completed resume data
+      setResumeData(completeResume);
       setActiveTemplate(resume.template || 'modern');
-      return frontendResume;
+      return completeResume;
     } catch (err) {
       console.error('Error loading resume:', err);
       setError('Failed to load resume');
@@ -213,15 +172,18 @@ export const ResumeProvider = ({ children }) => {
   const saveResume = async () => {
     setIsLoading(true);
     try {
-      // Transform from frontend format to backend format
-      const backendResume = mapResumeToBackendFormat(resumeData);
-      backendResume.template = activeTemplate;
-
+      // Transform from frontend format to backend format if needed
       let result;
       if (resumeData._id) {
-        result = await resumeService.updateResume(resumeData._id, backendResume);
+        result = await resumeService.updateResume(resumeData._id, {
+          ...resumeData,
+          template: activeTemplate
+        });
       } else {
-        result = await resumeService.createResume(backendResume);
+        result = await resumeService.createResume({
+          ...resumeData,
+          template: activeTemplate
+        });
 
         // Update the resume with the ID from the server
         setResumeData({
@@ -231,7 +193,7 @@ export const ResumeProvider = ({ children }) => {
       }
 
       // Refresh the resume list
-      await fetchResumes();
+      await fetchResumes(true); // Force refresh
       
       return result;
     } catch (err) {
@@ -249,7 +211,7 @@ export const ResumeProvider = ({ children }) => {
       await resumeService.deleteResume(resumeId);
       
       // Refresh the resume list
-      await fetchResumes();
+      await fetchResumes(true); // Force refresh
     } catch (err) {
       console.error('Error deleting resume:', err);
       setError('Failed to delete resume');
@@ -259,28 +221,49 @@ export const ResumeProvider = ({ children }) => {
     }
   };
 
+  // Updated generatePDF function that requires a saved resume with ID (Option 2)
   const generatePDF = async () => {
     setIsLoading(true);
+    setError(null);
+    
     try {
-      // Transform to backend format for PDF generation
-      const backendResume = mapResumeToBackendFormat(resumeData);
+      console.log('Preparing to generate PDF with template:', activeTemplate);
       
-      const pdfBlob = await resumeService.generatePDF(backendResume, activeTemplate);
+      // Check if we have a saved resume with an ID
+      if (!resumeData._id) {
+        throw new Error('Resume must be saved before generating a PDF. Please save your resume first.');
+      }
       
-      // Create a blob URL and trigger download
+      console.log('Sending PDF generation request with resumeId:', resumeData._id);
+      const pdfBlob = await resumeService.generatePDF(resumeData, activeTemplate);
+      
+      if (!pdfBlob || !(pdfBlob instanceof Blob)) {
+        throw new Error('Invalid PDF data received from server');
+      }
+      
+      console.log('PDF blob received:', pdfBlob.type, pdfBlob.size);
+      
+      // Create a filename
+      const filename = `${resumeData.personalInfo?.firstName || 'resume'}-${resumeData.personalInfo?.lastName || 'document'}.pdf`;
+      
+      // Create a download link and trigger it
       const url = window.URL.createObjectURL(pdfBlob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `${resumeData.personalInfo.firstName}-${resumeData.personalInfo.lastName}-resume.pdf`;
+      a.download = filename;
       document.body.appendChild(a);
+      
+      console.log('Triggering download for:', filename);
       a.click();
+      
+      // Clean up
       window.URL.revokeObjectURL(url);
       document.body.removeChild(a);
       
       return true;
     } catch (err) {
       console.error('Error generating PDF:', err);
-      setError('Failed to generate PDF');
+      setError('Failed to generate PDF: ' + (err.message || 'Unknown error'));
       throw err;
     } finally {
       setIsLoading(false);
@@ -290,13 +273,17 @@ export const ResumeProvider = ({ children }) => {
   const updateResumeData = (field, value) => {
     if (field.includes('.')) {
       const [section, key] = field.split('.');
-      setResumeData(prev => ({
-        ...prev,
-        [section]: {
-          ...prev[section],
-          [key]: value
-        }
-      }));
+      setResumeData(prev => {
+        // Make sure the section exists
+        const sectionData = prev[section] || {};
+        return {
+          ...prev,
+          [section]: {
+            ...sectionData,
+            [key]: value
+          }
+        };
+      });
     } else {
       setResumeData(prev => ({
         ...prev,
@@ -306,16 +293,29 @@ export const ResumeProvider = ({ children }) => {
   };
 
   const addListItem = (section, item) => {
-    setResumeData(prev => ({
-      ...prev,
-      [section]: [...prev[section], item]
-    }));
+    setResumeData(prev => {
+      // Make sure the section exists and is an array
+      const sectionItems = Array.isArray(prev[section]) ? prev[section] : [];
+      return {
+        ...prev,
+        [section]: [...sectionItems, item]
+      };
+    });
   };
 
   const updateListItem = (section, index, item) => {
     setResumeData(prev => {
-      const updatedSection = [...prev[section]];
-      updatedSection[index] = item;
+      // Make sure the section exists and is an array
+      const sectionItems = Array.isArray(prev[section]) ? prev[section] : [];
+      
+      // Create a new array with the updated item
+      const updatedSection = [...sectionItems];
+      if (index >= 0 && index < updatedSection.length) {
+        updatedSection[index] = item;
+      } else {
+        console.warn(`Index ${index} out of bounds for section ${section}`);
+      }
+      
       return {
         ...prev,
         [section]: updatedSection
@@ -325,8 +325,17 @@ export const ResumeProvider = ({ children }) => {
 
   const removeListItem = (section, index) => {
     setResumeData(prev => {
-      const updatedSection = [...prev[section]];
-      updatedSection.splice(index, 1);
+      // Make sure the section exists and is an array
+      const sectionItems = Array.isArray(prev[section]) ? prev[section] : [];
+      
+      // Create a new array without the item at the specified index
+      const updatedSection = [...sectionItems];
+      if (index >= 0 && index < updatedSection.length) {
+        updatedSection.splice(index, 1);
+      } else {
+        console.warn(`Index ${index} out of bounds for section ${section}`);
+      }
+      
       return {
         ...prev,
         [section]: updatedSection
@@ -341,15 +350,15 @@ export const ResumeProvider = ({ children }) => {
     isLoading,
     error,
     setActiveTemplate,
-    updateResumeData,
-    addListItem,
-    updateListItem,
-    removeListItem,
     loadResume,
     saveResume,
     deleteResume,
     generatePDF,
-    fetchResumes
+    fetchResumes,
+    updateResumeData,
+    addListItem,
+    updateListItem,
+    removeListItem
   };
 
   return (

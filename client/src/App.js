@@ -1,5 +1,5 @@
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import { ResumeProvider } from './context/ResumeContext';
 import Header from './components/common/Header';
@@ -12,6 +12,7 @@ import Register from './pages/Register';
 import CoverLetterPage from './pages/CoverLetterPage';
 import PrivateRoute from './components/common/PrivateRoute';
 import TestApi from './pages/TestApi';
+import TestPdf from './pages/TestPdf';
 import './styles.css';
 
 function App() {
@@ -23,11 +24,29 @@ function App() {
             <Header />
             <main className="main-content">
               <Routes>
-                <Route path="/" element={<Dashboard />} />
+                {/* Public Routes */}
                 <Route path="/login" element={<Login />} />
                 <Route path="/register" element={<Register />} />
-                <Route path="/templates" element={<Templates />} />
                 <Route path="/test-api" element={<TestApi />} />
+                <Route path="/test-pdf" element={<TestPdf />} />
+                
+                {/* Protected Routes */}
+                <Route 
+                  path="/" 
+                  element={
+                    <PrivateRoute>
+                      <Dashboard />
+                    </PrivateRoute>
+                  } 
+                />
+                <Route 
+                  path="/templates" 
+                  element={
+                    <PrivateRoute>
+                      <Templates />
+                    </PrivateRoute>
+                  } 
+                />
                 <Route 
                   path="/builder" 
                   element={
@@ -52,6 +71,9 @@ function App() {
                     </PrivateRoute>
                   } 
                 />
+                
+                {/* Fallback Route */}
+                <Route path="*" element={<Navigate to="/login" replace />} />
               </Routes>
             </main>
             <Footer />
