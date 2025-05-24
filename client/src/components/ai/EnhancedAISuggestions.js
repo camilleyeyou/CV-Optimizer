@@ -14,6 +14,7 @@ const EnhancedAISuggestions = ({
   type, 
   currentContent, 
   jobDescription, 
+  resumeId, // Add this prop
   onApplySuggestion 
 }) => {
   const [suggestions, setSuggestions] = useState([]);
@@ -43,17 +44,50 @@ const EnhancedAISuggestions = ({
     setError(null);
     
     try {
-      const result = await aiService.generateEnhancedSuggestions(
-        type, 
-        currentContent, 
-        jobDescription, 
-        improvementFocus
-      );
+      // Debug logging
+      console.log('Getting suggestions for:', { type, resumeId, currentContent });
       
-      setSuggestions(result.suggestions);
+      // Check if resumeId is required for the suggestion type
+      if ((type === 'summary' || type === 'skill') && !resumeId) {
+        setError('Please save your resume first to get AI suggestions for this section.');
+        return;
+      }
+      
+      let result;
+      
+      // Handle different suggestion types with appropriate parameters
+      switch (type) {
+        case 'summary':
+          result = await aiService.generateEnhancedSuggestions(
+            type, 
+            resumeId, // Pass resumeId as currentContent for summary
+            jobDescription, 
+            improvementFocus
+          );
+          break;
+          
+        case 'skill':
+          result = await aiService.generateEnhancedSuggestions(
+            type, 
+            resumeId, // Pass resumeId as currentContent for skills
+            jobDescription, 
+            improvementFocus
+          );
+          break;
+          
+        default:
+          result = await aiService.generateEnhancedSuggestions(
+            type, 
+            currentContent, 
+            jobDescription, 
+            improvementFocus
+          );
+      }
+      
+      setSuggestions(result.suggestions || []);
     } catch (err) {
       console.error('Error getting AI suggestions:', err);
-      setError('Failed to get AI suggestions. Please try again.');
+      setError(aiService.handleApiError ? aiService.handleApiError(err) : err.message);
     } finally {
       setLoading(false);
     }

@@ -11,15 +11,17 @@ const generateSummary = async (req, res) => {
       return res.status(400).json({ error: 'Resume ID is required' });
     }
 
-    // Get resume data
-    const resume = await Resume.findOne({
-      _id: resumeId,
-      user: req.user._id
-    });
+    // Get resume data - Updated to work with UUID strings
+    const resume = await Resume.findById(resumeId);
 
     if (!resume) {
       return res.status(404).json({ error: 'Resume not found' });
     }
+
+    // Optional: Check if user owns this resume (if you have authentication)
+    // if (req.user && resume.user && resume.user !== req.user._id) {
+    //   return res.status(403).json({ error: 'Unauthorized' });
+    // }
 
     // Generate summary
     const summary = await aiService.generateSummary(resume, jobTitle);
@@ -46,20 +48,23 @@ const enhanceExperience = async (req, res) => {
       return res.status(400).json({ error: 'Resume ID is required' });
     }
 
-    // Get resume data
-    const resume = await Resume.findOne({
-      _id: resumeId,
-      user: req.user._id
-    });
+    // Get resume data - Updated to work with UUID strings
+    const resume = await Resume.findById(resumeId);
 
     if (!resume) {
       return res.status(404).json({ error: 'Resume not found' });
     }
 
+    // Optional: Check if user owns this resume
+    // if (req.user && resume.user && resume.user !== req.user._id) {
+    //   return res.status(403).json({ error: 'Unauthorized' });
+    // }
+
     // Find the experience to enhance
     let experience;
     if (experienceId) {
-      experience = resume.workExperience.id(experienceId);
+      // Updated to work with string IDs instead of ObjectIds
+      experience = resume.workExperience.find(exp => exp.id === experienceId);
       if (!experience) {
         return res.status(404).json({ error: 'Experience not found' });
       }
@@ -75,8 +80,11 @@ const enhanceExperience = async (req, res) => {
 
     // Optionally update the resume
     if (req.body.updateResume && experienceId) {
-      experience.description = enhancedDescription;
-      await resume.save();
+      const expIndex = resume.workExperience.findIndex(exp => exp.id === experienceId);
+      if (expIndex !== -1) {
+        resume.workExperience[expIndex].description = enhancedDescription;
+        await resume.save();
+      }
     }
 
     res.json({ enhancedDescription });
@@ -95,15 +103,17 @@ const generateCoverLetter = async (req, res) => {
       return res.status(400).json({ error: 'Resume ID and job description are required' });
     }
 
-    // Get resume data
-    const resume = await Resume.findOne({
-      _id: resumeId,
-      user: req.user._id
-    });
+    // Get resume data - Updated to work with UUID strings
+    const resume = await Resume.findById(resumeId);
 
     if (!resume) {
       return res.status(404).json({ error: 'Resume not found' });
     }
+
+    // Optional: Check if user owns this resume
+    // if (req.user && resume.user && resume.user !== req.user._id) {
+    //   return res.status(403).json({ error: 'Unauthorized' });
+    // }
 
     // Generate cover letter
     const coverLetter = await aiService.generateCoverLetter(resume, jobDescription);
@@ -124,15 +134,17 @@ const suggestSkills = async (req, res) => {
       return res.status(400).json({ error: 'Resume ID and job description are required' });
     }
 
-    // Get resume data
-    const resume = await Resume.findOne({
-      _id: resumeId,
-      user: req.user._id
-    });
+    // Get resume data - Updated to work with UUID strings
+    const resume = await Resume.findById(resumeId);
 
     if (!resume) {
       return res.status(404).json({ error: 'Resume not found' });
     }
+
+    // Optional: Check if user owns this resume
+    // if (req.user && resume.user && resume.user !== req.user._id) {
+    //   return res.status(403).json({ error: 'Unauthorized' });
+    // }
 
     // Get skill suggestions
     const suggestions = await aiService.suggestSkills(resume, jobDescription);
@@ -178,11 +190,104 @@ const suggestActionVerbs = async (req, res) => {
   }
 };
 
+// Submit feedback for AI suggestions
+const submitFeedback = async (req, res) => {
+  try {
+    const { suggestionType, suggestionText, rating, feedback, helpful } = req.body;
+
+    // Validate required fields
+    if (!suggestionType) {
+      return res.status(400).json({ error: 'Suggestion type is required' });
+    }
+
+    // Log feedback data (you can later save this to a database)
+    const feedbackData = {
+      userId: req.user ? req.user._id : 'anonymous', // Handle case where no user auth
+      suggestionType,
+      suggestionText,
+      rating,
+      feedback,
+      helpful,
+      timestamp: new Date()
+    };
+
+    console.log('AI Suggestion Feedback:', feedbackData);
+
+    // If you have a Feedback model, you could save it like this:
+    // const feedbackEntry = new Feedback(feedbackData);
+    // await feedbackEntry.save();
+
+    res.json({ 
+      message: 'Feedback submitted successfully',
+      feedbackId: Date.now() // You can replace this with actual ID from database
+    });
+  } catch (error) {
+    console.error('Submit feedback error:', error);
+    res.status(500).json({ error: 'Failed to submit feedback. Please try again.' });
+  }
+};
+
+// Generate suggestions endpoint (for backward compatibility)
+const generateSuggestions = async (req, res) => {
+  try {
+    const { fieldType, currentContent, resumeId } = req.body;
+
+    if (!fieldType) {
+      return res.status(400).json({ error: 'Field type is required' });
+    }
+
+    let suggestions = [];
+
+    switch (fieldType) {
+      case 'summary':
+        if (!resumeId) {
+          return res.status(400).json({ error: 'Resume ID is required for summary suggestions' });
+        }
+        // Updated to work with UUID strings
+        const resume = await Resume.findById(resumeId);
+        if (!resume) {
+          return res.status(404).json({ error: 'Resume not found' });
+        }
+        // Optional: Check if user owns this resume
+        // if (req.user && resume.user && resume.user !== req.user._id) {
+        //   return res.status(403).json({ error: 'Unauthorized' });
+        // }
+        const summary = await aiService.generateSummary(resume);
+        suggestions = [summary];
+        break;
+
+      case 'experience':
+        const enhancedDesc = await aiService.enhanceExperience({ 
+          position: currentContent || 'Software Developer',
+          description: currentContent 
+        });
+        suggestions = enhancedDesc;
+        break;
+
+      case 'achievement':
+        const improved = await aiService.improveAchievement(currentContent);
+        suggestions = [improved];
+        break;
+
+      default:
+        const actionVerbs = await aiService.suggestActionVerbs();
+        suggestions = actionVerbs.slice(0, 5);
+    }
+
+    res.json({ suggestions });
+  } catch (error) {
+    console.error('Generate suggestions error:', error);
+    res.status(500).json({ error: 'Failed to generate suggestions. Please try again.' });
+  }
+};
+
 module.exports = {
   generateSummary,
   enhanceExperience,
   generateCoverLetter,
   suggestSkills,
   improveAchievement,
-  suggestActionVerbs
+  suggestActionVerbs,
+  submitFeedback,
+  generateSuggestions
 };

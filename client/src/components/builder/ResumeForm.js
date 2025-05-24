@@ -6,13 +6,44 @@ import AISuggestionFeedback from '../feedback/AISuggestionFeedback';
 import './ResumeForm.css';
 
 const ResumeForm = () => {
-  const { resumeData, updateResumeData, addListItem, updateListItem, removeListItem } = useResume();
+  const { 
+    resumeData, 
+    currentResumeId, // Get currentResumeId from context
+    updateResumeData, 
+    addListItem, 
+    updateListItem, 
+    removeListItem 
+  } = useResume();
   const [activeSection, setActiveSection] = useState('personalInfo');
   const [jobDescription, setJobDescription] = useState('');
   const [showAiSuggestions, setShowAiSuggestions] = useState(false);
   const [aiSuggestionType, setAiSuggestionType] = useState(null);
   const [aiSuggestionField, setAiSuggestionField] = useState(null);
   const [aiSuggestionIndex, setAiSuggestionIndex] = useState(null);
+
+  // Helper function to safely get skills as an array of objects
+  const getSkillsArray = () => {
+    // If skills is undefined or null, return empty array
+    if (!resumeData.skills) return [];
+    
+    // If skills is already an array, return it
+    if (Array.isArray(resumeData.skills)) {
+      return resumeData.skills;
+    }
+    
+    // If skills is an object with technical and soft properties
+    // Convert it to a flat array of skill objects for the form
+    const technicalSkills = Array.isArray(resumeData.skills.technical) ? 
+      resumeData.skills.technical : [];
+    const softSkills = Array.isArray(resumeData.skills.soft) ?
+      resumeData.skills.soft : [];
+    
+    // Create a flat array of all skills
+    return [...technicalSkills, ...softSkills];
+  };
+
+  // Get skills as an array for rendering
+  const skills = getSkillsArray();
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -100,7 +131,8 @@ const ResumeForm = () => {
   };
 
   const handleUpdateSkill = (index, field, value) => {
-    const updatedSkill = { ...resumeData.skills[index], [field]: value };
+    // Using our skills array from the helper function
+    const updatedSkill = { ...skills[index], [field]: value };
     updateListItem('skills', index, updatedSkill);
   };
 
@@ -119,6 +151,12 @@ const ResumeForm = () => {
   };
 
   const showAiSuggestion = (type, field, index = null) => {
+    // Check if we have a resume ID before showing AI suggestions
+    if (!currentResumeId && (type === 'summary' || type === 'skill')) {
+      alert('Please save your resume first to get AI suggestions for this section.');
+      return;
+    }
+    
     setAiSuggestionType(type);
     setAiSuggestionField(field);
     setAiSuggestionIndex(index);
@@ -325,6 +363,7 @@ const ResumeForm = () => {
                   type="summary"
                   currentContent={resumeData.summary}
                   jobDescription={jobDescription}
+                  resumeId={currentResumeId} // Pass the resume ID
                   onApplySuggestion={handleApplySuggestion}
                 />
                 
@@ -485,6 +524,7 @@ const ResumeForm = () => {
                       type="bullet_point"
                       currentContent={experience[aiSuggestionField]}
                       jobDescription={jobDescription}
+                      resumeId={currentResumeId} // Pass the resume ID
                       onApplySuggestion={handleApplySuggestion}
                     />
                     
@@ -503,6 +543,7 @@ const ResumeForm = () => {
                       type="achievement"
                       currentContent={experience.highlights[parseInt(aiSuggestionField)]}
                       jobDescription={jobDescription}
+                      resumeId={currentResumeId} // Pass the resume ID
                       onApplySuggestion={handleApplySuggestion}
                     />
                     
@@ -647,7 +688,8 @@ const ResumeForm = () => {
             </div>
             
             <div className="skills-grid">
-              {resumeData.skills.map((skill, skillIndex) => (
+              {/* Use our safe skills array here instead of resumeData.skills */}
+              {skills.map((skill, skillIndex) => (
                 <div key={skillIndex} className="skill-item">
                   <div className="skill-input">
                     <input
@@ -697,6 +739,7 @@ const ResumeForm = () => {
                     type="skill"
                     currentContent=""
                     jobDescription={jobDescription}
+                    resumeId={currentResumeId} // Pass the resume ID
                     onApplySuggestion={(skill) => {
                       addListItem('skills', { name: skill, level: 'Intermediate' });
                       setShowAiSuggestions(false);

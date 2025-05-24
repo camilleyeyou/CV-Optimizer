@@ -13,6 +13,13 @@ app.use(helmet());
 app.use(cors());
 app.use(express.json());
 
+// Rate limiting
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100 // limit each IP to 100 requests per windowMs
+});
+app.use('/api/', limiter);
+
 // Logging middleware
 app.use((req, res, next) => {
   console.log(`${new Date().toISOString()} - ${req.method} ${req.url}`);
@@ -35,10 +42,14 @@ app.get('/api/health', (req, res) => {
 // API Routes
 try {
   app.use('/api/auth', require('./routes/auth-simple'));
-  app.use('/api/resume', require('./routes/resume'));
+  
+  // FIXED: Use plural 'resumes' to match frontend expectations
+  app.use('/api/resumes', require('./routes/resume'));
+  
   app.use('/api/ai', require('./routes/ai'));
   app.use("/api/ai-test", require("./routes/ai-test"));
   app.use('/api/pdf', require('./routes/pdf'));
+  
   console.log('All routes loaded successfully');
 } catch (error) {
   console.error('Error loading routes:', error);
@@ -57,7 +68,7 @@ app.use((err, req, res, next) => {
 });
 
 // Database connection
-mongoose.connect(process.env.MONGODB_URI)
+mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/cv-optimizer')
   .then(() => {
     console.log('MongoDB connected successfully');
   })
@@ -70,7 +81,7 @@ app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
   console.log('Available routes:');
   console.log('  /api/auth');
-  console.log('  /api/resume');
+  console.log('  /api/resumes');  // Updated to plural
   console.log('  /api/ai');
   console.log('  /api/pdf');
 });

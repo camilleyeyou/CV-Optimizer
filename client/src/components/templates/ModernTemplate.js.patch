@@ -1,0 +1,49 @@
+--- ModernTemplate.js
++++ ModernTemplate.js
+@@ -1,4 +1,5 @@
+ import React from 'react';
++import { useResume } from '../../context/ResumeContext';
+
+ const ModernTemplate = ({ resumeData }) => {
+   const { personalInfo, summary, skills, workExperience, education, certifications, projects } = resumeData || {};
++  const { getNormalizedSkills } = useResume();
++  
++  // Get normalized skills from context
++  const normalizedSkills = getNormalizedSkills();
+   
+   const styles = {
+@@ -95,32 +96,15 @@
+       )}
+
+       {/* Skills Section */}
+-      {skills && (Array.isArray(skills) || skills.technical || skills.soft) && (
++      {normalizedSkills.length > 0 && (
+         <div style={styles.section}>
+           <h2 style={styles.sectionTitle}>SKILLS</h2>
+           <div style={styles.skills}>
+-            {/* Handle different skill formats */}
+-            {Array.isArray(skills) && skills.map((skill, index) => (
++            {normalizedSkills.map((skill, index) => (
+               <div key={index} style={styles.skill}>
+-                {typeof skill === 'string' ? skill : skill.name}
++                {skill.name || ''}
+                 {skill.level && ` (${skill.level})`}
+               </div>
+             ))}
+-            
+-            {/* Technical skills from the nested format */}
+-            {skills.technical && Array.isArray(skills.technical) && skills.technical.map((skill, index) => (
+-              <div key={`tech-${index}`} style={styles.skill}>
+-                {typeof skill === 'string' ? skill : skill.name}
+-              </div>
+-            ))}
+-            
+-            {/* Soft skills from the nested format */}
+-            {skills.soft && Array.isArray(skills.soft) && skills.soft.map((skill, index) => (
+-              <div key={`soft-${index}`} style={styles.skill}>
+-                {typeof skill === 'string' ? skill : skill.name}
+-              </div>
+-            ))}
+           </div>
+         </div>
+       )}

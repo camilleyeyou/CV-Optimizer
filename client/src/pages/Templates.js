@@ -1,36 +1,88 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useResume } from '../context/ResumeContext';
-import TemplateSelector from '../components/templates/TemplateSelector';
-import './Templates.css';
+import ModernTemplate from '../components/templates/ModernTemplate';
+import ClassicTemplate from '../components/templates/ClassicTemplate';
+import MinimalTemplate from '../components/templates/MinimalTemplate';
+import CreativeTemplate from '../components/templates/CreativeTemplate';
+import { FaArrowRight } from 'react-icons/fa';
+import '../styles/Templates.css';
 
 const Templates = () => {
   const navigate = useNavigate();
-  const { activeTemplate, saveResume } = useResume();
-  
-  const handleContinue = async () => {
-    try {
-      // Save the template selection
-      await saveResume();
-      // Navigate to the builder page
-      navigate('/builder');
-    } catch (error) {
-      console.error('Error saving template selection:', error);
+  const { createNewResume } = useResume();
+  const [selectedTemplate, setSelectedTemplate] = useState(null);
+
+  const templates = [
+    { id: 'modern', name: 'Modern', component: ModernTemplate },
+    { id: 'classic', name: 'Classic', component: ClassicTemplate },
+    { id: 'minimal', name: 'Minimal', component: MinimalTemplate },
+    { id: 'creative', name: 'Creative', component: CreativeTemplate },
+  ];
+
+  const selectTemplate = (templateId) => {
+    setSelectedTemplate(templateId);
+  };
+
+  const handleCreateResume = () => {
+    if (selectedTemplate) {
+      // Safely create new resume with selected template
+      const resumeId = createNewResume(selectedTemplate);
+      navigate(`/builder/${resumeId}`);
+    } else {
+      // If no template is selected, default to 'modern'
+      const resumeId = createNewResume('modern');
+      navigate(`/builder/${resumeId}`);
     }
   };
-  
+
+  const capitalizeFirstLetter = (string) => {
+    // Check if string exists before calling charAt
+    if (!string) return '';
+    return string.charAt(0).toUpperCase() + string.slice(1);
+  };
+
   return (
-    <div className="templates-page">
-      <div className="page-header">
-        <h1>Choose Your Resume Template</h1>
-        <p>Select a template design that best fits your style and industry</p>
+    <div className="templates-container">
+      <h1>Choose a Template</h1>
+      <p>Select a template to get started with your resume</p>
+      
+      <div className="templates-grid">
+        {templates.map((template) => {
+          const TemplateComponent = template.component;
+          return (
+            <div
+              key={template.id}
+              className={`template-card ${selectedTemplate === template.id ? 'selected' : ''}`}
+              onClick={() => selectTemplate(template.id)}
+            >
+              <div className="template-preview">
+                <TemplateComponent demoMode={true} />
+              </div>
+              <div className="template-info">
+                <h3>{capitalizeFirstLetter(template.name || '')}</h3>
+                <p>
+                  {template.id === 'modern' && 'A sleek and professional design'}
+                  {template.id === 'classic' && 'A traditional and elegant layout'}
+                  {template.id === 'minimal' && 'A simple and clean design'}
+                  {template.id === 'creative' && 'A unique and eye-catching layout'}
+                </p>
+              </div>
+            </div>
+          );
+        })}
       </div>
       
-      <TemplateSelector />
-      
-      <div className="templates-actions">
-        <button className="continue-button" onClick={handleContinue}>
-          Continue with {activeTemplate.charAt(0).toUpperCase() + activeTemplate.slice(1)} Template
+      <div className="template-actions">
+        <button 
+          className="select-template-btn"
+          onClick={handleCreateResume}
+          disabled={!selectedTemplate}
+        >
+          {selectedTemplate 
+            ? `Use ${capitalizeFirstLetter(selectedTemplate || '')} Template` 
+            : 'Select a Template'}
+          <FaArrowRight className="icon-right" />
         </button>
       </div>
     </div>

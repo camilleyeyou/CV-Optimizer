@@ -1,0 +1,82 @@
+.modern-template {
+  font-family: 'Arial', sans-serif;
+  max-width: 800px;
+  margin: 0 auto;
+  color: #333;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  min-height: 100vh;
+}
+
+.modern-header {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 40px;
+  text-align: center;
+}
+
+.modern-header h1 {
+  margin: 0 0 15px 0;
+  font-size: 36px;
+  font-weight: 300;
+  letter-spacing: 2px;
+}
+
+.modern-content {
+  background: white;
+  padding: 40px;
+  margin-top: -20px;
+  border-radius: 20px 20px 0 0;
+}
+
+.modern-section {
+  margin-bottom: 30px;
+}
+
+.modern-section h2 {
+  color: #667eea;
+  font-size: 20px;
+  font-weight: 600;
+  margin-bottom: 20px;
+  position: relative;
+  padding-bottom: 10px;
+}
+
+.modern-section h2:after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 50px;
+  height: 3px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.experience-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 5px;
+}
+
+.date-range {
+  background: #f8f9fa;
+  padding: 5px 15px;
+  border-radius: 20px;
+  font-size: 12px;
+  color: #666;
+}
+
+.skills-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.skill-tag {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-size: 14px;
+  font-weight: 500;
+}

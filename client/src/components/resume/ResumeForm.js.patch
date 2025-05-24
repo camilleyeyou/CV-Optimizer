@@ -1,0 +1,84 @@
+--- ResumeForm.js
++++ ResumeForm.js
+@@ -1,6 +1,7 @@
+ import React, { useState } from 'react';
+ import { useResume } from '../../context/ResumeContext';
+ import EnhancedField from './EnhancedField';
++import SkillsSection from './SkillsSection';
+ import EnhancedAISuggestions from '../ai/EnhancedAISuggestions';
+ import AISuggestionFeedback from '../feedback/AISuggestionFeedback';
+ import './ResumeForm.css';
+@@ -644,61 +645,18 @@
+         
+         {/* Skills */}
+         {activeSection === 'skills' && (
+-          <div className="form-section">
+-            <div className="section-header">
+-              <h2>Skills</h2>
+-              <button className="add-item-button" onClick={handleAddSkill}>
+-                Add Skill
+-              </button>
+-            </div>
+-            
+-            <div className="skills-grid">
+-              {skills.map((skill, skillIndex) => (
+-                <div key={skillIndex} className="skill-item">
+-                  <div className="skill-input">
+-                    <input
+-                      type="text"
+-                      value={skill.name || ''}
+-                      onChange={(e) => handleUpdateSkill(skillIndex, 'name', e.target.value)}
+-                      placeholder="e.g., JavaScript"
+-                    />
+-                    
+-                    <select
+-                      value={skill.level || 'Intermediate'}
+-                      onChange={(e) => handleUpdateSkill(skillIndex, 'level', e.target.value)}
+-                    >
+-                      <option value="Beginner">Beginner</option>
+-                      <option value="Intermediate">Intermediate</option>
+-                      <option value="Advanced">Advanced</option>
+-                      <option value="Expert">Expert</option>
+-                    </select>
+-                    
+-                    <button 
+-                      className="remove-skill-button"
+-                      onClick={() => removeListItem('skills', skillIndex)}
+-                      title="Remove skill"
+-                    >
+-                      ×
+-                    </button>
+-                  </div>
+-                </div>
+-              ))}
+-              
+-              <div className="skill-item add-skill" onClick={handleAddSkill}>
+-                <div className="add-skill-button">+ Add Skill</div>
+-              </div>
+-            </div>
+-            
+-            <div className="ai-skills-section">
+-              <button 
+-                className="ai-skills-button"
+-                onClick={() => showAiSuggestion('skill', 'name')}
+-              >
+-                Get AI Skill Suggestions Based on Job Description
+-              </button>
+-              
++          <SkillsSection 
++            skills={resumeData.skills}
++            addSkill={handleAddSkill}
++            updateSkill={handleUpdateSkill}
++            removeSkill={(index) => {
++              // Handle different skill structures
++              const skills = resumeData.skills;
++              if (Array.isArray(skills)) {
++                removeListItem('skills', index);
++              } else {
++                console.log("Removing skill from nested structure");
++                // Logic to remove from technical or soft array
++              }
++            }}
++            showAiSuggestion={showAiSuggestion}
++          />
++        )}

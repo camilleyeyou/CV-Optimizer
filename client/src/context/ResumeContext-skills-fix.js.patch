@@ -1,0 +1,114 @@
+--- ResumeContext.js
++++ ResumeContext.js
+@@ -1,6 +1,7 @@
+ import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
+ import * as resumeService from '../services/resumeService';
+ import * as authService from '../services/authService';
++import { normalizeSkills, toBackendFormat, skillsOperations } from '../services/skillsService';
+
+ // Simple debounce utility
+ const debounce = (func, wait) => {
+@@ -29,6 +30,67 @@
+   return typeof isAuthFn === 'function' ? isAuthFn() : isAuthFn;
+ };
+
++/**
++ * Skills-specific functions for ResumeContext
++ */
++const createSkillsUtils = (resumeData, setResumeData) => {
++  // Get normalized skills array
++  const getNormalizedSkills = () => {
++    return normalizeSkills(resumeData.skills);
++  };
++
++  // Add a new skill
++  const addSkill = (skill) => {
++    if (!skill || typeof skill !== 'string' && !skill.name) return;
++    
++    const normalizedSkills = getNormalizedSkills();
++    const updatedSkills = skillsOperations.addSkill(normalizedSkills, skill);
++    
++    // Update backend format in state
++    setResumeData(prev => ({
++      ...prev,
++      skills: toBackendFormat(updatedSkills)
++    }));
++  };
++
++  // Remove a skill by name
++  const removeSkill = (skillName) => {
++    if (!skillName) return;
++    
++    const normalizedSkills = getNormalizedSkills();
++    const updatedSkills = skillsOperations.removeSkill(normalizedSkills, skillName);
++    
++    // Update backend format in state
++    setResumeData(prev => ({
++      ...prev,
++      skills: toBackendFormat(updatedSkills)
++    }));
++  };
++
++  // Update a skill at specific index
++  const updateSkill = (index, updatedSkill) => {
++    if (index < 0 || !updatedSkill) return;
++    
++    const normalizedSkills = getNormalizedSkills();
++    if (index >= normalizedSkills.length) return;
++    
++    const updatedSkills = skillsOperations.updateSkill(
++      normalizedSkills, index, updatedSkill
++    );
++    
++    // Update backend format in state
++    setResumeData(prev => ({
++      ...prev,
++      skills: toBackendFormat(updatedSkills)
++    }));
++  };
++
++  return {
++    getNormalizedSkills,
++    addSkill,
++    removeSkill,
++    updateSkill
++  };
++};
++
+ export const ResumeProvider = ({ children }) => {
+   // Initialize with a complete structure to avoid undefined errors
+   const [resumeData, setResumeData] = useState({
+@@ -42,7 +104,9 @@
+     summary: '',
+     workExperience: [],
+     education: [],
+-    skills: [],
++    skills: {
++      technical: [],
++      soft: []
++    },
+     certifications: [],
+     projects: [],
+     languages: [],
+@@ -57,6 +121,9 @@
+   const fetchCountRef = useRef(0);
+   const lastFetchTimeRef = useRef(Date.now());
+   const isMountedRef = useRef(true); // Track component mount state
++  
++  // Create skills utilities
++  const skillsUtils = createSkillsUtils(resumeData, setResumeData);
+
+   // Improved fetch function with better throttling
+   const fetchResumes = useCallback(async (force = false) => {
+@@ -454,8 +521,12 @@
+     loadResume,
+     saveResume,
+     deleteResume,
++    getNormalizedSkills: skillsUtils.getNormalizedSkills,
++    addSkill: skillsUtils.addSkill,
++    removeSkill: skillsUtils.removeSkill,
++    updateSkill: skillsUtils.updateSkill,
+     generatePDF,
+     fetchResumes,
+     updateResumeData,
+     addListItem,

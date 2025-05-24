@@ -1,0 +1,80 @@
+.classic-template {
+  font-family: 'Times New Roman', serif;
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 40px;
+  line-height: 1.6;
+  color: #333;
+}
+
+.classic-header {
+  text-align: center;
+  border-bottom: 2px solid #333;
+  padding-bottom: 20px;
+  margin-bottom: 30px;
+}
+
+.classic-header h1 {
+  margin: 0 0 10px 0;
+  font-size: 32px;
+  font-weight: bold;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+}
+
+.contact-info {
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.classic-section {
+  margin-bottom: 30px;
+}
+
+.classic-section h2 {
+  font-size: 18px;
+  font-weight: bold;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  border-bottom: 1px solid #333;
+  padding-bottom: 5px;
+  margin-bottom: 15px;
+}
+
+.experience-item,
+.education-item {
+  margin-bottom: 20px;
+}
+
+.experience-item h3,
+.education-item h3 {
+  margin: 0 0 5px 0;
+  font-weight: bold;
+}
+
+.experience-item h4,
+.education-item h4 {
+  margin: 0 0 5px 0;
+  font-style: italic;
+}
+
+.date-range {
+  font-size: 14px;
+  color: #666;
+  margin: 0 0 10px 0;
+}
+
+.skills-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.skill-item {
+  padding: 5px 10px;
+  background-color: #f0f0f0;
+  border-radius: 15px;
+  font-size: 14px;
+}

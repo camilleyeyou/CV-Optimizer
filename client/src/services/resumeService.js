@@ -1,9 +1,19 @@
-import api from './api';
+import axios from 'axios';
 
-// Get list of user's resumes
+const API_URL = '/api';
+
+// Helper function to get the auth token
+const getAuthHeader = () => {
+  const token = localStorage.getItem('token');
+  return token ? { Authorization: `Bearer ${token}` } : {};
+};
+
+// Get all resumes
 export const getResumes = async () => {
   try {
-    const response = await api.get('/api/resume');
+    const response = await axios.get(`${API_URL}/resume`, {
+      headers: getAuthHeader()
+    });
     return response.data;
   } catch (error) {
     console.error('Error fetching resumes:', error);
@@ -14,8 +24,10 @@ export const getResumes = async () => {
 // Get a specific resume by ID
 export const getResumeById = async (resumeId) => {
   try {
-    const response = await api.get(`/api/resume/${resumeId}`);
-    return response.data;
+    const response = await axios.get(`${API_URL}/resume/${resumeId}`, {
+      headers: getAuthHeader()
+    });
+    return response.data.resume;
   } catch (error) {
     console.error(`Error fetching resume ${resumeId}:`, error);
     throw error;
@@ -25,8 +37,10 @@ export const getResumeById = async (resumeId) => {
 // Create a new resume
 export const createResume = async (resumeData) => {
   try {
-    const response = await api.post('/api/resume', resumeData);
-    return response.data;
+    const response = await axios.post(`${API_URL}/resume`, resumeData, {
+      headers: getAuthHeader()
+    });
+    return response.data.resume;
   } catch (error) {
     console.error('Error creating resume:', error);
     throw error;
@@ -36,8 +50,10 @@ export const createResume = async (resumeData) => {
 // Update an existing resume
 export const updateResume = async (resumeId, resumeData) => {
   try {
-    const response = await api.put(`/api/resume/${resumeId}`, resumeData);
-    return response.data;
+    const response = await axios.put(`${API_URL}/resume/${resumeId}`, resumeData, {
+      headers: getAuthHeader()
+    });
+    return response.data.resume;
   } catch (error) {
     console.error(`Error updating resume ${resumeId}:`, error);
     throw error;
@@ -47,7 +63,9 @@ export const updateResume = async (resumeId, resumeData) => {
 // Delete a resume
 export const deleteResume = async (resumeId) => {
   try {
-    const response = await api.delete(`/api/resume/${resumeId}`);
+    const response = await axios.delete(`${API_URL}/resume/${resumeId}`, {
+      headers: getAuthHeader()
+    });
     return response.data;
   } catch (error) {
     console.error(`Error deleting resume ${resumeId}:`, error);
@@ -55,84 +73,64 @@ export const deleteResume = async (resumeId) => {
   }
 };
 
-// Function to generate PDF - only supports resumeId
-export const generatePDF = async (resumeData, template) => {
+// Get available templates
+export const getTemplates = async () => {
   try {
-    console.log('Generating PDF with template:', template);
-    
-    // Check if we have the resume ID
-    const resumeId = resumeData._id;
-    
-    if (!resumeId) {
-      throw new Error('Resume ID is required to generate a PDF. Please save your resume first.');
-    }
-    
-    console.log('Using resumeId for PDF generation:', resumeId);
-    
-    // Make API request to generate PDF
-    const response = await fetch('/api/pdf/generate', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${localStorage.getItem('token')}` // Make sure token is included
-      },
-      body: JSON.stringify({
-        resumeId: resumeId,
-        template: template || 'modern'
-      }),
+    const response = await axios.get(`${API_URL}/resume/templates`, {
+      headers: getAuthHeader()
     });
+    return response.data.templates;
+  } catch (error) {
+    console.error('Error fetching templates:', error);
+    throw error;
+  }
+};
+
+// Generate PDF
+export const generatePDF = async (resume, template) => {
+  try {
+    const response = await axios.post(
+      `${API_URL}/pdf/generate`,
+      {
+        resumeId: resume._id,
+        template: template
+      },
+      {
+        headers: {
+          ...getAuthHeader(),
+          'Content-Type': 'application/json',
+        },
+        responseType: 'blob' // Important! This tells axios to handle the response as binary data
+      }
+    );
     
-    // Check for successful response
-    if (!response.ok) {
-      console.error('PDF generation failed with status:', response.status);
-      const errorText = await response.text();
-      console.error('Error response:', errorText);
-      throw new Error(`PDF generation failed: ${response.status} ${response.statusText}`);
-    }
-    
-    // Get the blob directly from the response
-    const pdfBlob = await response.blob();
-    console.log('PDF blob received:', pdfBlob.type, pdfBlob.size);
-    
-    return pdfBlob;
+    // Return the blob directly
+    return response.data;
   } catch (error) {
     console.error('Error generating PDF:', error);
     throw error;
   }
 };
 
-// Function to get AI suggestions
-export const getAISuggestions = async (section, content) => {
+// Preview PDF as base64
+export const previewPDF = async (resume, template) => {
   try {
-    const response = await api.post('/api/ai/suggest', { section, content });
+    const response = await axios.post(
+      `${API_URL}/pdf/preview`,
+      {
+        resumeId: resume._id,
+        template: template
+      },
+      {
+        headers: {
+          ...getAuthHeader(),
+          'Content-Type': 'application/json',
+        }
+      }
+    );
     return response.data;
   } catch (error) {
-    console.error('Error getting AI suggestions:', error);
+    console.error('Error previewing PDF:', error);
     throw error;
   }
-};
-
-// Function to analyze resume for ATS
-export const analyzeResumeATS = async (resumeData, jobDescription) => {
-  try {
-    const response = await api.post('/api/ai/analyze-ats', { 
-      resume: resumeData,
-      jobDescription 
-    });
-    return response.data;
-  } catch (error) {
-    console.error('Error analyzing resume for ATS:', error);
-    throw error;
-  }
-};
-
-export default {
-  getResumes,
-  getResumeById,
-  createResume,
-  updateResume,
-  deleteResume,
-  generatePDF,
-  getAISuggestions,
-  analyzeResumeATS
 };
