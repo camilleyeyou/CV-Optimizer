@@ -1,63 +1,78 @@
-export default async function handler(req, res) {
-  // CORS headers
+export default function handler(req, res) {
+  // CORS
   res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
 
-  // Handle preflight
   if (req.method === 'OPTIONS') {
     return res.status(200).end();
   }
 
-  console.log('Request:', req.method, req.url);
+  const { url, method } = req;
+  console.log('API Request:', method, url);
 
-  // Route: /api/resumes
-  if (req.url.includes('resumes')) {
-    if (req.method === 'GET') {
+  // Exact URL matching for /api/resumes
+  if (url === '/api/resumes' || url === '/api/resumes/') {
+    if (method === 'GET') {
       return res.status(200).json({
         success: true,
         resumes: [],
-        message: 'Resumes API working!'
+        message: 'Resumes fetched successfully - API working!'
       });
     }
-    if (req.method === 'POST') {
+    if (method === 'POST') {
       return res.status(200).json({
         success: true,
-        resume: { id: '123', title: 'New Resume' },
-        message: 'Resume created!'
+        resume: { id: Date.now().toString(), ...req.body },
+        message: 'Resume created successfully'
       });
     }
   }
 
-  // Route: /api/auth/register
-  if (req.url.includes('register')) {
-    if (req.method === 'POST') {
-      return res.status(200).json({
-        success: true,
-        user: { id: '1', email: 'test@test.com' },
-        token: 'mock-token-123',
-        message: 'Registration successful!'
-      });
+  // Auth endpoints
+  if (url === '/api/auth/register') {
+    if (method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
+    
+    const { email, password, name } = req.body;
+    if (!email || !password) {
+      return res.status(400).json({ error: 'Email and password required' });
     }
+    
+    return res.status(200).json({
+      success: true,
+      user: { id: Date.now().toString(), email, name },
+      token: 'mock-token-' + Date.now(),
+      message: 'Registration successful!'
+    });
   }
 
-  // Route: /api/auth/login
-  if (req.url.includes('login')) {
-    if (req.method === 'POST') {
-      return res.status(200).json({
-        success: true,
-        user: { id: '1', email: 'test@test.com' },
-        token: 'mock-token-123',
-        message: 'Login successful!'
-      });
+  if (url === '/api/auth/login') {
+    if (method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
+    
+    const { email, password } = req.body;
+    if (!email || !password) {
+      return res.status(400).json({ error: 'Email and password required' });
     }
+    
+    return res.status(200).json({
+      success: true,
+      user: { id: '1', email, name: 'Test User' },
+      token: 'mock-token-' + Date.now(),
+      message: 'Login successful!'
+    });
   }
 
   // Default response
   return res.status(200).json({
-    message: 'CV Optimizer API',
-    url: req.url,
-    method: req.method,
-    working: true
+    message: 'CV Optimizer API - Updated Version',
+    requestedUrl: url,
+    method: method,
+    timestamp: new Date().toISOString(),
+    availableEndpoints: [
+      'GET /api/resumes',
+      'POST /api/resumes', 
+      'POST /api/auth/register',
+      'POST /api/auth/login'
+    ]
   });
 }
