@@ -24,17 +24,24 @@ const Templates = () => {
     setSelectedTemplate(templateId);
   };
 
-  const handleCreateResume = () => {
+ const handleCreateResume = () => {
+  try {
     if (selectedTemplate) {
-      // Safely create new resume with selected template
+      console.log('🎨 Creating resume with template:', selectedTemplate);
       const resumeId = createNewResume(selectedTemplate);
+      console.log('✅ Created resume with ID:', resumeId);
       navigate(`/builder/${resumeId}`);
     } else {
-      // If no template is selected, default to 'modern'
+      console.log('🎨 No template selected, using default modern');
       const resumeId = createNewResume('modern');
+      console.log('✅ Created resume with ID:', resumeId);
       navigate(`/builder/${resumeId}`);
     }
-  };
+  } catch (error) {
+    console.error('❌ Error creating resume:', error);
+    // You could show a toast/alert here
+  }
+};
 
   const capitalizeFirstLetter = (string) => {
     // Check if string exists before calling charAt

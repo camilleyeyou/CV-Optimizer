@@ -76,12 +76,17 @@ mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/cv-optimi
     console.error('MongoDB connection error:', err);
   });
 
-// Start server
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-  console.log('Available routes:');
-  console.log('  /api/auth');
-  console.log('  /api/resumes');  // Updated to plural
-  console.log('  /api/ai');
-  console.log('  /api/pdf');
-});
+// MODIFIED: Only start server in development
+if (process.env.NODE_ENV !== 'production') {
+  app.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`);
+    console.log('Available routes:');
+    console.log('  /api/auth');
+    console.log('  /api/resumes');  // Updated to plural
+    console.log('  /api/ai');
+    console.log('  /api/pdf');
+  });
+}
+
+// ADDED: Export for Vercel serverless
+module.exports = app;

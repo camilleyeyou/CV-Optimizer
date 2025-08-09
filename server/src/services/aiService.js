@@ -1,12 +1,39 @@
 class BasicAIService {
+  // 🔧 HELPER: Normalize resume data structure
+  normalizeResumeData(resumeData) {
+    return {
+      personalInfo: resumeData.personalInfo || {},
+      workExperience: resumeData.workExperience || [],
+      skills: {
+        technical: Array.isArray(resumeData.skills) 
+          ? resumeData.skills.filter(skill => typeof skill === 'string')
+          : (resumeData.skills?.technical || []),
+        soft: resumeData.skills?.soft || []
+      },
+      education: resumeData.education || [],
+      summary: resumeData.summary || ''
+    };
+  }
+
   // Generate professional summary
   async generateSummary(resumeData, jobTitle) {
     try {
-      const position = jobTitle || resumeData.workExperience[0]?.position || 'Professional';
-      const skills = resumeData.skills.technical.slice(0, 3).join(', ');
-      const experience = this.calculateExperienceYears(resumeData);
+      const normalizedData = this.normalizeResumeData(resumeData);
+      const position = jobTitle || normalizedData.workExperience[0]?.title || normalizedData.workExperience[0]?.position || 'Professional';
       
-      return `${position} with ${experience}+ years of experience in ${skills}. Proven track record of delivering high-quality solutions and leading successful projects. Passionate about creating efficient, scalable applications and mentoring team members.`;
+      // Handle skills array properly
+      let skillsText = '';
+      if (normalizedData.skills.technical.length > 0) {
+        skillsText = normalizedData.skills.technical.slice(0, 3).join(', ');
+      } else if (Array.isArray(resumeData.skills) && resumeData.skills.length > 0) {
+        skillsText = resumeData.skills.slice(0, 3).join(', ');
+      } else {
+        skillsText = 'various technologies';
+      }
+      
+      const experience = this.calculateExperienceYears(normalizedData);
+      
+      return `${position} with ${experience}+ years of experience in ${skillsText}. Proven track record of delivering high-quality solutions and leading successful projects. Passionate about creating efficient, scalable applications and mentoring team members.`;
     } catch (error) {
       console.error('Error generating summary:', error);
       return 'Experienced professional with a strong background in software development.';
@@ -16,7 +43,8 @@ class BasicAIService {
   // Enhance work experience descriptions
   async enhanceExperience(experience) {
     try {
-      const roleType = this.getRoleType(experience.position);
+      const position = experience.title || experience.position || 'Professional';
+      const roleType = this.getRoleType(position);
       
       if (roleType === 'leadership') {
         return [
@@ -52,18 +80,31 @@ class BasicAIService {
   }
 
   // Generate cover letter
-  async generateCoverLetter(resume, jobDescription) {
+  async generateCoverLetter(resumeData, jobDescription) {
     try {
-      const name = `${resume.personalInfo.firstName} ${resume.personalInfo.lastName}`;
+      const normalizedData = this.normalizeResumeData(resumeData);
+      const personalInfo = normalizedData.personalInfo;
+      const name = `${personalInfo.firstName || 'Professional'} ${personalInfo.lastName || ''}`.trim();
       const position = this.extractJobTitle(jobDescription) || "the position";
-      const skills = resume.skills.technical.slice(0, 3).join(', ');
-      const experience = this.calculateExperienceYears(resume);
+      
+      // Handle skills properly
+      let skillsText = '';
+      if (normalizedData.skills.technical.length > 0) {
+        skillsText = normalizedData.skills.technical.slice(0, 3).join(', ');
+      } else if (Array.isArray(resumeData.skills) && resumeData.skills.length > 0) {
+        skillsText = resumeData.skills.slice(0, 3).join(', ');
+      } else {
+        skillsText = 'various technologies';
+      }
+      
+      const experience = this.calculateExperienceYears(normalizedData);
+      const company = normalizedData.workExperience[0]?.company || 'my previous company';
       
       return `Dear Hiring Manager,
 
-I am writing to express my interest in ${position} as described in your job posting. With ${experience}+ years of experience in software development and expertise in ${skills}, I am confident in my ability to make a significant contribution to your team.
+I am writing to express my interest in ${position} as described in your job posting. With ${experience}+ years of experience in software development and expertise in ${skillsText}, I am confident in my ability to make a significant contribution to your team.
 
-Throughout my career at ${resume.workExperience[0]?.company}, I have successfully delivered projects that improved system performance and user experience. My experience aligns perfectly with the requirements outlined in your job description, particularly in areas of ${skills}.
+Throughout my career at ${company}, I have successfully delivered projects that improved system performance and user experience. My experience aligns perfectly with the requirements outlined in your job description, particularly in areas of ${skillsText}.
 
 I am excited about the opportunity to bring my technical expertise and leadership skills to your organization and help drive your company's success.
 
@@ -78,10 +119,19 @@ ${name}`;
   }
 
   // Suggest skills based on job description
-  async suggestSkills(resume, jobDescription) {
+  async suggestSkills(resumeData, jobDescription) {
     try {
+      const normalizedData = this.normalizeResumeData(resumeData);
       const jobDescLower = jobDescription.toLowerCase();
-      const currentSkills = [...resume.skills.technical, ...resume.skills.soft].map(s => s.toLowerCase());
+      
+      // Get current skills from both technical and general skills arrays
+      let currentSkills = [];
+      if (normalizedData.skills.technical.length > 0) {
+        currentSkills = [...normalizedData.skills.technical, ...normalizedData.skills.soft];
+      } else if (Array.isArray(resumeData.skills)) {
+        currentSkills = resumeData.skills;
+      }
+      currentSkills = currentSkills.map(s => s.toLowerCase());
       
       const technical = [];
       const soft = [];
@@ -194,14 +244,14 @@ ${name}`;
   }
 
   // Helper methods
-  calculateExperienceYears(resume) {
+  calculateExperienceYears(resumeData) {
     try {
-      if (!resume.workExperience || resume.workExperience.length === 0) {
+      if (!resumeData.workExperience || resumeData.workExperience.length === 0) {
         return 1;
       }
 
       let totalMonths = 0;
-      resume.workExperience.forEach(exp => {
+      resumeData.workExperience.forEach(exp => {
         const startDate = new Date(exp.startDate);
         const endDate = exp.current ? new Date() : new Date(exp.endDate || startDate);
         

@@ -14,7 +14,7 @@ const EnhancedAISuggestions = ({
   type, 
   currentContent, 
   jobDescription, 
-  resumeId, // Add this prop
+  resumeId, 
   onApplySuggestion 
 }) => {
   const [suggestions, setSuggestions] = useState([]);
@@ -47,17 +47,18 @@ const EnhancedAISuggestions = ({
       // Debug logging
       console.log('Getting suggestions for:', { type, resumeId, currentContent });
       
-      // Check if resumeId is required for the suggestion type
-      if ((type === 'summary' || type === 'skill') && !resumeId) {
-        setError('Please save your resume first to get AI suggestions for this section.');
-        return;
-      }
+      // 🔧 FIX: No longer require resumeId for all types
+      // The backend will handle missing resume data gracefully
       
       let result;
       
       // Handle different suggestion types with appropriate parameters
       switch (type) {
         case 'summary':
+          if (!resumeId) {
+            setError('Please save your resume first to get AI suggestions for summary.');
+            return;
+          }
           result = await aiService.generateEnhancedSuggestions(
             type, 
             resumeId, // Pass resumeId as currentContent for summary
@@ -67,9 +68,55 @@ const EnhancedAISuggestions = ({
           break;
           
         case 'skill':
+          if (!resumeId) {
+            setError('Please save your resume first to get AI suggestions for skills.');
+            return;
+          }
           result = await aiService.generateEnhancedSuggestions(
             type, 
             resumeId, // Pass resumeId as currentContent for skills
+            jobDescription, 
+            improvementFocus
+          );
+          break;
+          
+        case 'bullet_point':
+          // For bullet points, we can work with current content directly
+          if (!currentContent || currentContent.trim() === '') {
+            setError('Please enter some experience content first.');
+            return;
+          }
+          result = await aiService.generateEnhancedSuggestions(
+            type, 
+            currentContent, 
+            jobDescription, 
+            improvementFocus
+          );
+          break;
+          
+        case 'achievement':
+          // For achievements, we can work with current content directly
+          if (!currentContent || currentContent.trim() === '') {
+            setError('Please enter an achievement statement first.');
+            return;
+          }
+          result = await aiService.generateEnhancedSuggestions(
+            type, 
+            currentContent, 
+            jobDescription, 
+            improvementFocus
+          );
+          break;
+          
+        case 'job_title':
+          // For job titles, we can work with current content directly
+          if (!currentContent || currentContent.trim() === '') {
+            setError('Please enter a job title first.');
+            return;
+          }
+          result = await aiService.generateEnhancedSuggestions(
+            type, 
+            currentContent, 
             jobDescription, 
             improvementFocus
           );
@@ -84,10 +131,25 @@ const EnhancedAISuggestions = ({
           );
       }
       
-      setSuggestions(result.suggestions || []);
+      if (result && result.suggestions) {
+        setSuggestions(result.suggestions);
+        setError(null);
+      } else {
+        setError('No suggestions were generated. Please try again.');
+      }
     } catch (err) {
       console.error('Error getting AI suggestions:', err);
-      setError(aiService.handleApiError ? aiService.handleApiError(err) : err.message);
+      
+      // 🔧 BETTER ERROR HANDLING
+      if (err.message && err.message.includes('Resume not found')) {
+        setError('Please save your resume first to get AI suggestions for this section.');
+      } else if (err.response && err.response.status === 404) {
+        setError('Please save your resume first to get AI suggestions for this section.');
+      } else if (err.response && err.response.status === 400) {
+        setError('Invalid request. Please check your data and try again.');
+      } else {
+        setError(aiService.handleApiError ? aiService.handleApiError(err) : err.message);
+      }
     } finally {
       setLoading(false);
     }
@@ -120,6 +182,41 @@ const EnhancedAISuggestions = ({
     );
   };
 
+  // 🔧 HELPER: Check if we can generate suggestions for this type
+  const canGenerateSuggestions = () => {
+    switch (type) {
+      case 'summary':
+      case 'skill':
+        return !!resumeId;
+      case 'bullet_point':
+      case 'achievement':
+      case 'job_title':
+        return !!(currentContent && currentContent.trim());
+      default:
+        return true;
+    }
+  };
+
+  const getButtonText = () => {
+    if (loading) return 'Generating...';
+    
+    if (!canGenerateSuggestions()) {
+      switch (type) {
+        case 'summary':
+        case 'skill':
+          return 'Save Resume First';
+        case 'bullet_point':
+        case 'achievement':
+        case 'job_title':
+          return 'Enter Content First';
+        default:
+          return 'Generate AI Suggestions';
+      }
+    }
+    
+    return 'Generate AI Suggestions';
+  };
+
   return (
     <div className="enhanced-ai-suggestions">
       <div className="suggestion-header">
@@ -136,14 +233,14 @@ const EnhancedAISuggestions = ({
         <button 
           className="get-suggestions-button" 
           onClick={getSuggestions}
-          disabled={loading}
+          disabled={loading || !canGenerateSuggestions()}
         >
           {loading ? (
             <span className="loading-spinner"></span>
           ) : (
             <>
               <span className="button-icon">✨</span>
-              Generate AI Suggestions
+              {getButtonText()}
             </>
           )}
         </button>

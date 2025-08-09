@@ -1,6 +1,440 @@
-import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
+import React, { createContext, useContext, useReducer, useEffect, useCallback, useRef } from 'react';
+import { saveResume, getResume, getResumes, deleteResume } from '../services/api';
 
 const ResumeContext = createContext();
+
+// Initial state
+const initialState = {
+  resumeData: {
+    id: null,
+    personalInfo: {
+      firstName: '',
+      lastName: '',
+      email: '',
+      phone: '',
+      title: '',
+      location: '',
+      linkedIn: '',
+      website: ''
+    },
+    summary: '',
+    workExperience: [],
+    education: [],
+    skills: [],
+    certifications: [],
+    template: 'modern',
+    createdAt: null,
+    updatedAt: null
+  },
+  resumes: [],
+  currentResume: null,
+  loading: false,
+  error: null
+};
+
+// Reducer
+const resumeReducer = (state, action) => {
+  switch (action.type) {
+    case 'SET_RESUME_DATA':
+      return { 
+        ...state, 
+        resumeData: action.payload,
+        currentResume: action.payload
+      };
+
+    case 'UPDATE_PERSONAL_INFO':
+      const updatedPersonalInfo = {
+        ...state.resumeData,
+        personalInfo: { ...state.resumeData.personalInfo, ...action.payload },
+        updatedAt: new Date().toISOString()
+      };
+      return {
+        ...state,
+        resumeData: updatedPersonalInfo,
+        currentResume: updatedPersonalInfo
+      };
+
+    case 'UPDATE_SUMMARY':
+      const updatedSummary = {
+        ...state.resumeData,
+        summary: action.payload,
+        updatedAt: new Date().toISOString()
+      };
+      return {
+        ...state,
+        resumeData: updatedSummary,
+        currentResume: updatedSummary
+      };
+
+    case 'SET_RESUMES':
+      return { ...state, resumes: action.payload };
+
+    case 'SET_LOADING':
+      return { ...state, loading: action.payload };
+
+    case 'SET_ERROR':
+      return { ...state, error: action.payload };
+
+    default:
+      return state;
+  }
+};
+
+// 🔧 HELPER: Save to localStorage
+const saveToLocalStorage = (resumes) => {
+  try {
+    localStorage.setItem('resumes', JSON.stringify(resumes));
+    console.log('✅ Saved to localStorage');
+  } catch (error) {
+    console.error('❌ Failed to save to localStorage:', error);
+  }
+};
+
+// 🔧 HELPER: Load from localStorage
+const loadFromLocalStorage = () => {
+  try {
+    const savedResumes = localStorage.getItem('resumes');
+    if (savedResumes) {
+      const resumes = JSON.parse(savedResumes);
+      console.log('✅ Loaded from localStorage:', resumes.length, 'resumes');
+      return resumes;
+    }
+  } catch (error) {
+    console.error('❌ Failed to load from localStorage:', error);
+  }
+  return [];
+};
+
+export const ResumeProvider = ({ children }) => {
+  const [state, dispatch] = useReducer(resumeReducer, initialState);
+  
+  // 🚫 PREVENT INFINITE LOOPS
+  const savingRef = useRef(false);
+  const lastSaveRef = useRef(null);
+  const saveTimeoutRef = useRef(null);
+
+  // 🔧 FETCH RESUMES: Memoized to fix ESLint warning
+  const fetchResumes = useCallback(async () => {
+    console.log('📋 fetchResumes called');
+    dispatch({ type: 'SET_LOADING', payload: true });
+
+    try {
+      // Load from localStorage first
+      const localResumes = loadFromLocalStorage();
+      dispatch({ type: 'SET_RESUMES', payload: localResumes });
+
+      // Try to also fetch from database and merge
+      try {
+        const dbResponse = await getResumes();
+        console.log('🔍 Database response:', dbResponse);
+        
+        // Handle different response formats
+        let dbResumes = [];
+        if (Array.isArray(dbResponse)) {
+          dbResumes = dbResponse;
+        } else if (dbResponse && Array.isArray(dbResponse.data)) {
+          dbResumes = dbResponse.data;
+        } else if (dbResponse && Array.isArray(dbResponse.resumes)) {
+          dbResumes = dbResponse.resumes;
+        } else {
+          console.log('⚠️ Unexpected database response format:', dbResponse);
+          dbResumes = [];
+        }
+
+        console.log('📊 Processed database resumes:', dbResumes.length);
+
+        if (dbResumes.length > 0) {
+          // Simple merge: prefer database versions, add local-only ones
+          const mergedResumes = [...dbResumes];
+          localResumes.forEach(localResume => {
+            if (!dbResumes.find(dbResume => dbResume.id === localResume.id)) {
+              mergedResumes.push(localResume);
+            }
+          });
+          dispatch({ type: 'SET_RESUMES', payload: mergedResumes });
+          saveToLocalStorage(mergedResumes);
+          console.log('✅ Merged and saved resumes:', mergedResumes.length);
+        } else {
+          console.log('📋 No database resumes, using localStorage only');
+        }
+      } catch (dbError) {
+        console.log('❌ Database fetch failed, using localStorage only:', dbError.message);
+      }
+
+      dispatch({ type: 'SET_LOADING', payload: false });
+    } catch (error) {
+      console.error('❌ Error fetching resumes:', error);
+      dispatch({ type: 'SET_ERROR', payload: error.message });
+      dispatch({ type: 'SET_LOADING', payload: false });
+    }
+  }, []);
+
+  // 🔧 DEBOUNCED SAVE: Prevents infinite loops
+  const debouncedSave = useCallback(async (resumeData) => {
+    // Prevent duplicate saves
+    if (savingRef.current) {
+      console.log('⏭️ Save already in progress, skipping...');
+      return;
+    }
+
+    // Prevent saving the same data
+    const dataString = JSON.stringify(resumeData);
+    if (lastSaveRef.current === dataString) {
+      console.log('⏭️ Data unchanged, skipping save...');
+      return;
+    }
+
+    // Clear any pending saves
+    if (saveTimeoutRef.current) {
+      clearTimeout(saveTimeoutRef.current);
+    }
+
+    // Debounce the save operation
+    saveTimeoutRef.current = setTimeout(async () => {
+      savingRef.current = true;
+      lastSaveRef.current = dataString;
+
+      try {
+        // Update localStorage immediately
+        const existingResumes = loadFromLocalStorage();
+        const resumeIndex = existingResumes.findIndex(r => r.id === resumeData.id);
+        
+        if (resumeIndex >= 0) {
+          existingResumes[resumeIndex] = resumeData;
+        } else {
+          existingResumes.push(resumeData);
+        }
+        
+        saveToLocalStorage(existingResumes);
+
+        // Try to save to database (non-blocking)
+        try {
+          await saveResume(resumeData);
+          console.log('✅ Dual save completed for:', resumeData.id);
+        } catch (dbError) {
+          console.error('❌ Database save failed (localStorage saved):', dbError);
+        }
+        
+      } catch (error) {
+        console.error('❌ Save operation failed:', error);
+      } finally {
+        savingRef.current = false;
+      }
+    }, 1000); // 1 second debounce
+  }, []);
+
+  // 🔧 UPDATE PERSONAL INFO
+  const updatePersonalInfo = useCallback(async (updates) => {
+    console.log('✏️ Updating personal info:', updates);
+    
+    // Ensure we have a resume ID
+    const resumeId = state.resumeData.id || `resume_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    
+    // Update state immediately
+    dispatch({ type: 'UPDATE_PERSONAL_INFO', payload: updates });
+    
+    // Create updated resume data
+    const updatedResumeData = {
+      ...state.resumeData,
+      id: resumeId,
+      personalInfo: { ...state.resumeData.personalInfo, ...updates },
+      updatedAt: new Date().toISOString()
+    };
+
+    // Debounced save to prevent infinite loops
+    debouncedSave(updatedResumeData);
+  }, [state.resumeData, debouncedSave]);
+
+  // 🔧 UPDATE SUMMARY
+  const updateSummary = useCallback(async (summary) => {
+    console.log('✏️ Updating summary');
+    
+    dispatch({ type: 'UPDATE_SUMMARY', payload: summary });
+    
+    const updatedResumeData = {
+      ...state.resumeData,
+      summary,
+      updatedAt: new Date().toISOString()
+    };
+
+    debouncedSave(updatedResumeData);
+  }, [state.resumeData, debouncedSave]);
+
+  // 🔧 LOAD RESUME
+  const loadResume = useCallback(async (resumeId) => {
+    console.log('🔥 loadResume called with ID:', resumeId);
+    dispatch({ type: 'SET_LOADING', payload: true });
+
+    try {
+      // Try localStorage first
+      const localResumes = loadFromLocalStorage();
+      let resume = localResumes.find(r => r.id === resumeId);
+      
+      if (resume) {
+        console.log('✅ Resume found in localStorage');
+        dispatch({ type: 'SET_RESUME_DATA', payload: resume });
+        dispatch({ type: 'SET_LOADING', payload: false });
+        return resume;
+      }
+
+      // Try database if not in localStorage
+      try {
+        resume = await getResume(resumeId);
+        if (resume) {
+          console.log('✅ Resume found in database');
+          dispatch({ type: 'SET_RESUME_DATA', payload: resume });
+          dispatch({ type: 'SET_LOADING', payload: false });
+          return resume;
+        }
+      } catch (dbError) {
+        console.log('Database lookup failed, using localStorage only');
+      }
+
+      throw new Error('Resume not found');
+    } catch (error) {
+      console.error('❌ Error loading resume:', error);
+      dispatch({ type: 'SET_ERROR', payload: error.message });
+      dispatch({ type: 'SET_LOADING', payload: false });
+      throw error;
+    }
+  }, []);
+
+  // 🔧 CREATE RESUME
+  const createResume = useCallback((templateType = 'modern') => {
+    const newResume = {
+      id: `resume_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      personalInfo: {
+        firstName: '',
+        lastName: '',
+        email: '',
+        phone: '',
+        title: '',
+        location: '',
+        linkedIn: '',
+        website: ''
+      },
+      summary: '',
+      workExperience: [],
+      education: [],
+      skills: [],
+      certifications: [],
+      template: templateType,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    };
+
+    console.log('✨ Created new resume:', newResume.id);
+    
+    // Set as current resume data
+    dispatch({ type: 'SET_RESUME_DATA', payload: newResume });
+    
+    // Save immediately (non-debounced for creation)
+    savingRef.current = true;
+    const existingResumes = loadFromLocalStorage();
+    existingResumes.push(newResume);
+    saveToLocalStorage(existingResumes);
+    
+    // Try to save to database (non-blocking)
+    saveResume(newResume)
+      .then(() => console.log('✅ New resume saved to database'))
+      .catch((error) => console.log('❌ Database save failed for new resume:', error))
+      .finally(() => {
+        savingRef.current = false;
+      });
+
+    return newResume;
+  }, []);
+
+  // 🔧 CREATE NEW RESUME (for Templates.js compatibility)
+  const createNewResume = useCallback((templateType = 'modern') => {
+    console.log('🎨 createNewResume called with template:', templateType);
+    const newResume = createResume(templateType);
+    console.log('✅ Returning resume ID:', newResume.id);
+    return newResume.id; // Return just the ID for navigation
+  }, [createResume]);
+
+  // 🔧 DELETE RESUME
+  const deleteResumeById = useCallback(async (resumeId) => {
+    console.log('🗑️ Deleting resume:', resumeId);
+    dispatch({ type: 'SET_LOADING', payload: true });
+
+    try {
+      // Delete from localStorage
+      const existingResumes = loadFromLocalStorage();
+      const filteredResumes = existingResumes.filter(r => r.id !== resumeId);
+      saveToLocalStorage(filteredResumes);
+      
+      // Update state
+      dispatch({ type: 'SET_RESUMES', payload: filteredResumes });
+      
+      // If deleting current resume, clear it
+      if (state.currentResume?.id === resumeId) {
+        dispatch({ type: 'SET_RESUME_DATA', payload: initialState.resumeData });
+      }
+
+      // Try to delete from database (non-blocking)
+      try {
+        await deleteResume(resumeId);
+        console.log('✅ Deleted from database');
+      } catch (dbError) {
+        console.log('Database delete failed, but localStorage delete succeeded');
+      }
+
+      dispatch({ type: 'SET_LOADING', payload: false });
+    } catch (error) {
+      console.error('❌ Error deleting resume:', error);
+      dispatch({ type: 'SET_ERROR', payload: error.message });
+      dispatch({ type: 'SET_LOADING', payload: false });
+    }
+  }, [state.currentResume]);
+
+  // 🚫 PREVENT INFINITE LOOPS: Only load resumes once on mount
+  const initializedRef = useRef(false);
+  useEffect(() => {
+    if (!initializedRef.current) {
+      console.log('🚀 ResumeProvider initializing...');
+      fetchResumes();
+      initializedRef.current = true;
+    }
+  }, [fetchResumes]);
+
+  // 🧹 CLEANUP: Clear timeouts on unmount
+  useEffect(() => {
+    return () => {
+      if (saveTimeoutRef.current) {
+        clearTimeout(saveTimeoutRef.current);
+      }
+    };
+  }, []);
+
+  // 🔧 CONTEXT VALUE
+  const value = {
+    // State
+    resumeData: state.resumeData,
+    resumes: state.resumes,
+    currentResume: state.currentResume,
+    loading: state.loading,
+    error: state.error,
+    
+    // Methods
+    updatePersonalInfo,
+    updateSummary,
+    loadResume,
+    createResume,
+    createNewResume, // Dedicated function for Templates.js
+    fetchResumes,
+    deleteResume: deleteResumeById,
+    
+    // Utility
+    setResumeData: (data) => dispatch({ type: 'SET_RESUME_DATA', payload: data })
+  };
+
+  return (
+    <ResumeContext.Provider value={value}>
+      {children}
+    </ResumeContext.Provider>
+  );
+};
 
 export const useResume = () => {
   const context = useContext(ResumeContext);
@@ -8,261 +442,4 @@ export const useResume = () => {
     throw new Error('useResume must be used within a ResumeProvider');
   }
   return context;
-};
-
-export const ResumeProvider = ({ children }) => {
-  // 🔧 FINAL FIX: Prevent double initialization with ref
-  const isInitializedRef = useRef(false);
-  
-  const [resumeData, setResumeData] = useState({
-    personalInfo: {},
-    summary: '',
-    workExperience: [],
-    education: [],
-    skills: [],
-    certifications: [],
-    template: 'modern'
-  });
-  
-  const [resumeList, setResumeList] = useState([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState(null);
-
-  // 🔧 CRITICAL: Single initialization only
-  useEffect(() => {
-    if (isInitializedRef.current) {
-      return; // Already initialized
-    }
-    
-    console.log('🚀 ResumeProvider initializing...');
-    isInitializedRef.current = true;
-    
-    try {
-      const savedResumes = localStorage.getItem('resumes');
-      if (savedResumes) {
-        const parsedResumes = JSON.parse(savedResumes);
-        const validResumes = Array.isArray(parsedResumes) 
-          ? parsedResumes.filter(resume => resume && resume.id !== 'undefined')
-          : [];
-        
-        setResumeList(validResumes);
-        console.log('✅ Loaded resumes from localStorage (blocked problematic ID)');
-      }
-    } catch (error) {
-      console.error('Error loading resumes from localStorage:', error);
-      setResumeList([]);
-    }
-  }, []); // Empty dependency array - run once only
-
-  // 🔧 STABLE: Memoized functions to prevent re-renders
-  const updateResumeData = useCallback((field, value) => {
-    setResumeData(prev => ({
-      ...prev,
-      [field]: value
-    }));
-  }, []);
-
-  const updatePersonalInfo = useCallback((field, value) => {
-    setResumeData(prev => ({
-      ...prev,
-      personalInfo: {
-        ...prev.personalInfo,
-        [field]: value
-      }
-    }));
-  }, []);
-
-  const loadResume = useCallback((resumeId) => {
-    if (!resumeId || resumeId === 'undefined') {
-      console.warn('⚠️ loadResume called with invalid ID:', resumeId);
-      return false;
-    }
-
-    // Prevent loading the same resume twice
-    if (resumeData.id === resumeId) {
-      console.log('📋 Resume already loaded:', resumeId);
-      return true;
-    }
-
-    console.log('🔥 loadResume called with ID:', resumeId);
-    
-    try {
-      const savedResumes = localStorage.getItem('resumes');
-      if (savedResumes) {
-        const resumes = JSON.parse(savedResumes);
-        const foundResume = resumes.find(resume => resume.id === resumeId);
-        
-        if (foundResume) {
-          setResumeData(foundResume);
-          console.log('✅ Resume loaded from localStorage');
-          return true;
-        }
-      }
-      
-      console.warn('⚠️ Resume not found:', resumeId);
-      return false;
-    } catch (error) {
-      console.error('❌ Error loading resume:', error);
-      setError('Failed to load resume');
-      return false;
-    }
-  }, [resumeData.id]); // Only depend on current resume ID
-
-  const saveCurrentResume = useCallback(() => {
-    try {
-      const resumeToSave = {
-        ...resumeData,
-        id: resumeData.id || `resume_${Date.now()}`,
-        updatedAt: new Date().toISOString()
-      };
-
-      const savedResumes = localStorage.getItem('resumes');
-      let resumes = savedResumes ? JSON.parse(savedResumes) : [];
-      
-      const existingIndex = resumes.findIndex(r => r.id === resumeToSave.id);
-      if (existingIndex >= 0) {
-        resumes[existingIndex] = resumeToSave;
-      } else {
-        resumes.push(resumeToSave);
-      }
-
-      localStorage.setItem('resumes', JSON.stringify(resumes));
-      setResumeList(resumes);
-      setResumeData(resumeToSave);
-      
-      console.log('✅ Resume saved to localStorage');
-      return resumeToSave.id;
-    } catch (error) {
-      console.error('❌ Error saving resume:', error);
-      setError('Failed to save resume');
-      return null;
-    }
-  }, [resumeData]);
-
-  const createNewResume = useCallback((template = 'modern') => {
-    const newResumeId = `resume_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-    const newResume = {
-      id: newResumeId,
-      template,
-      title: `Resume - ${new Date().toLocaleDateString()}`,
-      personalInfo: {},
-      summary: '',
-      workExperience: [],
-      education: [],
-      skills: [],
-      certifications: [],
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
-    };
-    
-    setResumeData(newResume);
-    console.log('✨ Created new resume:', newResumeId);
-    return newResumeId;
-  }, []);
-
-  const deleteResume = useCallback((resumeId) => {
-    try {
-      const savedResumes = localStorage.getItem('resumes');
-      if (savedResumes) {
-        const resumes = JSON.parse(savedResumes);
-        const filteredResumes = resumes.filter(resume => resume.id !== resumeId);
-        
-        localStorage.setItem('resumes', JSON.stringify(filteredResumes));
-        setResumeList(filteredResumes);
-        
-        // If we're deleting the currently loaded resume, clear it
-        if (resumeData.id === resumeId) {
-          setResumeData({
-            personalInfo: {},
-            summary: '',
-            workExperience: [],
-            education: [],
-            skills: [],
-            certifications: [],
-            template: 'modern'
-          });
-        }
-        
-        console.log('🗑️ Resume deleted:', resumeId);
-        return true;
-      }
-      return false;
-    } catch (error) {
-      console.error('❌ Error deleting resume:', error);
-      setError('Failed to delete resume');
-      return false;
-    }
-  }, [resumeData.id]);
-
-  const fetchResumes = useCallback(() => {
-    console.log('📋 fetchResumes called');
-    setIsLoading(true);
-    try {
-      const savedResumes = localStorage.getItem('resumes');
-      if (savedResumes) {
-        const resumes = JSON.parse(savedResumes);
-        const validResumes = Array.isArray(resumes) 
-          ? resumes.filter(resume => resume && resume.id !== 'undefined')
-          : [];
-        setResumeList(validResumes);
-        console.log('✅ Fetched resumes from localStorage');
-      }
-    } catch (error) {
-      console.error('❌ Error fetching resumes:', error);
-      setError('Failed to fetch resumes');
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
-
-  // 🔧 MISSING FUNCTION: Add list item (skills, certifications, etc.)
-  const addListItem = useCallback((field, item) => {
-    setResumeData(prev => ({
-      ...prev,
-      [field]: [...(prev[field] || []), item]
-    }));
-  }, []);
-
-  // 🔧 MISSING FUNCTION: Remove list item
-  const removeListItem = useCallback((field, index) => {
-    setResumeData(prev => ({
-      ...prev,
-      [field]: (prev[field] || []).filter((_, i) => i !== index)
-    }));
-  }, []);
-
-  // 🔧 MISSING FUNCTION: Update list item
-  const updateListItem = useCallback((field, index, item) => {
-    setResumeData(prev => ({
-      ...prev,
-      [field]: (prev[field] || []).map((existing, i) => 
-        i === index ? item : existing
-      )
-    }));
-  }, []);
-
-  // Context value with all necessary functions and state
-  const contextValue = {
-    resumeData,
-    resumeList,
-    isLoading,
-    error,
-    updateResumeData,
-    updatePersonalInfo,
-    loadResume,
-    saveCurrentResume,
-    createNewResume,
-    deleteResume,
-    fetchResumes,
-    addListItem,
-    removeListItem,
-    updateListItem,
-    setError
-  };
-
-  return (
-    <ResumeContext.Provider value={contextValue}>
-      {children}
-    </ResumeContext.Provider>
-  );
 };

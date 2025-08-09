@@ -5,6 +5,18 @@ const PersonalInfoForm = () => {
   const { resumeData, updatePersonalInfo } = useResume();
   const { personalInfo } = resumeData;
   
+  // 🔧 MINIMAL FIX: Ensure all values are strings (prevents controlled component issues)
+  const safePersonalInfo = {
+    firstName: personalInfo?.firstName || '',
+    lastName: personalInfo?.lastName || '',
+    email: personalInfo?.email || '',
+    phone: personalInfo?.phone || '',
+    title: personalInfo?.title || '',
+    location: personalInfo?.location || '',
+    linkedIn: personalInfo?.linkedIn || '',
+    website: personalInfo?.website || ''
+  };
+  
   const handleChange = (e) => {
     const { name, value } = e.target;
     updatePersonalInfo({ [name]: value });
@@ -19,7 +31,7 @@ const PersonalInfoForm = () => {
             type="text"
             id="firstName"
             name="firstName"
-            value={personalInfo.firstName}
+            value={safePersonalInfo.firstName}
             onChange={handleChange}
             placeholder="Enter your first name"
             required
@@ -32,7 +44,7 @@ const PersonalInfoForm = () => {
             type="text"
             id="lastName"
             name="lastName"
-            value={personalInfo.lastName}
+            value={safePersonalInfo.lastName}
             onChange={handleChange}
             placeholder="Enter your last name"
             required
@@ -47,7 +59,7 @@ const PersonalInfoForm = () => {
             type="email"
             id="email"
             name="email"
-            value={personalInfo.email}
+            value={safePersonalInfo.email}
             onChange={handleChange}
             placeholder="Enter your email"
             required
@@ -60,7 +72,7 @@ const PersonalInfoForm = () => {
             type="tel"
             id="phone"
             name="phone"
-            value={personalInfo.phone}
+            value={safePersonalInfo.phone}
             onChange={handleChange}
             placeholder="Enter your phone number"
             required
@@ -74,7 +86,7 @@ const PersonalInfoForm = () => {
           type="text"
           id="title"
           name="title"
-          value={personalInfo.title}
+          value={safePersonalInfo.title}
           onChange={handleChange}
           placeholder="e.g., Software Developer, Marketing Manager"
           required
@@ -87,7 +99,7 @@ const PersonalInfoForm = () => {
           type="text"
           id="location"
           name="location"
-          value={personalInfo.location}
+          value={safePersonalInfo.location}
           onChange={handleChange}
           placeholder="City, State/Province, Country"
           required
@@ -101,7 +113,7 @@ const PersonalInfoForm = () => {
             type="url"
             id="linkedIn"
             name="linkedIn"
-            value={personalInfo.linkedIn}
+            value={safePersonalInfo.linkedIn}
             onChange={handleChange}
             placeholder="https://linkedin.com/in/username"
           />
@@ -113,7 +125,7 @@ const PersonalInfoForm = () => {
             type="url"
             id="website"
             name="website"
-            value={personalInfo.website}
+            value={safePersonalInfo.website}
             onChange={handleChange}
             placeholder="https://yourwebsite.com"
           />
