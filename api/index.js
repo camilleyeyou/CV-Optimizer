@@ -9,15 +9,19 @@ export default function handler(req, res) {
   }
 
   const { url, method } = req;
-  console.log('API Request:', method, url);
+  console.log('=== API DEBUG ===');
+  console.log('URL:', url);
+  console.log('Method:', method);
+  console.log('================');
 
-  // Exact URL matching for /api/resumes
-  if (url === '/api/resumes' || url === '/api/resumes/') {
+  // Try multiple URL patterns for resumes
+  if (url === '/api/resumes' || url === '/api/resumes/' || url.endsWith('/resumes') || url.includes('resumes')) {
     if (method === 'GET') {
       return res.status(200).json({
         success: true,
         resumes: [],
-        message: 'Resumes fetched successfully - API working!'
+        message: 'Resumes fetched successfully - API working!',
+        matchedUrl: url
       });
     }
     if (method === 'POST') {
@@ -30,7 +34,7 @@ export default function handler(req, res) {
   }
 
   // Auth endpoints
-  if (url === '/api/auth/register') {
+  if (url === '/api/auth/register' || url.includes('register')) {
     if (method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
     
     const { email, password, name } = req.body;
@@ -46,7 +50,7 @@ export default function handler(req, res) {
     });
   }
 
-  if (url === '/api/auth/login') {
+  if (url === '/api/auth/login' || url.includes('login')) {
     if (method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
     
     const { email, password } = req.body;
@@ -62,12 +66,17 @@ export default function handler(req, res) {
     });
   }
 
-  // Default response
+  // Default response with debug info
   return res.status(200).json({
-    message: 'CV Optimizer API - Updated Version',
+    message: 'CV Optimizer API - Debug Version',
     requestedUrl: url,
     method: method,
     timestamp: new Date().toISOString(),
+    debug: {
+      urlLength: url.length,
+      includesResumes: url.includes('resumes'),
+      exactMatch: url === '/api/resumes'
+    },
     availableEndpoints: [
       'GET /api/resumes',
       'POST /api/resumes', 
