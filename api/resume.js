@@ -1,45 +1,30 @@
-const express = require('express');
-const mongoose = require('mongoose');
-const cors = require('cors');
+// api/resumes.js
+export default function handler(req, res) {
+  // Enable CORS
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
 
-const app = express();
-app.use(cors());
-app.use(express.json());
+  if (req.method === 'OPTIONS') {
+    res.status(200).end();
+    return;
+  }
 
-// Connect to MongoDB if URI is provided
-if (process.env.MONGODB_URI) {
-  mongoose.connect(process.env.MONGODB_URI).catch(err => {
-    console.error('MongoDB connection error:', err);
-  });
-}
-
-// GET /api/resumes
-app.get('/api/resumes', async (req, res) => {
-  try {
-    // For now, return mock data to test if the endpoint works
-    res.json({ 
+  if (req.method === 'GET') {
+    res.status(200).json({ 
       success: true, 
       resumes: [],
-      message: 'Resumes endpoint is working!'
+      message: 'Resumes endpoint working!'
     });
-  } catch (error) {
-    console.error('Error fetching resumes:', error);
-    res.status(500).json({ error: error.message });
-  }
-});
-
-// POST /api/resumes
-app.post('/api/resumes', async (req, res) => {
-  try {
-    res.json({ 
+  } 
+  else if (req.method === 'POST') {
+    res.status(200).json({ 
       success: true, 
       resume: { id: Date.now().toString(), ...req.body },
       message: 'Resume created successfully'
     });
-  } catch (error) {
-    console.error('Error creating resume:', error);
-    res.status(500).json({ error: error.message });
   }
-});
-
-module.exports = app;
+  else {
+    res.status(405).json({ error: 'Method not allowed' });
+  }
+}
