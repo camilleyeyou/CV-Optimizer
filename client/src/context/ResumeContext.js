@@ -66,6 +66,18 @@ const resumeReducer = (state, action) => {
         currentResume: updatedSummary
       };
 
+    // ✅ NEW: Generic update action
+    case 'UPDATE_RESUME_DATA':
+      const updatedData = {
+        ...action.payload,
+        updatedAt: new Date().toISOString()
+      };
+      return {
+        ...state,
+        resumeData: updatedData,
+        currentResume: updatedData
+      };
+
     case 'SET_RESUMES':
       return { ...state, resumes: action.payload };
 
@@ -260,6 +272,26 @@ export const ResumeProvider = ({ children }) => {
     debouncedSave(updatedResumeData);
   }, [state.resumeData, debouncedSave]);
 
+  // ✅ NEW: Generic update resume data method
+  const updateResumeData = useCallback(async (newData) => {
+    console.log('✏️ Updating resume data:', Object.keys(newData));
+    
+    // Ensure we have a resume ID
+    const resumeId = newData.id || state.resumeData.id || `resume_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    
+    const updatedData = {
+      ...newData,
+      id: resumeId,
+      updatedAt: new Date().toISOString()
+    };
+    
+    // Update state immediately
+    dispatch({ type: 'UPDATE_RESUME_DATA', payload: updatedData });
+    
+    // Debounced save to prevent infinite loops
+    debouncedSave(updatedData);
+  }, [state.resumeData, debouncedSave]);
+
   // 🔧 LOAD RESUME
   const loadResume = useCallback(async (resumeId) => {
     console.log('🔥 loadResume called with ID:', resumeId);
@@ -419,6 +451,7 @@ export const ResumeProvider = ({ children }) => {
     // Methods
     updatePersonalInfo,
     updateSummary,
+    updateResumeData, // ✅ NEW: Generic update method
     loadResume,
     createResume,
     createNewResume, // Dedicated function for Templates.js
