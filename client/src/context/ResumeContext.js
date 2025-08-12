@@ -66,7 +66,7 @@ const resumeReducer = (state, action) => {
         currentResume: updatedSummary
       };
 
-    // ✅ NEW: Generic update action
+    // Generic update action
     case 'UPDATE_RESUME_DATA':
       const updatedData = {
         ...action.payload,
@@ -272,8 +272,22 @@ export const ResumeProvider = ({ children }) => {
     debouncedSave(updatedResumeData);
   }, [state.resumeData, debouncedSave]);
 
-  // ✅ NEW: Generic update resume data method
+  // 🔧 🐛 DEBUG VERSION: Generic update resume data method
   const updateResumeData = useCallback(async (newData) => {
+    console.log('✏️ updateResumeData called with:', {
+      type: typeof newData,
+      isArray: Array.isArray(newData),
+      keys: newData && typeof newData === 'object' ? Object.keys(newData) : 'N/A',
+      data: newData
+    });
+    
+    // If it's not a proper object, log error and return early
+    if (!newData || typeof newData !== 'object' || Array.isArray(newData)) {
+      console.error('❌ updateResumeData received invalid data:', newData);
+      console.trace('🔍 Call stack:'); // This will show you exactly where the bad call came from
+      return;
+    }
+    
     console.log('✏️ Updating resume data:', Object.keys(newData));
     
     // Ensure we have a resume ID
@@ -451,7 +465,7 @@ export const ResumeProvider = ({ children }) => {
     // Methods
     updatePersonalInfo,
     updateSummary,
-    updateResumeData, // ✅ NEW: Generic update method
+    updateResumeData, // Generic update method with debugging
     loadResume,
     createResume,
     createNewResume, // Dedicated function for Templates.js
