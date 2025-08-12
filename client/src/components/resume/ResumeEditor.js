@@ -11,46 +11,54 @@ import './ResumeEditor.css';
 const ResumeEditor = () => {
   const { resumeId } = useParams();
   const navigate = useNavigate();
-  const { loadResume, saveCurrentResume, isLoading, resumeData } = useResume();
+  
+  // ✅ FIXED: Use the correct methods from context
+  const { 
+    loadResume, 
+    loading, 
+    resumeData, 
+    error 
+  } = useResume();
+  
   const resumeLoadedRef = useRef(false);
   const lastLoadedIdRef = useRef(null);
 
-  // 🔧 CRITICAL FIX: Prevent infinite loading loops
+  // Load resume effect
   useEffect(() => {
-    // Only load resume if:
-    // 1. We have a resumeId
-    // 2. It's different from the last loaded ID
-    // 3. It's different from current resumeData.id
     if (resumeId && 
         resumeId !== lastLoadedIdRef.current && 
-        resumeId !== resumeData.id) {
+        resumeId !== resumeData?.id) {
       
       console.log('📥 ResumeEditor loading resume:', resumeId);
       lastLoadedIdRef.current = resumeId;
       
       loadResume(resumeId).catch(err => {
         console.error('Error loading resume:', err);
-        // Navigate to resume list if we can't load this resume
         navigate('/resumes');
       });
     }
-  }, [resumeId, loadResume, navigate, resumeData.id]); // 🚨 Added resumeData.id
+  }, [resumeId, loadResume, navigate, resumeData?.id]);
 
-  const handleSave = async () => {
-    try {
-      await saveCurrentResume();
-      // If this is a new resume (no ID), redirect to the resume list
-      if (!resumeId) {
-        navigate('/resumes');
-      }
-    } catch (err) {
-      console.error('Error saving resume:', err);
+  // ✅ FIXED: Simplified save handler - the context already handles auto-saving
+  const handleSave = () => {
+    // The context automatically saves changes via updatePersonalInfo, updateSummary, etc.
+    // So we just need to show feedback to the user
+    console.log('✅ Resume changes are automatically saved');
+    
+    // Optionally navigate back to resume list
+    if (!resumeId) {
+      navigate('/resumes');
     }
   };
 
-  // 🔧 FIX: Better loading state check
-  if (isLoading && (!resumeData.id || resumeData.id !== resumeId)) {
+  // ✅ FIXED: Use correct loading state
+  if (loading && (!resumeData?.id || resumeData.id !== resumeId)) {
     return <LoadingSpinner message="Loading resume..." />;
+  }
+
+  // ✅ FIXED: Handle error state
+  if (error) {
+    return <ErrorMessage message={`Error: ${error}`} />;
   }
 
   return (
@@ -59,8 +67,8 @@ const ResumeEditor = () => {
         <h1>{resumeId ? 'Edit Resume' : 'Create New Resume'}</h1>
         <div className="header-actions">
           <TemplateSelector />
-          <button className="save-button" onClick={handleSave} disabled={isLoading}>
-            {isLoading ? 'Saving...' : 'Save Resume'}
+          <button className="save-button" onClick={handleSave} disabled={loading}>
+            {loading ? 'Saving...' : 'Auto-Saved'}
           </button>
         </div>
       </div>
