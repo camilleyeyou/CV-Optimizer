@@ -11,7 +11,7 @@ const SkillsForm = () => {
   
   // Ensure we have a valid skills structure
   const ensureSkillsStructure = () => {
-    if (!resumeData.skills || typeof resumeData.skills !== 'object') {
+    if (!resumeData?.skills || typeof resumeData.skills !== 'object') {
       return { technical: [], soft: [] };
     }
     
@@ -57,10 +57,13 @@ const SkillsForm = () => {
     // Add to technical skills array
     const updatedTechnical = [...skills.technical, newSkillObj];
     
-    // Update the skills structure
-    updateResumeData('skills', {
-      ...skills,
-      technical: updatedTechnical
+    // ✅ FIXED: Pass complete resume object to updateResumeData
+    updateResumeData({
+      ...resumeData,
+      skills: {
+        ...skills,
+        technical: updatedTechnical
+      }
     });
   };
   
@@ -79,10 +82,13 @@ const SkillsForm = () => {
       (typeof skill === 'object' && skill.name !== skillToRemove)
     );
     
-    // Update the skills structure
-    updateResumeData('skills', {
-      technical: updatedTechnical,
-      soft: updatedSoft
+    // ✅ FIXED: Pass complete resume object to updateResumeData
+    updateResumeData({
+      ...resumeData,
+      skills: {
+        technical: updatedTechnical,
+        soft: updatedSoft
+      }
     });
   };
   
@@ -94,10 +100,13 @@ const SkillsForm = () => {
         : skill;
     });
     
-    // Update just the technical skills
-    updateResumeData('skills', {
-      ...ensureSkillsStructure(),
-      technical: updatedSkills
+    // ✅ FIXED: Pass complete resume object to updateResumeData
+    updateResumeData({
+      ...resumeData,
+      skills: {
+        ...ensureSkillsStructure(),
+        technical: updatedSkills
+      }
     });
   };
   
@@ -115,12 +124,12 @@ const SkillsForm = () => {
       
       // Get suggestions from the AI service based on work experience and summary
       const result = await getAiSuggestions('skills', {
-        workExperience: resumeData.workExperience,
-        summary: resumeData.summary,
-        personalInfo: resumeData.personalInfo
+        workExperience: resumeData?.workExperience || [],
+        summary: resumeData?.summary || '',
+        personalInfo: resumeData?.personalInfo || {}
       });
       
-      setSuggestions(result);
+      setSuggestions(result || []);
     } catch (error) {
       console.error('Error generating skills:', error);
       alert('Error generating skills. Please try again.');
@@ -158,6 +167,15 @@ const SkillsForm = () => {
 
   // Get all skills for display
   const allSkills = getAllSkills();
+  
+  // ✅ SAFETY CHECK: Don't render if resumeData is invalid
+  if (!resumeData || typeof resumeData !== 'object') {
+    return (
+      <div className="form-section">
+        <div className="loading-message">Loading skills form...</div>
+      </div>
+    );
+  }
   
   return (
     <div className="form-section">
