@@ -3,7 +3,7 @@ import { saveResume, getResume, getResumes, deleteResume } from '../services/api
 
 const ResumeContext = createContext();
 
-// Initial state
+// Initial state with professional-modern as default template
 const initialState = {
   resumeData: {
     id: null,
@@ -22,7 +22,10 @@ const initialState = {
     education: [],
     skills: [],
     certifications: [],
-    template: 'modern',
+    projects: [], // Added projects array
+    technicalSkills: {}, // Added technical skills object
+    languages: [], // Added languages array
+    template: 'professional-modern', // ✅ Updated default template
     createdAt: null,
     updatedAt: null
   },
@@ -272,19 +275,32 @@ export const ResumeProvider = ({ children }) => {
     debouncedSave(updatedResumeData);
   }, [state.resumeData, debouncedSave]);
 
-  // 🔧 🐛 DEBUG VERSION: Generic update resume data method
+  // 🔧 ENHANCED DEBUG VERSION: Generic update resume data method
   const updateResumeData = useCallback(async (newData) => {
-    console.log('✏️ updateResumeData called with:', {
+    console.log('🔍 DETAILED DEBUG - updateResumeData called with:', {
       type: typeof newData,
       isArray: Array.isArray(newData),
-      keys: newData && typeof newData === 'object' ? Object.keys(newData) : 'N/A',
+      isString: typeof newData === 'string',
+      length: newData?.length,
+      keys: newData && typeof newData === 'object' && !Array.isArray(newData) ? Object.keys(newData) : 'N/A',
+      firstFewChars: typeof newData === 'string' ? newData.slice(0, 50) : 'N/A',
       data: newData
+    });
+    
+    // Create a detailed stack trace for debugging
+    console.log('🔍 ENHANCED STACK TRACE:');
+    const error = new Error();
+    const stack = error.stack.split('\n');
+    stack.forEach((line, index) => {
+      if (index < 10) { // Show first 10 lines
+        console.log(`  ${index}: ${line}`);
+      }
     });
     
     // If it's not a proper object, log error and return early
     if (!newData || typeof newData !== 'object' || Array.isArray(newData)) {
       console.error('❌ updateResumeData received invalid data:', newData);
-      console.trace('🔍 Call stack:'); // This will show you exactly where the bad call came from
+      console.error('❌ This call is coming from the stack trace above ☝️');
       return;
     }
     
@@ -345,8 +361,8 @@ export const ResumeProvider = ({ children }) => {
     }
   }, []);
 
-  // 🔧 CREATE RESUME
-  const createResume = useCallback((templateType = 'modern') => {
+  // 🔧 CREATE RESUME with professional-modern as default
+  const createResume = useCallback((templateType = 'professional-modern') => {
     const newResume = {
       id: `resume_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
       personalInfo: {
@@ -364,7 +380,10 @@ export const ResumeProvider = ({ children }) => {
       education: [],
       skills: [],
       certifications: [],
-      template: templateType,
+      projects: [], // ✅ Added projects array
+      technicalSkills: {}, // ✅ Added technical skills object
+      languages: [], // ✅ Added languages array
+      template: templateType, // Will use 'professional-modern' by default
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString()
     };
@@ -392,7 +411,7 @@ export const ResumeProvider = ({ children }) => {
   }, []);
 
   // 🔧 CREATE NEW RESUME (for Templates.js compatibility)
-  const createNewResume = useCallback((templateType = 'modern') => {
+  const createNewResume = useCallback((templateType = 'professional-modern') => {
     console.log('🎨 createNewResume called with template:', templateType);
     const newResume = createResume(templateType);
     console.log('✅ Returning resume ID:', newResume.id);
@@ -434,6 +453,62 @@ export const ResumeProvider = ({ children }) => {
     }
   }, [state.currentResume]);
 
+  // 🔧 TEMPLATE MANAGEMENT: Update template
+  const updateTemplate = useCallback((templateType) => {
+    console.log('🎨 Updating template to:', templateType);
+    
+    const updatedResumeData = {
+      ...state.resumeData,
+      template: templateType,
+      updatedAt: new Date().toISOString()
+    };
+    
+    dispatch({ type: 'UPDATE_RESUME_DATA', payload: updatedResumeData });
+    debouncedSave(updatedResumeData);
+  }, [state.resumeData, debouncedSave]);
+
+  // 🔧 PROJECTS MANAGEMENT: Add/Update/Remove projects
+  const updateProjects = useCallback((projects) => {
+    console.log('📂 Updating projects');
+    
+    const updatedResumeData = {
+      ...state.resumeData,
+      projects: projects,
+      updatedAt: new Date().toISOString()
+    };
+    
+    dispatch({ type: 'UPDATE_RESUME_DATA', payload: updatedResumeData });
+    debouncedSave(updatedResumeData);
+  }, [state.resumeData, debouncedSave]);
+
+  // 🔧 TECHNICAL SKILLS MANAGEMENT: Update technical skills
+  const updateTechnicalSkills = useCallback((technicalSkills) => {
+    console.log('🛠️ Updating technical skills');
+    
+    const updatedResumeData = {
+      ...state.resumeData,
+      technicalSkills: technicalSkills,
+      updatedAt: new Date().toISOString()
+    };
+    
+    dispatch({ type: 'UPDATE_RESUME_DATA', payload: updatedResumeData });
+    debouncedSave(updatedResumeData);
+  }, [state.resumeData, debouncedSave]);
+
+  // 🔧 LANGUAGES MANAGEMENT: Update languages
+  const updateLanguages = useCallback((languages) => {
+    console.log('🌍 Updating languages');
+    
+    const updatedResumeData = {
+      ...state.resumeData,
+      languages: languages,
+      updatedAt: new Date().toISOString()
+    };
+    
+    dispatch({ type: 'UPDATE_RESUME_DATA', payload: updatedResumeData });
+    debouncedSave(updatedResumeData);
+  }, [state.resumeData, debouncedSave]);
+
   // 🚫 PREVENT INFINITE LOOPS: Only load resumes once on mount
   const initializedRef = useRef(false);
   useEffect(() => {
@@ -462,15 +537,23 @@ export const ResumeProvider = ({ children }) => {
     loading: state.loading,
     error: state.error,
     
-    // Methods
+    // Core Methods
     updatePersonalInfo,
     updateSummary,
-    updateResumeData, // Generic update method with debugging
+    updateResumeData, // Generic update method with enhanced debugging
     loadResume,
     createResume,
     createNewResume, // Dedicated function for Templates.js
     fetchResumes,
     deleteResume: deleteResumeById,
+    
+    // Template Management
+    updateTemplate,
+    
+    // Enhanced Data Management
+    updateProjects,
+    updateTechnicalSkills,
+    updateLanguages,
     
     // Utility
     setResumeData: (data) => dispatch({ type: 'SET_RESUME_DATA', payload: data })

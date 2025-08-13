@@ -1,0 +1,323 @@
+/* Professional Modern Template - Matching the example resume */
+.professional-modern-template {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+  max-width: 8.5in;
+  margin: 0 auto;
+  padding: 0.75in;
+  background: white;
+  color: #333;
+  line-height: 1.5;
+  font-size: 14px;
+}
+
+/* Header Section */
+.resume-header-modern {
+  margin-bottom: 24px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.header-content {
+  text-align: center;
+}
+
+.full-name {
+  font-size: 32px;
+  font-weight: 700;
+  color: #2c3e50;
+  margin: 0 0 8px 0;
+  letter-spacing: -0.5px;
+}
+
+.job-title {
+  font-size: 18px;
+  font-weight: 400;
+  color: #555;
+  margin: 0 0 16px 0;
+  font-style: italic;
+}
+
+.contact-info-modern {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 20px;
+  font-size: 14px;
+  color: #666;
+}
+
+.contact-item {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.contact-icon {
+  font-size: 12px;
+}
+
+/* Section Styling */
+.resume-section-modern {
+  margin-bottom: 24px;
+  page-break-inside: avoid;
+}
+
+.section-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: #2c3e50;
+  margin: 0 0 12px 0;
+  padding-bottom: 4px;
+  border-bottom: 1px solid #ddd;
+  text-transform: none;
+}
+
+.section-content {
+  margin-left: 0;
+}
+
+/* Professional Summary */
+.summary-text {
+  margin: 0;
+  line-height: 1.6;
+  text-align: justify;
+  color: #444;
+}
+
+/* Work Experience */
+.experience-item-modern {
+  margin-bottom: 20px;
+  page-break-inside: avoid;
+}
+
+.experience-header {
+  margin-bottom: 8px;
+}
+
+.experience-title-company {
+  font-size: 14px;
+  font-weight: 600;
+  color: #2c3e50;
+  line-height: 1.4;
+}
+
+.job-title-modern {
+  font-weight: 600;
+  color: #2c3e50;
+}
+
+.company-name {
+  font-weight: 500;
+  color: #555;
+}
+
+.date-range {
+  font-weight: 400;
+  color: #666;
+}
+
+.separator {
+  color: #999;
+  font-weight: 400;
+}
+
+.job-description {
+  margin: 8px 0;
+  color: #444;
+  line-height: 1.5;
+}
+
+.job-highlights {
+  margin: 8px 0 0 0;
+  padding-left: 18px;
+}
+
+.job-highlights li {
+  margin-bottom: 4px;
+  line-height: 1.5;
+  color: #444;
+}
+
+/* Projects Section */
+.project-item-modern {
+  margin-bottom: 16px;
+  page-break-inside: avoid;
+}
+
+.project-header {
+  font-weight: 600;
+  color: #2c3e50;
+  margin-bottom: 6px;
+}
+
+.project-name {
+  font-weight: 600;
+  color: #2c3e50;
+}
+
+.project-link {
+  color: #0066cc;
+  font-weight: 500;
+}
+
+.project-description {
+  margin: 4px 0;
+  color: #444;
+  line-height: 1.5;
+}
+
+.tech-stack {
+  margin: 4px 0;
+  color: #444;
+  font-size: 14px;
+}
+
+.tech-label {
+  font-weight: 600;
+  color: #2c3e50;
+}
+
+/* Education */
+.education-item-modern {
+  margin-bottom: 16px;
+  page-break-inside: avoid;
+}
+
+.education-header {
+  font-weight: 600;
+  color: #2c3e50;
+  margin-bottom: 4px;
+}
+
+.degree-name {
+  font-weight: 600;
+  color: #2c3e50;
+}
+
+.education-details {
+  color: #555;
+  font-style: italic;
+  font-size: 14px;
+}
+
+.institution-name {
+  font-weight: 500;
+}
+
+.education-location,
+.graduation-date {
+  font-weight: 400;
+}
+
+.gpa {
+  margin: 4px 0;
+  color: #666;
+  font-size: 14px;
+}
+
+/* Technical Skills */
+.skills-grid-modern {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.skill-category {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  line-height: 1.5;
+}
+
+.skill-category-name {
+  font-weight: 600;
+  color: #2c3e50;
+  min-width: 120px;
+  flex-shrink: 0;
+}
+
+.skill-list {
+  color: #444;
+  flex: 1;
+}
+
+/* Languages */
+.languages-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.language-item {
+  display: flex;
+  align-items: center;
+}
+
+.language-name {
+  font-weight: 500;
+  color: #2c3e50;
+}
+
+.language-level {
+  color: #666;
+  font-weight: 400;
+}
+
+/* Print Styles */
+@media print {
+  .professional-modern-template {
+    padding: 0.5in;
+    font-size: 12px;
+    -webkit-print-color-adjust: exact;
+    color-adjust: exact;
+  }
+
+  .full-name {
+    font-size: 28px;
+  }
+
+  .job-title {
+    font-size: 16px;
+  }
+
+  .section-title {
+    font-size: 16px;
+  }
+
+  .contact-info-modern {
+    font-size: 12px;
+  }
+
+  .resume-section-modern {
+    page-break-inside: avoid;
+    margin-bottom: 20px;
+  }
+
+  .experience-item-modern,
+  .project-item-modern,
+  .education-item-modern {
+    page-break-inside: avoid;
+  }
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .professional-modern-template {
+    padding: 20px;
+    font-size: 13px;
+  }
+
+  .contact-info-modern {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .skill-category {
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .skill-category-name {
+    min-width: auto;
+  }
+}

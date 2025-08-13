@@ -3,7 +3,7 @@ import { useResume } from '../../context/ResumeContext';
 import './ResumePreview.css';
 
 // Import templates with error handling
-let ModernTemplate, ClassicTemplate, CreativeTemplate, MinimalTemplate, ProfessionalTemplate, TechnicalTemplate;
+let ModernTemplate, ClassicTemplate, CreativeTemplate, MinimalTemplate, ProfessionalTemplate, TechnicalTemplate, ProfessionalModernTemplate;
 
 try {
   ModernTemplate = require('../templates/ModernTemplate').default;
@@ -39,6 +39,12 @@ try {
   TechnicalTemplate = require('../templates/TechnicalTemplate').default;
 } catch (e) {
   console.warn('TechnicalTemplate not found');
+}
+
+try {
+  ProfessionalModernTemplate = require('../templates/ProfessionalModernTemplate').default;
+} catch (e) {
+  console.warn('ProfessionalModernTemplate not found');
 }
 
 // Fallback template component
@@ -494,10 +500,147 @@ const getTemplateStyles = (template) => {
         font-weight: 500;
         box-shadow: 0 2px 10px rgba(0,0,0,0.1);
       }
+    `,
+    
+    'professional-modern': `
+      ${baseStyles}
+      .professional-modern-template {
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+        max-width: 8.5in;
+        margin: 0 auto;
+        background: white;
+        color: #333;
+        line-height: 1.5;
+        font-size: 14px;
+      }
+      .resume-header-modern {
+        margin-bottom: 24px;
+        padding-bottom: 16px;
+        border-bottom: 1px solid #e0e0e0;
+        text-align: center;
+      }
+      .full-name {
+        font-size: 32px;
+        font-weight: 700;
+        color: #2c3e50;
+        margin: 0 0 8px 0;
+        letter-spacing: -0.5px;
+      }
+      .job-title {
+        font-size: 18px;
+        font-weight: 400;
+        color: #555;
+        margin: 0 0 16px 0;
+        font-style: italic;
+      }
+      .contact-info-modern {
+        display: flex;
+        justify-content: center;
+        flex-wrap: wrap;
+        gap: 20px;
+        font-size: 14px;
+        color: #666;
+      }
+      .contact-item {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+      }
+      .section-title {
+        font-size: 18px;
+        font-weight: 600;
+        color: #2c3e50;
+        margin: 0 0 12px 0;
+        padding-bottom: 4px;
+        border-bottom: 1px solid #ddd;
+      }
+      .experience-item-modern, .project-item-modern, .education-item-modern {
+        margin-bottom: 20px;
+        page-break-inside: avoid;
+      }
+      .experience-title-company {
+        font-size: 14px;
+        font-weight: 600;
+        color: #2c3e50;
+        line-height: 1.4;
+      }
+      .job-title-modern {
+        font-weight: 600;
+        color: #2c3e50;
+      }
+      .company-name {
+        font-weight: 500;
+        color: #555;
+      }
+      .date-range {
+        font-weight: 400;
+        color: #666;
+      }
+      .separator {
+        color: #999;
+        font-weight: 400;
+      }
+      .job-highlights {
+        margin: 8px 0 0 0;
+        padding-left: 18px;
+      }
+      .job-highlights li {
+        margin-bottom: 4px;
+        line-height: 1.5;
+        color: #444;
+      }
+      .skills-grid-modern {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+      .skill-category {
+        display: flex;
+        align-items: flex-start;
+        gap: 8px;
+        line-height: 1.5;
+      }
+      .skill-category-name {
+        font-weight: 600;
+        color: #2c3e50;
+        min-width: 120px;
+        flex-shrink: 0;
+      }
+      .skill-list {
+        color: #444;
+        flex: 1;
+      }
+      .project-name {
+        font-weight: 600;
+        color: #2c3e50;
+      }
+      .project-link {
+        color: #0066cc;
+        font-weight: 500;
+      }
+      .tech-label {
+        font-weight: 600;
+        color: #2c3e50;
+      }
+      .degree-name {
+        font-weight: 600;
+        color: #2c3e50;
+      }
+      .institution-name {
+        font-weight: 500;
+      }
+      .language-name {
+        font-weight: 500;
+        color: #2c3e50;
+      }
+      .language-level {
+        color: #666;
+        font-weight: 400;
+      }
     `
   };
 
-  return templateStyles[template] || templateStyles.modern;
+  return templateStyles[template] || templateStyles['professional-modern'];
 };
 
 const ResumePreview = ({ showHeader = true }) => {
@@ -647,10 +790,12 @@ const ResumePreview = ({ showHeader = true }) => {
           return MinimalTemplate || FallbackTemplate;
         case 'professional':
           return ProfessionalTemplate || FallbackTemplate;
+        case 'professional-modern':
+          return ProfessionalModernTemplate || FallbackTemplate;
         case 'technical':
           return TechnicalTemplate || FallbackTemplate;
         default:
-          return ModernTemplate || FallbackTemplate;
+          return ProfessionalModernTemplate || ModernTemplate || FallbackTemplate;
       }
     })();
 
