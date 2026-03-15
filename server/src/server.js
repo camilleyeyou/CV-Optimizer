@@ -7,21 +7,31 @@ const rateLimit = require('express-rate-limit');
 const app = express();
 const PORT = process.env.PORT || 5002;
 
-// Validate required env vars
+// Validate required env vars — fail hard in production
 const requiredEnvVars = ['OPENAI_API_KEY', 'SUPABASE_URL', 'SUPABASE_SERVICE_ROLE_KEY'];
-for (const envVar of requiredEnvVars) {
-  if (!process.env[envVar]) {
-    console.warn(`Warning: ${envVar} is not set`);
+const missing = requiredEnvVars.filter((v) => !process.env[v]);
+if (missing.length > 0) {
+  if (process.env.NODE_ENV === 'production') {
+    throw new Error(`Missing required environment variables: ${missing.join(', ')}`);
   }
+  // eslint-disable-next-line no-console
+  console.warn(`Warning: Missing env vars: ${missing.join(', ')}`);
+}
+
+// CORS — on Vercel (same-origin), CLIENT_URL is optional
+const clientUrl = process.env.CLIENT_URL;
+if (process.env.NODE_ENV === 'production' && clientUrl && clientUrl.includes('localhost')) {
+  throw new Error('CLIENT_URL must not be localhost in production');
 }
 
 // Security middleware
 app.use(helmet());
 app.use(cors({
-  origin: process.env.CLIENT_URL || 'http://localhost:3000',
+  origin: clientUrl || true, // true = reflect request origin (safe when behind auth)
   credentials: true,
 }));
-app.use(express.json({ limit: '10mb' }));
+app.use(express.json({ limit: '2mb' }));
+app.use(express.urlencoded({ extended: false, limit: '2mb' }));
 
 // Rate limiting
 const apiLimiter = rateLimit({
@@ -38,14 +48,11 @@ const aiLimiter = rateLimit({
 
 app.use('/api/', apiLimiter);
 app.use('/api/ai', aiLimiter);
+app.use('/api/ats', aiLimiter);
 
-// Health check
+// Health check — no sensitive info
 app.get('/api/health', (req, res) => {
-  res.json({
-    status: 'ok',
-    timestamp: new Date().toISOString(),
-    openai: !!process.env.OPENAI_API_KEY,
-  });
+  res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
 // Routes
@@ -59,16 +66,17 @@ app.use((req, res) => {
 });
 
 // Error handler
-app.use((err, req, res, next) => {
-  console.error('Server error:', err.message);
-  res.status(500).json({ error: 'Internal server error' });
+app.use((err, req, res, _next) => {
+  const status = err.status || 500;
+  const message = status === 500 ? 'Internal server error' : err.message;
+  res.status(status).json({ error: message });
 });
 
-// Start server
+// Start server (non-production uses direct listen; production uses module export)
 if (process.env.NODE_ENV !== 'production') {
   app.listen(PORT, () => {
+    // eslint-disable-next-line no-console
     console.log(`Server running on port ${PORT}`);
-    console.log('Routes: /api/ai, /api/pdf, /api/health');
   });
 }
 

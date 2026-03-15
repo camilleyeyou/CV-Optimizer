@@ -1,4 +1,14 @@
 {
   "buildCommand": "cd client && npm install && npm run build",
-  "outputDirectory": "client/build"
+  "outputDirectory": "client/build",
+  "installCommand": "npm install && cd server && npm install && cd ../client && npm install",
+  "rewrites": [
+    { "source": "/api/(.*)", "destination": "/api" }
+  ],
+  "functions": {
+    "api/index.js": {
+      "maxDuration": 60,
+      "memory": 1024
+    }
+  }
 }

@@ -48,7 +48,6 @@ const Builder = () => {
       window.URL.revokeObjectURL(url);
       toast.success('PDF downloaded');
     } catch (err) {
-      console.error('PDF export error:', err);
       toast.error('Failed to export PDF. Please try again.');
     } finally {
       setExporting(false);

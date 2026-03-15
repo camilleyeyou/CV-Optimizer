@@ -4,8 +4,38 @@ class OpenAIService {
   constructor() {
     this.client = new OpenAI({
       apiKey: process.env.OPENAI_API_KEY || '',
+      timeout: 30000, // 30s timeout
+      maxRetries: 2,
     });
-    this.model = 'gpt-4o-mini'; // Cost-effective and fast
+    this.model = 'gpt-4o-mini';
+  }
+
+  _safeJsonParse(content, fallback) {
+    const jsonMatch = content.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) return fallback;
+    try {
+      return JSON.parse(jsonMatch[0]);
+    } catch {
+      return fallback;
+    }
+  }
+
+  _safeJsonArrayParse(content) {
+    const jsonMatch = content.match(/\[[\s\S]*\]/);
+    if (!jsonMatch) return null;
+    try {
+      return JSON.parse(jsonMatch[0]);
+    } catch {
+      return null;
+    }
+  }
+
+  _getResponse(response) {
+    const choice = response.choices?.[0];
+    if (!choice?.message?.content) {
+      throw new Error('Empty response from AI');
+    }
+    return choice.message.content.trim();
   }
 
   async generateSummary(resumeData, jobTitle) {
@@ -32,7 +62,7 @@ class OpenAIService {
       temperature: 0.7,
     });
 
-    return response.choices[0].message.content.trim();
+    return this._getResponse(response);
   }
 
   async enhanceExperience(experience) {
@@ -46,19 +76,18 @@ class OpenAIService {
         },
         {
           role: 'user',
-          content: `Improve these bullet points for: ${experience.position} at ${experience.company}\n\nCurrent:\n${(experience.description || []).join('\n') || 'No description provided'}\n\nRules:\n- Return exactly 4 bullet points as a JSON array\n- Start each with a strong action verb\n- Add metrics/numbers where possible (%, $, team size)\n- Focus on impact and results, not duties\n- Keep each under 25 words`,
+          content: `Improve these bullet points for: ${experience.position || 'Role'} at ${experience.company || 'Company'}\n\nCurrent:\n${(Array.isArray(experience.description) ? experience.description : []).join('\n') || 'No description provided'}\n\nRules:\n- Return exactly 4 bullet points as a JSON array\n- Start each with a strong action verb\n- Add metrics/numbers where possible (%, $, team size)\n- Focus on impact and results, not duties\n- Keep each under 25 words`,
         },
       ],
       max_tokens: 400,
       temperature: 0.7,
     });
 
-    const content = response.choices[0].message.content.trim();
-    const jsonMatch = content.match(/\[[\s\S]*\]/);
-    if (jsonMatch) {
-      return JSON.parse(jsonMatch[0]);
-    }
+    const content = this._getResponse(response);
+    const parsed = this._safeJsonArrayParse(content);
+    if (parsed && Array.isArray(parsed)) return parsed;
 
+    // Fallback: parse as newline-separated text
     return content
       .split('\n')
       .filter((line) => line.trim())
@@ -91,7 +120,7 @@ class OpenAIService {
       temperature: 0.7,
     });
 
-    return response.choices[0].message.content.trim();
+    return this._getResponse(response);
   }
 
   async suggestSkills(resume, jobDescription) {
@@ -116,12 +145,8 @@ class OpenAIService {
       temperature: 0.5,
     });
 
-    const content = response.choices[0].message.content.trim();
-    const jsonMatch = content.match(/\{[\s\S]*\}/);
-    if (jsonMatch) {
-      return JSON.parse(jsonMatch[0]);
-    }
-    return { technical: [], soft: [] };
+    const content = this._getResponse(response);
+    return this._safeJsonParse(content, { technical: [], soft: [] });
   }
 
   async tailorResume(resume, jobDescription) {
@@ -135,19 +160,17 @@ class OpenAIService {
         },
         {
           role: 'user',
-          content: `Analyze this resume against the job description and suggest improvements.\n\nResume Summary: ${resume.summary || 'None'}\nSkills: ${JSON.stringify(resume.skills)}\nExperience: ${JSON.stringify(resume.workExperience?.map((e) => ({ position: e.position, company: e.company, description: e.description })))}\n\nJob Description:\n${jobDescription}\n\nReturn JSON:\n{\n  "score": <0-100>,\n  "summary_suggestion": "improved summary",\n  "missing_keywords": ["keyword1", "keyword2"],\n  "improvements": [\n    {"section": "experience|skills|summary", "suggestion": "specific change"}\n  ]\n}`,
+          content: `Analyze this resume against the job description and suggest improvements.\n\nResume Summary: ${resume.summary || 'None'}\nSkills: ${JSON.stringify(resume.skills || [])}\nExperience: ${JSON.stringify((resume.workExperience || []).map((e) => ({ position: e.position, company: e.company, description: e.description })))}\n\nJob Description:\n${jobDescription}\n\nReturn JSON:\n{\n  "score": <0-100>,\n  "summary_suggestion": "improved summary",\n  "missing_keywords": ["keyword1", "keyword2"],\n  "improvements": [\n    {"section": "experience|skills|summary", "suggestion": "specific change"}\n  ]\n}`,
         },
       ],
       max_tokens: 800,
       temperature: 0.5,
     });
 
-    const content = response.choices[0].message.content.trim();
-    const jsonMatch = content.match(/\{[\s\S]*\}/);
-    if (jsonMatch) {
-      return JSON.parse(jsonMatch[0]);
-    }
-    throw new Error('Failed to parse AI response');
+    const content = this._getResponse(response);
+    const parsed = this._safeJsonParse(content, null);
+    if (!parsed) throw new Error('Failed to parse AI response');
+    return parsed;
   }
 
   async generateQuestions(jobDescription) {
@@ -191,10 +214,10 @@ Rules:
       temperature: 0.5,
     });
 
-    const content = response.choices[0].message.content.trim();
-    const jsonMatch = content.match(/\{[\s\S]*\}/);
-    if (jsonMatch) return JSON.parse(jsonMatch[0]);
-    throw new Error('Failed to parse questions');
+    const content = this._getResponse(response);
+    const parsed = this._safeJsonParse(content, null);
+    if (!parsed) throw new Error('Failed to parse questions');
+    return parsed;
   }
 
   async generateResumeFromAnswers(jobDescription, answers, jobTitle) {
@@ -209,7 +232,7 @@ Rules:
           role: 'user',
           content: `Create a complete resume tailored to this job.
 
-Job Title: ${jobTitle}
+Job Title: ${jobTitle || 'Not specified'}
 Job Description:
 ${jobDescription}
 
@@ -220,7 +243,7 @@ Return JSON in this exact format:
 {
   "personal_info": {
     "first_name": "", "last_name": "", "email": "", "phone": "",
-    "job_title": "${jobTitle}", "location": "", "linkedin": "", "website": ""
+    "job_title": "${jobTitle || ''}", "location": "", "linkedin": "", "website": ""
   },
   "summary": "3-4 sentence professional summary tailored to the job",
   "work_experience": [
@@ -251,22 +274,26 @@ Rules:
       temperature: 0.5,
     });
 
-    const content = response.choices[0].message.content.trim();
-    const jsonMatch = content.match(/\{[\s\S]*\}/);
-    if (jsonMatch) return JSON.parse(jsonMatch[0]);
-    throw new Error('Failed to generate resume');
+    const content = this._getResponse(response);
+    const parsed = this._safeJsonParse(content, null);
+    if (!parsed) throw new Error('Failed to generate resume');
+    return parsed;
   }
 
   _calculateYears(resume) {
     if (!resume.workExperience?.length) return 1;
-    const sorted = [...resume.workExperience].sort(
-      (a, b) => new Date(a.startDate) - new Date(b.startDate)
-    );
-    const first = new Date(sorted[0].startDate);
-    const last = sorted[sorted.length - 1].current
-      ? new Date()
-      : new Date(sorted[sorted.length - 1].endDate);
-    return Math.max(1, Math.round((last - first) / (365.25 * 24 * 60 * 60 * 1000)));
+    try {
+      const sorted = [...resume.workExperience].sort(
+        (a, b) => new Date(a.startDate) - new Date(b.startDate)
+      );
+      const first = new Date(sorted[0].startDate);
+      const last = sorted[sorted.length - 1].current
+        ? new Date()
+        : new Date(sorted[sorted.length - 1].endDate);
+      return Math.max(1, Math.round((last - first) / (365.25 * 24 * 60 * 60 * 1000)));
+    } catch {
+      return 1;
+    }
   }
 }
 

@@ -14,6 +14,8 @@ const upload = multer({
   },
 }).single('resume');
 
+const MAX_RESUME_TEXT_LENGTH = 50000; // ~50k chars is more than enough for any resume
+
 const analyzeResume = async (req, res) => {
   upload(req, res, async (err) => {
     if (err) {
@@ -30,8 +32,12 @@ const analyzeResume = async (req, res) => {
         return res.status(400).json({ error: 'Please upload a PDF resume.' });
       }
 
-      if (!jobTitle) {
-        return res.status(400).json({ error: 'Job title is required.' });
+      if (!jobTitle || typeof jobTitle !== 'string' || jobTitle.trim().length < 2) {
+        return res.status(400).json({ error: 'Job title is required (at least 2 characters).' });
+      }
+
+      if (jobDescription && typeof jobDescription === 'string' && jobDescription.length > 10000) {
+        return res.status(400).json({ error: 'Job description is too long (max 10000 characters).' });
       }
 
       // Extract text from PDF
@@ -43,12 +49,14 @@ const analyzeResume = async (req, res) => {
         });
       }
 
+      // Truncate excessively long text to prevent API abuse
+      const truncatedText = resumeText.slice(0, MAX_RESUME_TEXT_LENGTH);
+
       // Analyze with OpenAI
-      const analysis = await atsService.analyzeATS(resumeText, jobTitle, jobDescription || '');
+      const analysis = await atsService.analyzeATS(truncatedText, jobTitle.trim(), (jobDescription || '').trim());
 
       res.json(analysis);
     } catch (error) {
-      console.error('ATS analysis error:', error.message);
       res.status(500).json({ error: 'Failed to analyze resume. Please try again.' });
     }
   });

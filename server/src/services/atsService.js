@@ -5,6 +5,8 @@ class ATSService {
   constructor() {
     this.client = new OpenAI({
       apiKey: process.env.OPENAI_API_KEY || '',
+      timeout: 30000,
+      maxRetries: 2,
     });
     this.model = 'gpt-4o-mini';
   }
@@ -75,12 +77,22 @@ Be specific and actionable. Don't be generic.`,
       temperature: 0.3,
     });
 
-    const content = response.choices[0].message.content.trim();
-    const jsonMatch = content.match(/\{[\s\S]*\}/);
-    if (jsonMatch) {
-      return JSON.parse(jsonMatch[0]);
+    const choice = response.choices?.[0];
+    if (!choice?.message?.content) {
+      throw new Error('Empty response from AI');
     }
-    throw new Error('Failed to parse ATS analysis');
+
+    const content = choice.message.content.trim();
+    const jsonMatch = content.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) {
+      throw new Error('Failed to parse ATS analysis');
+    }
+
+    try {
+      return JSON.parse(jsonMatch[0]);
+    } catch {
+      throw new Error('Failed to parse ATS analysis');
+    }
   }
 }
 
