@@ -1,6 +1,5 @@
 require('dotenv').config();
 const express = require('express');
-const mongoose = require('mongoose');
 const cors = require('cors');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
@@ -8,85 +7,69 @@ const rateLimit = require('express-rate-limit');
 const app = express();
 const PORT = process.env.PORT || 5002;
 
-// Middleware
+// Validate required env vars
+const requiredEnvVars = ['OPENAI_API_KEY', 'SUPABASE_URL', 'SUPABASE_SERVICE_ROLE_KEY'];
+for (const envVar of requiredEnvVars) {
+  if (!process.env[envVar]) {
+    console.warn(`Warning: ${envVar} is not set`);
+  }
+}
+
+// Security middleware
 app.use(helmet());
-app.use(cors());
-app.use(express.json());
+app.use(cors({
+  origin: process.env.CLIENT_URL || 'http://localhost:3000',
+  credentials: true,
+}));
+app.use(express.json({ limit: '10mb' }));
 
 // Rate limiting
-const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100 // limit each IP to 100 requests per windowMs
-});
-app.use('/api/', limiter);
-
-// Logging middleware
-app.use((req, res, next) => {
-  console.log(`${new Date().toISOString()} - ${req.method} ${req.url}`);
-  next();
+const apiLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 100,
+  message: { error: 'Too many requests, please try again later.' },
 });
 
-// Basic routes
-app.get('/', (req, res) => {
-  res.json({ message: 'CV Optimizer API is running' });
+const aiLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 30,
+  message: { error: 'AI request limit reached. Please try again later.' },
 });
 
+app.use('/api/', apiLimiter);
+app.use('/api/ai', aiLimiter);
+
+// Health check
 app.get('/api/health', (req, res) => {
-  res.json({ 
-    status: 'OK', 
+  res.json({
+    status: 'ok',
     timestamp: new Date().toISOString(),
-    database: mongoose.connection.readyState === 1 ? 'Connected' : 'Disconnected'
+    openai: !!process.env.OPENAI_API_KEY,
   });
 });
 
-// API Routes
-try {
-  app.use('/api/auth', require('./routes/auth-simple'));
-  
-  // FIXED: Use plural 'resumes' to match frontend expectations
-  app.use('/api/resumes', require('./routes/resume'));
-  
-  app.use('/api/ai', require('./routes/ai'));
-  app.use("/api/ai-test", require("./routes/ai-test"));
-  app.use('/api/pdf', require('./routes/pdf'));
-  
-  console.log('All routes loaded successfully');
-} catch (error) {
-  console.error('Error loading routes:', error);
-}
+// Routes
+app.use('/api/ai', require('./routes/ai'));
+app.use('/api/pdf', require('./routes/pdf'));
+app.use('/api/ats', require('./routes/ats'));
 
-// 404 handler - this must come after all routes
+// 404
 app.use((req, res) => {
-  console.log('404 - Route not found:', req.url);
   res.status(404).json({ error: 'Route not found' });
 });
 
 // Error handler
 app.use((err, req, res, next) => {
-  console.error('Error:', err);
-  res.status(500).json({ error: 'Something went wrong!' });
+  console.error('Server error:', err.message);
+  res.status(500).json({ error: 'Internal server error' });
 });
 
-// Database connection
-mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/cv-optimizer')
-  .then(() => {
-    console.log('MongoDB connected successfully');
-  })
-  .catch(err => {
-    console.error('MongoDB connection error:', err);
-  });
-
-// MODIFIED: Only start server in development
+// Start server
 if (process.env.NODE_ENV !== 'production') {
   app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
-    console.log('Available routes:');
-    console.log('  /api/auth');
-    console.log('  /api/resumes');  // Updated to plural
-    console.log('  /api/ai');
-    console.log('  /api/pdf');
+    console.log('Routes: /api/ai, /api/pdf, /api/health');
   });
 }
 
-// ADDED: Export for Vercel serverless
 module.exports = app;

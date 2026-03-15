@@ -1,421 +1,268 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useResume } from '../context/ResumeContext';
 import { useAuth } from '../context/AuthContext';
+import {
+  Plus,
+  FileText,
+  Clock,
+  Trash2,
+  Edit3,
+  Copy,
+  MoreVertical,
+  AlertTriangle,
+} from 'lucide-react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import './Dashboard.css';
 
 const Dashboard = () => {
   const navigate = useNavigate();
-  
-  // ✅ FIXED: Use correct property names from your context
-  const { 
-    resumes,           // ✅ Changed from resumeList to resumes  
-    fetchResumes, 
-    deleteResume,      // ✅ Should work if it exists in context
-    loading            // ✅ Changed from isLoading to loading
-  } = useResume();
-  
-  const auth = useAuth();
-  const [showTutorial, setShowTutorial] = useState(false);
-  const [resumeStats, setResumeStats] = useState({
-    total: 0,
-    recent: 0,
-    downloaded: 0
-  });
-  
-  const hasFetchedRef = useRef(false);
-  const isInitializedRef = useRef(false);
+  const { resumes, loading, deleteResume, duplicateResume } = useResume();
+  const { user } = useAuth();
+  const [menuOpen, setMenuOpen] = useState(null);
+  const [deleteTarget, setDeleteTarget] = useState(null);
+  const menuRef = useRef(null);
 
-  const isUserAuthenticated = () => {
-    if (!auth) return false;
-    const { isAuthenticated } = auth;
-    return typeof isAuthenticated === 'function' 
-      ? isAuthenticated() 
-      : isAuthenticated;
-  };
+  const displayName =
+    user?.user_metadata?.first_name || user?.email?.split('@')[0] || 'there';
 
-  const stableFetchResumes = useCallback(() => {
-    return fetchResumes();
-  }, [fetchResumes]);
+  // Close card menu on click outside or Escape
+  const closeMenu = useCallback(() => setMenuOpen(null), []);
 
-  const stableIsUserAuthenticated = useCallback(() => {
-    if (!auth) return false;
-    const { isAuthenticated } = auth;
-    return typeof isAuthenticated === 'function' 
-      ? isAuthenticated() 
-      : isAuthenticated;
-  }, [auth]);
-
-  // Initialize dashboard
   useEffect(() => {
-    if (isInitializedRef.current) {
-      return;
-    }
-
-    const userAuthenticated = stableIsUserAuthenticated();
-    
-    if (!userAuthenticated) {
-      console.log('Dashboard: User not authenticated, skipping initialization');
-      return;
-    }
-
-    console.log('Dashboard: Initializing for authenticated user');
-    isInitializedRef.current = true;
-    
-    // Tutorial logic
-    const isFirstVisit = localStorage.getItem('firstVisit') !== 'false';
-    if (isFirstVisit) {
-      setShowTutorial(true);
-      localStorage.setItem('firstVisit', 'false');
-    }
-    
-    // Fetch resumes only once
-    if (!hasFetchedRef.current) {
-      hasFetchedRef.current = true;
-      console.log('Dashboard: Fetching resumes...');
-      
-      setTimeout(() => {
-        try {
-          stableFetchResumes();
-        } catch (error) {
-          console.error('Dashboard: Error fetching resumes:', error);
-          hasFetchedRef.current = false;
-        }
-      }, 100);
-    }
-  }, [stableFetchResumes, stableIsUserAuthenticated]);
-
-  // ✅ FIXED: Calculate stats using correct property name
-  useEffect(() => {
-    if (!resumes || !Array.isArray(resumes)) {
-      setResumeStats({ total: 0, recent: 0, downloaded: 0 });
-      return;
-    }
-    
-    try {
-      const now = new Date();
-      const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
-      
-      const stats = {
-        total: resumes.length,
-        recent: resumes.filter(resume => {
-          try {
-            // Check both updatedAt and createdAt
-            const updateDate = resume.updatedAt || resume.createdAt;
-            return updateDate && new Date(updateDate) > thirtyDaysAgo;
-          } catch (e) {
-            return false;
-          }
-        }).length,
-        // Since downloads might not be tracked, use a placeholder calculation
-        downloaded: resumes.filter(resume => {
-          // If downloads property exists, use it; otherwise estimate based on age
-          if (resume.downloads !== undefined) {
-            return resume.downloads > 0;
-          }
-          // Fallback: assume older resumes might have been downloaded
-          try {
-            const createDate = resume.createdAt || resume.updatedAt;
-            if (createDate) {
-              const age = now.getTime() - new Date(createDate).getTime();
-              const daysOld = age / (1000 * 60 * 60 * 24);
-              return daysOld > 7; // Assume resumes older than 7 days might be downloaded
-            }
-          } catch (e) {
-            return false;
-          }
-          return false;
-        }).length
-      };
-      
-      setResumeStats(stats);
-      console.log('Dashboard: Stats updated:', stats);
-    } catch (error) {
-      console.error('Error calculating resume stats:', error);
-      setResumeStats({ total: 0, recent: 0, downloaded: 0 });
-    }
-  }, [resumes]); // ✅ Changed dependency from resumeList to resumes
-
-  const handleCreateNew = () => {
-    navigate('/templates');
-  };
-
-  const handleEditResume = (id) => {
-    navigate(`/builder/${id}`);
-  };
-
-  // ✅ FIXED: Better error handling for delete
-  const handleDeleteResume = async (id, event) => {
-    event.stopPropagation();
-    
-    if (window.confirm('Are you sure you want to delete this resume?')) {
-      try {
-        console.log('Dashboard: Deleting resume:', id);
-        await deleteResume(id);
-        console.log('Dashboard: Resume deleted successfully:', id);
-        // Refresh the list after deletion
-        setTimeout(() => stableFetchResumes(), 500);
-      } catch (error) {
-        console.error('Dashboard: Error deleting resume:', error);
-        alert('Failed to delete resume. Please try again.');
-      }
-    }
-  };
-
-  const formatDate = (dateString) => {
-    try {
-      if (!dateString) return 'Unknown date';
-      const options = { year: 'numeric', month: 'short', day: 'numeric' };
-      return new Date(dateString).toLocaleDateString(undefined, options);
-    } catch (e) {
-      return 'Invalid date';
-    }
-  };
-
-  const getTemplateColor = (template) => {
-    const colors = {
-      modern: '#6366f1',
-      creative: '#f59e0b',
-      professional: '#374151',
-      classic: '#8b5cf6',
-      minimal: '#10b981',
-      technical: '#ef4444'
+    if (!menuOpen) return;
+    const handleClickOutside = (e) => {
+      if (menuRef.current && !menuRef.current.contains(e.target)) closeMenu();
     };
-    return colors[template] || colors.modern;
+    const handleEscape = (e) => { if (e.key === 'Escape') closeMenu(); };
+    document.addEventListener('mousedown', handleClickOutside);
+    document.addEventListener('keydown', handleEscape);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('keydown', handleEscape);
+    };
+  }, [menuOpen, closeMenu]);
+
+  // Close confirm dialog on Escape
+  useEffect(() => {
+    if (!deleteTarget) return;
+    const handleEscape = (e) => { if (e.key === 'Escape') setDeleteTarget(null); };
+    document.addEventListener('keydown', handleEscape);
+    return () => document.removeEventListener('keydown', handleEscape);
+  }, [deleteTarget]);
+
+  const handleCreate = () => navigate('/templates');
+  const handleEdit = (id) => navigate(`/builder/${id}`);
+
+  const handleDeleteConfirm = async () => {
+    if (!deleteTarget) return;
+    await deleteResume(deleteTarget.id);
+    setDeleteTarget(null);
   };
 
-  // ✅ FIXED: Better resume title generation
+  const handleDuplicate = async (id) => {
+    closeMenu();
+    await duplicateResume(id);
+  };
+
+  const formatDate = (dateStr) => {
+    if (!dateStr) return '';
+    const date = new Date(dateStr);
+    const now = new Date();
+    const diffMs = now - date;
+    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+    if (diffDays === 0) return 'Today';
+    if (diffDays === 1) return 'Yesterday';
+    if (diffDays < 7) return `${diffDays} days ago`;
+    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  };
+
   const getResumeTitle = (resume) => {
     if (resume.title) return resume.title;
-    
-    const firstName = resume.personalInfo?.firstName || '';
-    const lastName = resume.personalInfo?.lastName || '';
-    
-    if (firstName || lastName) {
-      return `${firstName} ${lastName}`.trim() + ' Resume';
-    }
-    
+    const first = resume.personal_info?.first_name || '';
+    const last = resume.personal_info?.last_name || '';
+    if (first || last) return `${first} ${last}`.trim();
     return 'Untitled Resume';
   };
 
-  if (!stableIsUserAuthenticated()) {
-    console.log('Dashboard: User not authenticated, returning null');
-    return null;
-  }
+  const getCompleteness = (resume) => {
+    let score = 0;
+    const checks = [
+      resume.personal_info?.first_name,
+      resume.personal_info?.email,
+      resume.personal_info?.phone,
+      resume.summary?.length > 20,
+      resume.work_experience?.length > 0,
+      resume.education?.length > 0,
+      resume.skills?.length > 0,
+    ];
+    checks.forEach((c) => { if (c) score++; });
+    return Math.round((score / checks.length) * 100);
+  };
 
   return (
     <div className="dashboard">
-      {showTutorial && (
-        <div className="tutorial-overlay">
-          <div className="tutorial-modal">
-            <div className="tutorial-icon">🎉</div>
-            <h2>Welcome to CV Optimizer!</h2>
-            <p>Ready to create amazing resumes that get you hired?</p>
-            <button className="tutorial-btn" onClick={() => setShowTutorial(false)}>
-              Let's Go!
+      <div className="dashboard-container">
+        {/* Header */}
+        <div className="dashboard-header">
+          <div>
+            <h1>Hi, {displayName}</h1>
+            <p className="dashboard-subtitle">
+              {resumes.length === 0
+                ? 'Create your first resume to get started.'
+                : `You have ${resumes.length} resume${resumes.length !== 1 ? 's' : ''}.`}
+            </p>
+          </div>
+          <button className="btn btn-primary btn-lg" onClick={handleCreate}>
+            <Plus size={18} aria-hidden="true" />
+            New Resume
+          </button>
+        </div>
+
+        {/* Content */}
+        {loading ? (
+          <div className="dashboard-grid">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="resume-card-skeleton">
+                <div className="skeleton" style={{ height: 140 }} />
+                <div style={{ padding: 20 }}>
+                  <div className="skeleton" style={{ height: 20, width: '60%', marginBottom: 8 }} />
+                  <div className="skeleton" style={{ height: 14, width: '40%' }} />
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : resumes.length === 0 ? (
+          <div className="empty-state">
+            <div className="empty-state-icon">
+              <FileText size={48} strokeWidth={1} aria-hidden="true" />
+            </div>
+            <h3>No resumes yet</h3>
+            <p>Create your first resume and start applying to jobs with confidence.</p>
+            <button className="btn btn-primary btn-lg" onClick={handleCreate}>
+              <Plus size={18} aria-hidden="true" />
+              Create Resume
             </button>
+          </div>
+        ) : (
+          <div className="dashboard-grid">
+            {resumes.map((resume) => {
+              const completeness = getCompleteness(resume);
+              return (
+                <div
+                  key={resume.id}
+                  className="resume-card"
+                  onClick={() => handleEdit(resume.id)}
+                >
+                  {/* Preview */}
+                  <div className="resume-card-preview">
+                    <div className="preview-mock">
+                      <div className="preview-mock-header" />
+                      <div className="preview-mock-line w-60" />
+                      <div className="preview-mock-line w-40" />
+                      <div className="preview-mock-gap" />
+                      <div className="preview-mock-line w-80" />
+                      <div className="preview-mock-line w-70" />
+                      <div className="preview-mock-line w-90" />
+                    </div>
+                    <div className="resume-card-template">
+                      {resume.template || 'modern'}
+                    </div>
+                  </div>
+
+                  {/* Info */}
+                  <div className="resume-card-body">
+                    <div className="resume-card-info">
+                      <h3 className="resume-card-title">{getResumeTitle(resume)}</h3>
+                      <span className="resume-card-date">
+                        <Clock size={12} aria-hidden="true" />
+                        {formatDate(resume.updated_at)}
+                      </span>
+                    </div>
+
+                    {/* Completeness */}
+                    <div className="resume-card-progress">
+                      <div className="progress-bar" role="progressbar" aria-valuenow={completeness} aria-valuemin={0} aria-valuemax={100}>
+                        <div
+                          className="progress-fill"
+                          style={{ width: `${completeness}%` }}
+                        />
+                      </div>
+                      <span className="progress-label">{completeness}% complete</span>
+                    </div>
+                  </div>
+
+                  {/* Actions */}
+                  <div className="resume-card-actions" ref={menuOpen === resume.id ? menuRef : null}>
+                    <button
+                      className="btn btn-ghost btn-icon"
+                      aria-label={`Actions for ${getResumeTitle(resume)}`}
+                      aria-expanded={menuOpen === resume.id}
+                      aria-haspopup="true"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setMenuOpen(menuOpen === resume.id ? null : resume.id);
+                      }}
+                    >
+                      <MoreVertical size={16} />
+                    </button>
+
+                    {menuOpen === resume.id && (
+                      <div className="card-menu" role="menu" onClick={(e) => e.stopPropagation()}>
+                        <button className="card-menu-item" role="menuitem" onClick={() => { closeMenu(); handleEdit(resume.id); }}>
+                          <Edit3 size={14} aria-hidden="true" /> Edit
+                        </button>
+                        <button className="card-menu-item" role="menuitem" onClick={() => handleDuplicate(resume.id)}>
+                          <Copy size={14} aria-hidden="true" /> Duplicate
+                        </button>
+                        <button
+                          className="card-menu-item card-menu-danger"
+                          role="menuitem"
+                          onClick={() => {
+                            closeMenu();
+                            setDeleteTarget({ id: resume.id, title: getResumeTitle(resume) });
+                          }}
+                        >
+                          <Trash2 size={14} aria-hidden="true" /> Delete
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+
+            {/* Add card */}
+            <button className="resume-card resume-card-add" onClick={handleCreate}>
+              <Plus size={32} strokeWidth={1.5} aria-hidden="true" />
+              <span>New Resume</span>
+            </button>
+          </div>
+        )}
+      </div>
+
+      {/* Delete confirmation dialog */}
+      {deleteTarget && (
+        <div className="confirm-overlay" onClick={() => setDeleteTarget(null)}>
+          <div className="confirm-dialog" role="alertdialog" aria-labelledby="confirm-title" onClick={(e) => e.stopPropagation()}>
+            <h3 id="confirm-title">
+              <AlertTriangle size={18} style={{ color: 'var(--error)', verticalAlign: 'text-bottom' }} aria-hidden="true" />{' '}
+              Delete resume?
+            </h3>
+            <p>
+              Are you sure you want to delete <strong>{deleteTarget.title}</strong>? This action cannot be undone.
+            </p>
+            <div className="confirm-actions">
+              <button className="btn btn-secondary" onClick={() => setDeleteTarget(null)}>
+                Cancel
+              </button>
+              <button className="btn btn-danger" onClick={handleDeleteConfirm}>
+                <Trash2 size={14} aria-hidden="true" /> Delete
+              </button>
+            </div>
           </div>
         </div>
       )}
-      
-      {/* Header */}
-      <div className="dashboard-hero">
-        <div className="hero-content">
-          <h1>Your Resume Dashboard</h1>
-          <p>Create, edit, and manage your professional resumes</p>
-        </div>
-        <button className="btn-primary" onClick={handleCreateNew}>
-          <span className="btn-icon">✨</span>
-          Create New Resume
-        </button>
-      </div>
-      
-      {/* Stats */}
-      <div className="stats-grid">
-        <div className="stat-box">
-          <div className="stat-icon blue">📄</div>
-          <div className="stat-info">
-            <div className="stat-number">{resumeStats.total}</div>
-            <div className="stat-label">Total Resumes</div>
-          </div>
-        </div>
-        <div className="stat-box">
-          <div className="stat-icon green">🔄</div>
-          <div className="stat-info">
-            <div className="stat-number">{resumeStats.recent}</div>
-            <div className="stat-label">Recent Updates</div>
-          </div>
-        </div>
-        <div className="stat-box">
-          <div className="stat-icon purple">📥</div>
-          <div className="stat-info">
-            <div className="stat-number">{resumeStats.downloaded}</div>
-            <div className="stat-label">Estimated Downloads</div>
-          </div>
-        </div>
-      </div>
-      
-      {/* Main Content */}
-      <div className="dashboard-grid">
-        {/* Resumes Section */}
-        <div className="resumes-panel">
-          <div className="panel-header">
-            <h2>Your Resumes ({resumes?.length || 0})</h2>
-          </div>
-          
-          {loading ? (
-            <div className="loading-state">
-              <div className="spinner"></div>
-              <p>Loading your resumes...</p>
-            </div>
-          ) : resumes && Array.isArray(resumes) && resumes.length > 0 ? (
-            <div className="resume-grid">
-              {resumes.map((resume) => (
-                <div key={resume.id} className="resume-card">
-                  {/* Card Header */}
-                  <div className="card-header">
-                    <div className="resume-title">
-                      <h3>{getResumeTitle(resume)}</h3>
-                      <span 
-                        className="template-tag"
-                        style={{ backgroundColor: getTemplateColor(resume.template) }}
-                      >
-                        {resume.template || 'modern'}
-                      </span>
-                    </div>
-                    <div className="card-actions">
-                      <button 
-                        className="action-btn edit"
-                        onClick={() => handleEditResume(resume.id)}
-                        title="Edit resume"
-                      >
-                        ✏️
-                      </button>
-                      <button 
-                        className="action-btn delete"
-                        onClick={(e) => handleDeleteResume(resume.id, e)}
-                        title="Delete resume"
-                      >
-                        🗑️
-                      </button>
-                    </div>
-                  </div>
-                  
-                  {/* Mini Preview */}
-                  <div 
-                    className="resume-preview-mini"
-                    style={{ borderTopColor: getTemplateColor(resume.template) }}
-                  >
-                    <div className="preview-content">
-                      <div className="preview-name">
-                        {resume.personalInfo?.firstName || ''} {resume.personalInfo?.lastName || ''}
-                      </div>
-                      <div className="preview-contact">
-                        {resume.personalInfo?.email && (
-                          <div className="preview-email">{resume.personalInfo.email}</div>
-                        )}
-                      </div>
-                      {resume.summary && (
-                        <div className="preview-section">
-                          <div className="preview-title">SUMMARY</div>
-                          <div className="preview-text">{resume.summary.substring(0, 80)}...</div>
-                        </div>
-                      )}
-                      {resume.workExperience && resume.workExperience.length > 0 && (
-                        <div className="preview-section">
-                          <div className="preview-title">EXPERIENCE</div>
-                          <div className="preview-job">
-                            <div className="job-title">{resume.workExperience[0].title || resume.workExperience[0].jobTitle}</div>
-                            <div className="job-company">{resume.workExperience[0].company}</div>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                  
-                  {/* Card Footer */}
-                  <div className="card-footer">
-                    <div className="resume-meta">
-                      <span className="meta-item">
-                        📅 {formatDate(resume.updatedAt || resume.createdAt)}
-                      </span>
-                      <span className="meta-item">
-                        📥 {resume.downloads || 0} downloads
-                      </span>
-                    </div>
-                    <button 
-                      className="btn-edit-full"
-                      onClick={() => handleEditResume(resume.id)}
-                    >
-                      Edit Resume
-                    </button>
-                  </div>
-                </div>
-              ))}
-              
-              {/* Add New Card */}
-              <div className="resume-card add-card" onClick={handleCreateNew}>
-                <div className="add-content">
-                  <div className="add-icon">+</div>
-                  <h3>Create New Resume</h3>
-                  <p>Start building your next opportunity</p>
-                </div>
-              </div>
-            </div>
-          ) : (
-            <div className="empty-state">
-              <div className="empty-icon">🚀</div>
-              <h3>Ready to Get Started?</h3>
-              <p>Create your first professional resume and land your dream job!</p>
-              <button className="btn-primary large" onClick={handleCreateNew}>
-                <span className="btn-icon">✨</span>
-                Create Your First Resume
-              </button>
-            </div>
-          )}
-        </div>
-        
-        {/* Tips Sidebar */}
-        <div className="tips-panel">
-          <h2>💡 Pro Tips</h2>
-          
-          <div className="tip-card featured">
-            <div className="tip-header">
-              <span className="tip-emoji">🎯</span>
-              <h3>ATS Optimization</h3>
-            </div>
-            <ul className="tip-list">
-              <li>Use relevant keywords from job descriptions</li>
-              <li>Keep formatting simple and clean</li>
-              <li>Include quantifiable achievements</li>
-            </ul>
-          </div>
-          
-          <div className="tip-card">
-            <div className="tip-header">
-              <span className="tip-emoji">✨</span>
-              <h3>Stand Out</h3>
-            </div>
-            <ul className="tip-list">
-              <li>Tailor each resume to the specific role</li>
-              <li>Highlight your most relevant experience</li>
-              <li>Use action verbs and strong language</li>
-            </ul>
-          </div>
-          
-          <div className="tip-card">
-            <div className="tip-header">
-              <span className="tip-emoji">❌</span>
-              <h3>Avoid These Mistakes</h3>
-            </div>
-            <ul className="tip-list">
-              <li>Spelling and grammar errors</li>
-              <li>Unprofessional email addresses</li>
-              <li>Including irrelevant information</li>
-            </ul>
-          </div>
-        </div>
-      </div>
     </div>
   );
 };

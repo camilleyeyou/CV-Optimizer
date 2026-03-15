@@ -1,905 +1,580 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useResume } from '../../context/ResumeContext';
-import EnhancedField from './EnhancedField';
-import EnhancedAISuggestions from '../ai/EnhancedAISuggestions';
-import AISuggestionFeedback from '../feedback/AISuggestionFeedback';
+import {
+  User, Briefcase, GraduationCap, Wrench, FolderOpen, Award, Globe,
+  ChevronDown, ChevronRight, Plus, Trash2, Sparkles, Loader,
+} from 'lucide-react';
+import { generateSummary, enhanceExperience, suggestSkills } from '../../services/api';
+import toast from 'react-hot-toast';
 import './ResumeForm.css';
 
+const SECTIONS = [
+  { id: 'personal', label: 'Personal Info', icon: User },
+  { id: 'summary', label: 'Summary', icon: Sparkles },
+  { id: 'experience', label: 'Experience', icon: Briefcase },
+  { id: 'education', label: 'Education', icon: GraduationCap },
+  { id: 'skills', label: 'Skills', icon: Wrench },
+  { id: 'projects', label: 'Projects', icon: FolderOpen },
+  { id: 'certifications', label: 'Certifications', icon: Award },
+  { id: 'languages', label: 'Languages', icon: Globe },
+];
+
 const ResumeForm = () => {
-  const { 
-    resumeData, 
-    updateResumeData, 
-    updatePersonalInfo,
-    updateSummary
-  } = useResume();
-  
-  const [activeSection, setActiveSection] = useState('personalInfo');
-  const [jobDescription, setJobDescription] = useState('');
-  const [showAiSuggestions, setShowAiSuggestions] = useState(false);
-  const [aiSuggestionType, setAiSuggestionType] = useState(null);
-  const [aiSuggestionField, setAiSuggestionField] = useState(null);
-  const [aiSuggestionIndex, setAiSuggestionIndex] = useState(null);
+  const { resumeData, updateField } = useResume();
+  const [openSections, setOpenSections] = useState(['personal', 'summary']);
+  const [aiLoading, setAiLoading] = useState({});
 
-  // Helper function to safely get skills as an array of objects
-  const getSkillsArray = () => {
-    if (!resumeData?.skills) return [];
-    
-    if (Array.isArray(resumeData.skills)) {
-      return resumeData.skills;
-    }
-    
-    const technicalSkills = Array.isArray(resumeData.skills.technical) ? 
-      resumeData.skills.technical : [];
-    const softSkills = Array.isArray(resumeData.skills.soft) ?
-      resumeData.skills.soft : [];
-    
-    return [...technicalSkills, ...softSkills];
+  const toggleSection = (id) => {
+    setOpenSections((prev) =>
+      prev.includes(id) ? prev.filter((s) => s !== id) : [...prev, id]
+    );
   };
 
-  const skills = getSkillsArray();
+  const isOpen = (id) => openSections.includes(id);
 
-  // ✅ FIXED: Use proper updateResumeData calls
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    if (name === 'summary') {
-      updateSummary(value);
-    } else {
-      updateResumeData({
-        ...resumeData,
-        [name]: value
-      });
-    }
+  // Personal Info
+  const updatePersonal = (key, value) => {
+    updateField('personal_info', { ...resumeData.personal_info, [key]: value });
   };
 
-  // ✅ FIXED: Use updatePersonalInfo for nested personal info updates
-  const handleNestedInputChange = (section, key, value) => {
-    if (section === 'personalInfo') {
-      updatePersonalInfo({ [key]: value });
-    } else {
-      updateResumeData({
-        ...resumeData,
-        [section]: {
-          ...resumeData[section],
-          [key]: value
-        }
-      });
-    }
+  // Summary
+  const updateSummary = (value) => {
+    updateField('summary', value);
   };
 
-  // ✅ FIXED: Array manipulation functions
-  const handleAddExperience = () => {
-    const newExperience = {
-      title: '',
+  // Work Experience
+  const addExperience = () => {
+    const exp = [...(resumeData.work_experience || [])];
+    exp.push({
+      id: Date.now().toString(),
       company: '',
+      position: '',
       location: '',
-      startDate: '',
-      endDate: '',
+      start_date: '',
+      end_date: '',
       current: false,
-      description: '',
-      highlights: []
+      description: [''],
+    });
+    updateField('work_experience', exp);
+    if (!isOpen('experience')) toggleSection('experience');
+  };
+
+  const updateExperience = (index, key, value) => {
+    const exp = [...resumeData.work_experience];
+    exp[index] = { ...exp[index], [key]: value };
+    updateField('work_experience', exp);
+  };
+
+  const removeExperience = (index) => {
+    updateField('work_experience', resumeData.work_experience.filter((_, i) => i !== index));
+  };
+
+  const addBullet = (expIndex) => {
+    const exp = [...resumeData.work_experience];
+    exp[expIndex] = { ...exp[expIndex], description: [...(exp[expIndex].description || []), ''] };
+    updateField('work_experience', exp);
+  };
+
+  const updateBullet = (expIndex, bulletIndex, value) => {
+    const exp = [...resumeData.work_experience];
+    const desc = [...exp[expIndex].description];
+    desc[bulletIndex] = value;
+    exp[expIndex] = { ...exp[expIndex], description: desc };
+    updateField('work_experience', exp);
+  };
+
+  const removeBullet = (expIndex, bulletIndex) => {
+    const exp = [...resumeData.work_experience];
+    exp[expIndex] = {
+      ...exp[expIndex],
+      description: exp[expIndex].description.filter((_, i) => i !== bulletIndex),
     };
-    
-    updateResumeData({
-      ...resumeData,
-      workExperience: [...(resumeData.workExperience || []), newExperience]
-    });
+    updateField('work_experience', exp);
   };
 
-  const handleUpdateExperience = (index, field, value) => {
-    const updatedExperience = [...(resumeData.workExperience || [])];
-    updatedExperience[index] = { ...updatedExperience[index], [field]: value };
-    
-    updateResumeData({
-      ...resumeData,
-      workExperience: updatedExperience
-    });
-  };
-
-  const handleRemoveExperience = (index) => {
-    const updatedExperience = [...(resumeData.workExperience || [])];
-    updatedExperience.splice(index, 1);
-    
-    updateResumeData({
-      ...resumeData,
-      workExperience: updatedExperience
-    });
-  };
-
-  const handleAddHighlight = (experienceIndex) => {
-    const experience = resumeData.workExperience[experienceIndex];
-    const updatedExperience = [...(resumeData.workExperience || [])];
-    updatedExperience[experienceIndex] = {
-      ...experience,
-      highlights: [...(experience.highlights || []), '']
-    };
-    
-    updateResumeData({
-      ...resumeData,
-      workExperience: updatedExperience
-    });
-  };
-
-  const handleUpdateHighlight = (experienceIndex, highlightIndex, value) => {
-    const updatedExperience = [...(resumeData.workExperience || [])];
-    const updatedHighlights = [...(updatedExperience[experienceIndex].highlights || [])];
-    updatedHighlights[highlightIndex] = value;
-    
-    updatedExperience[experienceIndex] = {
-      ...updatedExperience[experienceIndex],
-      highlights: updatedHighlights
-    };
-    
-    updateResumeData({
-      ...resumeData,
-      workExperience: updatedExperience
-    });
-  };
-
-  const handleRemoveHighlight = (experienceIndex, highlightIndex) => {
-    const updatedExperience = [...(resumeData.workExperience || [])];
-    const updatedHighlights = [...(updatedExperience[experienceIndex].highlights || [])];
-    updatedHighlights.splice(highlightIndex, 1);
-    
-    updatedExperience[experienceIndex] = {
-      ...updatedExperience[experienceIndex],
-      highlights: updatedHighlights
-    };
-    
-    updateResumeData({
-      ...resumeData,
-      workExperience: updatedExperience
-    });
-  };
-
-  const handleAddEducation = () => {
-    const newEducation = {
+  // Education
+  const addEducation = () => {
+    const edu = [...(resumeData.education || [])];
+    edu.push({
+      id: Date.now().toString(),
       institution: '',
       degree: '',
-      field: '',
+      field_of_study: '',
       location: '',
-      startDate: '',
-      endDate: '',
-      current: false,
+      start_date: '',
+      end_date: '',
       gpa: '',
-      achievements: []
-    };
-    
-    updateResumeData({
-      ...resumeData,
-      education: [...(resumeData.education || []), newEducation]
     });
+    updateField('education', edu);
+    if (!isOpen('education')) toggleSection('education');
   };
 
-  const handleUpdateEducation = (index, field, value) => {
-    const updatedEducation = [...(resumeData.education || [])];
-    updatedEducation[index] = { ...updatedEducation[index], [field]: value };
-    
-    updateResumeData({
-      ...resumeData,
-      education: updatedEducation
-    });
+  const updateEducation = (index, key, value) => {
+    const edu = [...resumeData.education];
+    edu[index] = { ...edu[index], [key]: value };
+    updateField('education', edu);
   };
 
-  const handleRemoveEducation = (index) => {
-    const updatedEducation = [...(resumeData.education || [])];
-    updatedEducation.splice(index, 1);
-    
-    updateResumeData({
-      ...resumeData,
-      education: updatedEducation
-    });
+  const removeEducation = (index) => {
+    updateField('education', resumeData.education.filter((_, i) => i !== index));
   };
 
-  const handleAddSkill = () => {
-    const newSkill = { name: '', level: 'Intermediate' };
-    updateResumeData({
-      ...resumeData,
-      skills: [...skills, newSkill]
-    });
+  // Skills
+  const addSkill = () => {
+    updateField('skills', [...(resumeData.skills || []), '']);
+    if (!isOpen('skills')) toggleSection('skills');
   };
 
-  const handleUpdateSkill = (index, field, value) => {
-    const updatedSkills = [...skills];
-    updatedSkills[index] = { ...updatedSkills[index], [field]: value };
-    
-    updateResumeData({
-      ...resumeData,
-      skills: updatedSkills
-    });
+  const updateSkill = (index, value) => {
+    const skills = [...resumeData.skills];
+    skills[index] = value;
+    updateField('skills', skills);
   };
 
-  const handleRemoveSkill = (index) => {
-    const updatedSkills = [...skills];
-    updatedSkills.splice(index, 1);
-    
-    updateResumeData({
-      ...resumeData,
-      skills: updatedSkills
-    });
+  const removeSkill = (index) => {
+    updateField('skills', resumeData.skills.filter((_, i) => i !== index));
   };
 
-  const handleAddCertification = () => {
-    const newCertification = {
+  // Projects
+  const addProject = () => {
+    const projects = [...(resumeData.projects || [])];
+    projects.push({
+      id: Date.now().toString(),
+      name: '',
+      description: '',
+      technologies: '',
+      url: '',
+    });
+    updateField('projects', projects);
+    if (!isOpen('projects')) toggleSection('projects');
+  };
+
+  const updateProject = (index, key, value) => {
+    const projects = [...resumeData.projects];
+    projects[index] = { ...projects[index], [key]: value };
+    updateField('projects', projects);
+  };
+
+  const removeProject = (index) => {
+    updateField('projects', resumeData.projects.filter((_, i) => i !== index));
+  };
+
+  // Certifications
+  const addCertification = () => {
+    const certs = [...(resumeData.certifications || [])];
+    certs.push({
+      id: Date.now().toString(),
       name: '',
       issuer: '',
       date: '',
-      url: ''
-    };
-    
-    updateResumeData({
-      ...resumeData,
-      certifications: [...(resumeData.certifications || []), newCertification]
+      url: '',
     });
+    updateField('certifications', certs);
+    if (!isOpen('certifications')) toggleSection('certifications');
   };
 
-  const handleUpdateCertification = (index, field, value) => {
-    const updatedCertifications = [...(resumeData.certifications || [])];
-    updatedCertifications[index] = { ...updatedCertifications[index], [field]: value };
-    
-    updateResumeData({
-      ...resumeData,
-      certifications: updatedCertifications
-    });
+  const updateCertification = (index, key, value) => {
+    const certs = [...resumeData.certifications];
+    certs[index] = { ...certs[index], [key]: value };
+    updateField('certifications', certs);
   };
 
-  const handleRemoveCertification = (index) => {
-    const updatedCertifications = [...(resumeData.certifications || [])];
-    updatedCertifications.splice(index, 1);
-    
-    updateResumeData({
-      ...resumeData,
-      certifications: updatedCertifications
-    });
+  const removeCertification = (index) => {
+    updateField('certifications', resumeData.certifications.filter((_, i) => i !== index));
   };
 
-  const showAiSuggestion = (type, field, index = null) => {
-    if (!resumeData?.id && (type === 'summary' || type === 'skill')) {
-      alert('Please save your resume first to get AI suggestions for this section.');
+  // Languages
+  const addLanguage = () => {
+    const langs = [...(resumeData.languages || [])];
+    langs.push({ name: '', proficiency: 'Professional' });
+    updateField('languages', langs);
+    if (!isOpen('languages')) toggleSection('languages');
+  };
+
+  const updateLanguage = (index, key, value) => {
+    const langs = [...resumeData.languages];
+    langs[index] = { ...langs[index], [key]: value };
+    updateField('languages', langs);
+  };
+
+  const removeLanguage = (index) => {
+    updateField('languages', resumeData.languages.filter((_, i) => i !== index));
+  };
+
+  // AI Assist Functions
+  const handleAISummary = async () => {
+    setAiLoading((prev) => ({ ...prev, summary: true }));
+    try {
+      const result = await generateSummary(resumeData, resumeData.personal_info?.job_title);
+      updateField('summary', result.summary);
+      toast.success('Summary generated!');
+    } catch (err) {
+      toast.error('Failed to generate summary');
+    } finally {
+      setAiLoading((prev) => ({ ...prev, summary: false }));
+    }
+  };
+
+  const handleAIEnhance = async (index) => {
+    const exp = resumeData.work_experience[index];
+    if (!exp.position && !exp.company) {
+      toast.error('Add position and company first');
       return;
     }
-    
-    setAiSuggestionType(type);
-    setAiSuggestionField(field);
-    setAiSuggestionIndex(index);
-    setShowAiSuggestions(true);
-  };
-
-  const handleApplySuggestion = (suggestion) => {
-    if (aiSuggestionIndex !== null) {
-      if (aiSuggestionType === 'highlight') {
-        handleUpdateHighlight(aiSuggestionIndex, parseInt(aiSuggestionField), suggestion);
-      } else if (aiSuggestionType === 'experience') {
-        handleUpdateExperience(aiSuggestionIndex, aiSuggestionField, suggestion);
-      } else if (aiSuggestionType === 'education') {
-        handleUpdateEducation(aiSuggestionIndex, aiSuggestionField, suggestion);
-      } else if (aiSuggestionType === 'skill') {
-        handleUpdateSkill(aiSuggestionIndex, aiSuggestionField, suggestion);
-      }
-    } else {
-      if (aiSuggestionType === 'summary') {
-        updateSummary(suggestion);
-      }
+    setAiLoading((prev) => ({ ...prev, [`exp_${index}`]: true }));
+    try {
+      const result = await enhanceExperience(exp);
+      const updated = [...resumeData.work_experience];
+      updated[index] = { ...updated[index], description: result.enhancedDescription };
+      updateField('work_experience', updated);
+      toast.success('Bullets enhanced!');
+    } catch (err) {
+      toast.error('Failed to enhance experience');
+    } finally {
+      setAiLoading((prev) => ({ ...prev, [`exp_${index}`]: false }));
     }
-    
-    setShowAiSuggestions(false);
   };
 
-  // Safety check
-  if (!resumeData || typeof resumeData !== 'object') {
-    return (
-      <div className="resume-form">
-        <div className="loading-message">Loading resume form...</div>
-      </div>
-    );
-  }
+  const handleAISkills = async () => {
+    const jobTitle = resumeData.personal_info?.job_title;
+    if (!jobTitle) {
+      toast.error('Add a job title in Personal Info first');
+      return;
+    }
+    setAiLoading((prev) => ({ ...prev, skills: true }));
+    try {
+      const result = await suggestSkills(resumeData, `Looking for a ${jobTitle}`);
+      const newSkills = [
+        ...(result.suggestions?.technical || []),
+        ...(result.suggestions?.soft || []),
+      ];
+      const existing = resumeData.skills || [];
+      const unique = newSkills.filter(
+        (s) => !existing.some((e) => e.toLowerCase() === s.toLowerCase())
+      );
+      if (unique.length > 0) {
+        updateField('skills', [...existing, ...unique]);
+        toast.success(`Added ${unique.length} skills!`);
+      } else {
+        toast.success('No new skills to suggest');
+      }
+    } catch (err) {
+      toast.error('Failed to suggest skills');
+    } finally {
+      setAiLoading((prev) => ({ ...prev, skills: false }));
+    }
+  };
 
   return (
     <div className="resume-form">
-      <div className="job-description-input">
-        <label htmlFor="job-description-input">Optimize for Job Description (Optional)</label>
-        <textarea
-          id="job-description-input"
-          placeholder="Paste a job description here to get personalized AI suggestions..."
-          value={jobDescription}
-          onChange={(e) => setJobDescription(e.target.value)}
-          rows={4}
-        />
-        <p className="input-help">
-          Adding a job description helps our AI tailor suggestions specifically for this position
-        </p>
-      </div>
-      
-      <div className="form-navigation">
-        <button 
-          className={`nav-button ${activeSection === 'personalInfo' ? 'active' : ''}`}
-          onClick={() => setActiveSection('personalInfo')}
-        >
-          Personal Info
-        </button>
-        <button 
-          className={`nav-button ${activeSection === 'summary' ? 'active' : ''}`}
-          onClick={() => setActiveSection('summary')}
-        >
-          Summary
-        </button>
-        <button 
-          className={`nav-button ${activeSection === 'workExperience' ? 'active' : ''}`}
-          onClick={() => setActiveSection('workExperience')}
-        >
-          Experience
-        </button>
-        <button 
-          className={`nav-button ${activeSection === 'education' ? 'active' : ''}`}
-          onClick={() => setActiveSection('education')}
-        >
-          Education
-        </button>
-        <button 
-          className={`nav-button ${activeSection === 'skills' ? 'active' : ''}`}
-          onClick={() => setActiveSection('skills')}
-        >
-          Skills
-        </button>
-        <button 
-          className={`nav-button ${activeSection === 'certifications' ? 'active' : ''}`}
-          onClick={() => setActiveSection('certifications')}
-        >
-          Certifications
-        </button>
-      </div>
-      
-      <div className="form-content">
-        {/* Personal Information */}
-        {activeSection === 'personalInfo' && (
-          <div className="form-section">
-            <h2>Personal Information</h2>
-            
-            <div className="form-row">
-              <EnhancedField
-                label="First Name"
-                name="personalInfo.firstName"
-                value={resumeData.personalInfo?.firstName || ''}
-                onChange={(e) => handleNestedInputChange('personalInfo', 'firstName', e.target.value)}
-                placeholder="Your first name"
-              />
-              
-              <EnhancedField
-                label="Last Name"
-                name="personalInfo.lastName"
-                value={resumeData.personalInfo?.lastName || ''}
-                onChange={(e) => handleNestedInputChange('personalInfo', 'lastName', e.target.value)}
-                placeholder="Your last name"
-              />
+      {SECTIONS.map(({ id, label, icon: Icon }) => (
+        <div key={id} className={`form-section ${isOpen(id) ? 'is-open' : ''}`}>
+          <button className="section-header" onClick={() => toggleSection(id)}>
+            <div className="section-header-left">
+              <Icon size={16} />
+              <span>{label}</span>
+              {id === 'experience' && resumeData.work_experience?.length > 0 && (
+                <span className="section-count">{resumeData.work_experience.length}</span>
+              )}
+              {id === 'education' && resumeData.education?.length > 0 && (
+                <span className="section-count">{resumeData.education.length}</span>
+              )}
+              {id === 'skills' && resumeData.skills?.length > 0 && (
+                <span className="section-count">{resumeData.skills.length}</span>
+              )}
             </div>
-            
-            <div className="form-row">
-              <EnhancedField
-                label="Email"
-                name="personalInfo.email"
-                value={resumeData.personalInfo?.email || ''}
-                onChange={(e) => handleNestedInputChange('personalInfo', 'email', e.target.value)}
-                placeholder="your.email@example.com"
-              />
-              
-              <EnhancedField
-                label="Phone"
-                name="personalInfo.phone"
-                value={resumeData.personalInfo?.phone || ''}
-                onChange={(e) => handleNestedInputChange('personalInfo', 'phone', e.target.value)}
-                placeholder="(123) 456-7890"
-              />
-            </div>
-            
-            <EnhancedField
-              label="Address"
-              name="personalInfo.address"
-              value={resumeData.personalInfo?.address || ''}
-              onChange={(e) => handleNestedInputChange('personalInfo', 'address', e.target.value)}
-              placeholder="Your street address"
-            />
-            
-            <div className="form-row">
-              <EnhancedField
-                label="City"
-                name="personalInfo.city"
-                value={resumeData.personalInfo?.city || ''}
-                onChange={(e) => handleNestedInputChange('personalInfo', 'city', e.target.value)}
-                placeholder="City"
-              />
-              
-              <EnhancedField
-                label="State/Province"
-                name="personalInfo.state"
-                value={resumeData.personalInfo?.state || ''}
-                onChange={(e) => handleNestedInputChange('personalInfo', 'state', e.target.value)}
-                placeholder="State/Province"
-              />
-              
-              <EnhancedField
-                label="Zip/Postal Code"
-                name="personalInfo.zipCode"
-                value={resumeData.personalInfo?.zipCode || ''}
-                onChange={(e) => handleNestedInputChange('personalInfo', 'zipCode', e.target.value)}
-                placeholder="Zip/Postal Code"
-              />
-            </div>
-            
-            <div className="form-row">
-              <EnhancedField
-                label="LinkedIn (Optional)"
-                name="personalInfo.linkedIn"
-                value={resumeData.personalInfo?.linkedIn || ''}
-                onChange={(e) => handleNestedInputChange('personalInfo', 'linkedIn', e.target.value)}
-                placeholder="linkedin.com/in/yourprofile"
-              />
-              
-              <EnhancedField
-                label="Website (Optional)"
-                name="personalInfo.website"
-                value={resumeData.personalInfo?.website || ''}
-                onChange={(e) => handleNestedInputChange('personalInfo', 'website', e.target.value)}
-                placeholder="yourwebsite.com"
-              />
-            </div>
-          </div>
-        )}
-        
-        {/* Professional Summary */}
-        {activeSection === 'summary' && (
-          <div className="form-section">
-            <div className="section-header">
-              <h2>Professional Summary</h2>
-              <button 
-                className="ai-suggestion-button"
-                onClick={() => showAiSuggestion('summary', 'summary')}
-              >
-                Get AI Suggestions
-              </button>
-            </div>
-            
-            <EnhancedField
-              label="Summary"
-              name="summary"
-              value={resumeData.summary || ''}
-              onChange={handleInputChange}
-              placeholder="Write a compelling professional summary..."
-              multiline={true}
-            />
-            
-            {showAiSuggestions && aiSuggestionType === 'summary' && (
-              <div className="ai-suggestions-panel">
-                <EnhancedAISuggestions
-                  type="summary"
-                  currentContent={resumeData.summary || ''}
-                  jobDescription={jobDescription}
-                  resumeId={resumeData.id}
-                  onApplySuggestion={handleApplySuggestion}
-                />
-                
-                <AISuggestionFeedback
-                  suggestionId="summary-general"
-                  suggestionType="summary"
-                />
-              </div>
-            )}
-          </div>
-        )}
-        
-        {/* Work Experience */}
-        {activeSection === 'workExperience' && (
-          <div className="form-section">
-            <div className="section-header">
-              <h2>Work Experience</h2>
-              <button className="add-item-button" onClick={handleAddExperience}>
-                Add Experience
-              </button>
-            </div>
-            
-            {(resumeData.workExperience || []).map((experience, expIndex) => (
-              <div key={expIndex} className="experience-item">
-                <div className="item-header">
-                  <h3>Experience {expIndex + 1}</h3>
-                  <button 
-                    className="remove-item-button"
-                    onClick={() => handleRemoveExperience(expIndex)}
-                  >
-                    Remove
-                  </button>
-                </div>
-                
-                <div className="form-row">
-                  <EnhancedField
-                    label="Job Title"
-                    name={`workExperience[${expIndex}].title`}
-                    value={experience.title || ''}
-                    onChange={(e) => handleUpdateExperience(expIndex, 'title', e.target.value)}
-                    placeholder="e.g., Software Engineer"
-                  />
-                  
-                  <EnhancedField
-                    label="Company"
-                    name={`workExperience[${expIndex}].company`}
-                    value={experience.company || ''}
-                    onChange={(e) => handleUpdateExperience(expIndex, 'company', e.target.value)}
-                    placeholder="e.g., Acme Corporation"
-                  />
-                </div>
-                
-                <div className="form-row">
-                  <EnhancedField
-                    label="Location"
-                    name={`workExperience[${expIndex}].location`}
-                    value={experience.location || ''}
-                    onChange={(e) => handleUpdateExperience(expIndex, 'location', e.target.value)}
-                    placeholder="e.g., New York, NY"
-                  />
-                </div>
-                
-                <div className="form-row">
-                  <EnhancedField
-                    label="Start Date"
-                    name={`workExperience[${expIndex}].startDate`}
-                    value={experience.startDate || ''}
-                    onChange={(e) => handleUpdateExperience(expIndex, 'startDate', e.target.value)}
-                    placeholder="e.g., June 2020"
-                  />
-                  
-                  <EnhancedField
-                    label="End Date"
-                    name={`workExperience[${expIndex}].endDate`}
-                    value={experience.endDate || ''}
-                    onChange={(e) => handleUpdateExperience(expIndex, 'endDate', e.target.value)}
-                    placeholder="e.g., Present"
-                    disabled={experience.current}
-                  />
-                  
-                  <div className="checkbox-field">
-                    <input
-                      type="checkbox"
-                      id={`current-job-${expIndex}`}
-                      checked={experience.current || false}
-                      onChange={(e) => handleUpdateExperience(expIndex, 'current', e.target.checked)}
-                    />
-                    <label htmlFor={`current-job-${expIndex}`}>Current Job</label>
+            {isOpen(id) ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
+          </button>
+
+          {isOpen(id) && (
+            <div className="section-content">
+              {/* Personal Info */}
+              {id === 'personal' && (
+                <div className="section-fields">
+                  <div className="form-row">
+                    <div className="form-group">
+                      <label className="form-label">First Name</label>
+                      <input className="form-input" value={resumeData.personal_info?.first_name || ''} onChange={(e) => updatePersonal('first_name', e.target.value)} placeholder="John" />
+                    </div>
+                    <div className="form-group">
+                      <label className="form-label">Last Name</label>
+                      <input className="form-input" value={resumeData.personal_info?.last_name || ''} onChange={(e) => updatePersonal('last_name', e.target.value)} placeholder="Doe" />
+                    </div>
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label">Job Title</label>
+                    <input className="form-input" value={resumeData.personal_info?.job_title || ''} onChange={(e) => updatePersonal('job_title', e.target.value)} placeholder="Software Engineer" />
+                  </div>
+                  <div className="form-row">
+                    <div className="form-group">
+                      <label className="form-label">Email</label>
+                      <input className="form-input" type="email" value={resumeData.personal_info?.email || ''} onChange={(e) => updatePersonal('email', e.target.value)} placeholder="john@example.com" />
+                    </div>
+                    <div className="form-group">
+                      <label className="form-label">Phone</label>
+                      <input className="form-input" value={resumeData.personal_info?.phone || ''} onChange={(e) => updatePersonal('phone', e.target.value)} placeholder="+1 (555) 000-0000" />
+                    </div>
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label">Location</label>
+                    <input className="form-input" value={resumeData.personal_info?.location || ''} onChange={(e) => updatePersonal('location', e.target.value)} placeholder="New York, NY" />
+                  </div>
+                  <div className="form-row">
+                    <div className="form-group">
+                      <label className="form-label">LinkedIn</label>
+                      <input className="form-input" value={resumeData.personal_info?.linkedin || ''} onChange={(e) => updatePersonal('linkedin', e.target.value)} placeholder="linkedin.com/in/johndoe" />
+                    </div>
+                    <div className="form-group">
+                      <label className="form-label">Website</label>
+                      <input className="form-input" value={resumeData.personal_info?.website || ''} onChange={(e) => updatePersonal('website', e.target.value)} placeholder="johndoe.com" />
+                    </div>
                   </div>
                 </div>
-                
-                <div className="description-field">
-                  <div className="field-header">
-                    <label>Job Description</label>
-                    <button 
-                      className="ai-suggestion-button"
-                      onClick={() => showAiSuggestion('experience', 'description', expIndex)}
-                    >
-                      Get AI Suggestions
-                    </button>
+              )}
+
+              {/* Summary */}
+              {id === 'summary' && (
+                <div className="section-fields">
+                  <div className="form-group">
+                    <div className="form-label-row">
+                      <label className="form-label">Professional Summary</label>
+                      <button
+                        className="btn btn-ai btn-sm"
+                        onClick={handleAISummary}
+                        disabled={aiLoading.summary}
+                      >
+                        {aiLoading.summary ? <><Loader size={12} className="spin" /> Generating...</> : <><Sparkles size={12} /> AI Write</>}
+                      </button>
+                    </div>
+                    <textarea className="form-textarea" rows={4} value={resumeData.summary || ''} onChange={(e) => updateSummary(e.target.value)} placeholder="Experienced software engineer with 5+ years building scalable web applications..." />
+                    <span className="form-hint">{(resumeData.summary || '').length}/500 characters</span>
                   </div>
-                  
-                  <textarea
-                    name={`workExperience[${expIndex}].description`}
-                    value={experience.description || ''}
-                    onChange={(e) => handleUpdateExperience(expIndex, 'description', e.target.value)}
-                    placeholder="Describe your responsibilities and the scope of your role..."
-                    rows={4}
-                  />
                 </div>
-                
-                <div className="highlights-section">
-                  <div className="section-header">
-                    <h4>Key Achievements</h4>
-                    <button 
-                      className="add-highlight-button"
-                      onClick={() => handleAddHighlight(expIndex)}
-                    >
-                      Add Achievement
-                    </button>
-                  </div>
-                  
-                  {(experience.highlights || []).map((highlight, highlightIndex) => (
-                    <div key={highlightIndex} className="highlight-item">
-                      <div className="highlight-input">
-                        <input
-                          type="text"
-                          value={highlight || ''}
-                          onChange={(e) => handleUpdateHighlight(expIndex, highlightIndex, e.target.value)}
-                          placeholder="e.g., Increased revenue by 20% through..."
-                        />
-                        <div className="highlight-actions">
-                          <button 
-                            className="ai-suggestion-button sm"
-                            onClick={() => showAiSuggestion('highlight', highlightIndex.toString(), expIndex)}
-                            title="Get AI suggestions"
+              )}
+
+              {/* Experience */}
+              {id === 'experience' && (
+                <div className="section-fields">
+                  {(resumeData.work_experience || []).map((exp, i) => (
+                    <div key={exp.id || i} className="repeater-item">
+                      <div className="repeater-header">
+                        <span className="repeater-title">{exp.position || exp.company || `Position ${i + 1}`}</span>
+                        <button className="btn btn-ghost btn-sm" onClick={() => removeExperience(i)}><Trash2 size={14} /></button>
+                      </div>
+                      <div className="form-row">
+                        <div className="form-group">
+                          <label className="form-label">Position</label>
+                          <input className="form-input" value={exp.position || ''} onChange={(e) => updateExperience(i, 'position', e.target.value)} placeholder="Software Engineer" />
+                        </div>
+                        <div className="form-group">
+                          <label className="form-label">Company</label>
+                          <input className="form-input" value={exp.company || ''} onChange={(e) => updateExperience(i, 'company', e.target.value)} placeholder="Acme Inc." />
+                        </div>
+                      </div>
+                      <div className="form-group">
+                        <label className="form-label">Location</label>
+                        <input className="form-input" value={exp.location || ''} onChange={(e) => updateExperience(i, 'location', e.target.value)} placeholder="San Francisco, CA" />
+                      </div>
+                      <div className="form-row">
+                        <div className="form-group">
+                          <label className="form-label">Start Date</label>
+                          <input className="form-input" type="month" value={exp.start_date || ''} onChange={(e) => updateExperience(i, 'start_date', e.target.value)} />
+                        </div>
+                        <div className="form-group">
+                          <label className="form-label">End Date</label>
+                          <input className="form-input" type="month" value={exp.end_date || ''} onChange={(e) => updateExperience(i, 'end_date', e.target.value)} disabled={exp.current} />
+                          <label className="checkbox-label">
+                            <input type="checkbox" checked={exp.current || false} onChange={(e) => updateExperience(i, 'current', e.target.checked)} />
+                            Currently working here
+                          </label>
+                        </div>
+                      </div>
+                      <div className="form-group">
+                        <div className="form-label-row">
+                          <label className="form-label">Key Achievements</label>
+                          <button
+                            className="btn btn-ai btn-sm"
+                            onClick={() => handleAIEnhance(i)}
+                            disabled={aiLoading[`exp_${i}`]}
                           >
-                            AI
+                            {aiLoading[`exp_${i}`] ? <><Loader size={12} className="spin" /> Enhancing...</> : <><Sparkles size={12} /> AI Enhance</>}
                           </button>
-                          <button 
-                            className="remove-highlight-button"
-                            onClick={() => handleRemoveHighlight(expIndex, highlightIndex)}
-                            title="Remove achievement"
-                          >
-                            ×
-                          </button>
+                        </div>
+                        {(exp.description || []).map((bullet, bi) => (
+                          <div key={bi} className="bullet-row">
+                            <span className="bullet-dot" />
+                            <input className="form-input" value={bullet} onChange={(e) => updateBullet(i, bi, e.target.value)} placeholder="Led a team of 5 engineers to deliver..." />
+                            <button className="btn btn-ghost btn-icon btn-sm" onClick={() => removeBullet(i, bi)}><Trash2 size={12} /></button>
+                          </div>
+                        ))}
+                        <button className="btn btn-ghost btn-sm" onClick={() => addBullet(i)}><Plus size={14} /> Add bullet</button>
+                      </div>
+                    </div>
+                  ))}
+                  <button className="btn btn-secondary btn-sm" onClick={addExperience}><Plus size={14} /> Add Experience</button>
+                </div>
+              )}
+
+              {/* Education */}
+              {id === 'education' && (
+                <div className="section-fields">
+                  {(resumeData.education || []).map((edu, i) => (
+                    <div key={edu.id || i} className="repeater-item">
+                      <div className="repeater-header">
+                        <span className="repeater-title">{edu.institution || `Education ${i + 1}`}</span>
+                        <button className="btn btn-ghost btn-sm" onClick={() => removeEducation(i)}><Trash2 size={14} /></button>
+                      </div>
+                      <div className="form-row">
+                        <div className="form-group">
+                          <label className="form-label">Institution</label>
+                          <input className="form-input" value={edu.institution || ''} onChange={(e) => updateEducation(i, 'institution', e.target.value)} placeholder="MIT" />
+                        </div>
+                        <div className="form-group">
+                          <label className="form-label">Degree</label>
+                          <input className="form-input" value={edu.degree || ''} onChange={(e) => updateEducation(i, 'degree', e.target.value)} placeholder="B.S. Computer Science" />
+                        </div>
+                      </div>
+                      <div className="form-row">
+                        <div className="form-group">
+                          <label className="form-label">Field of Study</label>
+                          <input className="form-input" value={edu.field_of_study || ''} onChange={(e) => updateEducation(i, 'field_of_study', e.target.value)} placeholder="Computer Science" />
+                        </div>
+                        <div className="form-group">
+                          <label className="form-label">GPA</label>
+                          <input className="form-input" value={edu.gpa || ''} onChange={(e) => updateEducation(i, 'gpa', e.target.value)} placeholder="3.8" />
+                        </div>
+                      </div>
+                      <div className="form-row">
+                        <div className="form-group">
+                          <label className="form-label">Start Date</label>
+                          <input className="form-input" type="month" value={edu.start_date || ''} onChange={(e) => updateEducation(i, 'start_date', e.target.value)} />
+                        </div>
+                        <div className="form-group">
+                          <label className="form-label">End Date</label>
+                          <input className="form-input" type="month" value={edu.end_date || ''} onChange={(e) => updateEducation(i, 'end_date', e.target.value)} />
                         </div>
                       </div>
                     </div>
                   ))}
+                  <button className="btn btn-secondary btn-sm" onClick={addEducation}><Plus size={14} /> Add Education</button>
                 </div>
-              </div>
-            ))}
-            
-            {(!resumeData.workExperience || resumeData.workExperience.length === 0) && (
-              <div className="empty-section">
-                <p>No work experience added yet.</p>
-                <button className="add-item-button" onClick={handleAddExperience}>
-                  Add Experience
-                </button>
-              </div>
-            )}
-          </div>
-        )}
-        
-        {/* Education */}
-        {activeSection === 'education' && (
-          <div className="form-section">
-            <div className="section-header">
-              <h2>Education</h2>
-              <button className="add-item-button" onClick={handleAddEducation}>
-                Add Education
-              </button>
-            </div>
-            
-            {(resumeData.education || []).map((education, eduIndex) => (
-              <div key={eduIndex} className="education-item">
-                <div className="item-header">
-                  <h3>Education {eduIndex + 1}</h3>
-                  <button 
-                    className="remove-item-button"
-                    onClick={() => handleRemoveEducation(eduIndex)}
-                  >
-                    Remove
-                  </button>
-                </div>
-                
-                <div className="form-row">
-                  <EnhancedField
-                    label="Institution"
-                    name={`education[${eduIndex}].institution`}
-                    value={education.institution || ''}
-                    onChange={(e) => handleUpdateEducation(eduIndex, 'institution', e.target.value)}
-                    placeholder="e.g., University of California, Berkeley"
-                  />
-                  
-                  <EnhancedField
-                    label="Location"
-                    name={`education[${eduIndex}].location`}
-                    value={education.location || ''}
-                    onChange={(e) => handleUpdateEducation(eduIndex, 'location', e.target.value)}
-                    placeholder="e.g., Berkeley, CA"
-                  />
-                </div>
-                
-                <div className="form-row">
-                  <EnhancedField
-                    label="Degree"
-                    name={`education[${eduIndex}].degree`}
-                    value={education.degree || ''}
-                    onChange={(e) => handleUpdateEducation(eduIndex, 'degree', e.target.value)}
-                    placeholder="e.g., Bachelor of Science"
-                  />
-                  
-                  <EnhancedField
-                    label="Field of Study"
-                    name={`education[${eduIndex}].field`}
-                    value={education.field || ''}
-                    onChange={(e) => handleUpdateEducation(eduIndex, 'field', e.target.value)}
-                    placeholder="e.g., Computer Science"
-                  />
-                </div>
-                
-                <div className="form-row">
-                  <EnhancedField
-                    label="Start Date"
-                    name={`education[${eduIndex}].startDate`}
-                    value={education.startDate || ''}
-                    onChange={(e) => handleUpdateEducation(eduIndex, 'startDate', e.target.value)}
-                    placeholder="e.g., September 2018"
-                  />
-                  
-                  <EnhancedField
-                    label="End Date"
-                    name={`education[${eduIndex}].endDate`}
-                    value={education.endDate || ''}
-                    onChange={(e) => handleUpdateEducation(eduIndex, 'endDate', e.target.value)}
-                    placeholder="e.g., May 2022"
-                    disabled={education.current}
-                  />
-                  
-                  <div className="checkbox-field">
-                    <input
-                      type="checkbox"
-                      id={`current-education-${eduIndex}`}
-                      checked={education.current || false}
-                      onChange={(e) => handleUpdateEducation(eduIndex, 'current', e.target.checked)}
-                    />
-                    <label htmlFor={`current-education-${eduIndex}`}>Currently Studying</label>
+              )}
+
+              {/* Skills */}
+              {id === 'skills' && (
+                <div className="section-fields">
+                  <div className="skills-grid">
+                    {(resumeData.skills || []).map((skill, i) => (
+                      <div key={i} className="skill-tag-input">
+                        <input className="form-input" value={skill} onChange={(e) => updateSkill(i, e.target.value)} placeholder="React, Python, etc." />
+                        <button className="btn btn-ghost btn-icon btn-sm" onClick={() => removeSkill(i)}><Trash2 size={12} /></button>
+                      </div>
+                    ))}
                   </div>
-                </div>
-                
-                <div className="form-row">
-                  <EnhancedField
-                    label="GPA (Optional)"
-                    name={`education[${eduIndex}].gpa`}
-                    value={education.gpa || ''}
-                    onChange={(e) => handleUpdateEducation(eduIndex, 'gpa', e.target.value)}
-                    placeholder="e.g., 3.8/4.0"
-                  />
-                </div>
-              </div>
-            ))}
-            
-            {(!resumeData.education || resumeData.education.length === 0) && (
-              <div className="empty-section">
-                <p>No education added yet.</p>
-                <button className="add-item-button" onClick={handleAddEducation}>
-                  Add Education
-                </button>
-              </div>
-            )}
-          </div>
-        )}
-        
-        {/* Skills */}
-        {activeSection === 'skills' && (
-          <div className="form-section">
-            <div className="section-header">
-              <h2>Skills</h2>
-              <button className="add-item-button" onClick={handleAddSkill}>
-                Add Skill
-              </button>
-            </div>
-            
-            <div className="skills-grid">
-              {skills.map((skill, skillIndex) => (
-                <div key={skillIndex} className="skill-item">
-                  <div className="skill-input">
-                    <input
-                      type="text"
-                      value={skill.name || ''}
-                      onChange={(e) => handleUpdateSkill(skillIndex, 'name', e.target.value)}
-                      placeholder="e.g., JavaScript"
-                    />
-                    
-                    <select
-                      value={skill.level || 'Intermediate'}
-                      onChange={(e) => handleUpdateSkill(skillIndex, 'level', e.target.value)}
+                  <div className="skills-actions">
+                    <button className="btn btn-secondary btn-sm" onClick={addSkill}><Plus size={14} /> Add Skill</button>
+                    <button
+                      className="btn btn-ai btn-sm"
+                      onClick={handleAISkills}
+                      disabled={aiLoading.skills}
                     >
-                      <option value="Beginner">Beginner</option>
-                      <option value="Intermediate">Intermediate</option>
-                      <option value="Advanced">Advanced</option>
-                      <option value="Expert">Expert</option>
-                    </select>
-                    
-                    <button 
-                      className="remove-skill-button"
-                      onClick={() => handleRemoveSkill(skillIndex)}
-                      title="Remove skill"
-                    >
-                      ×
+                      {aiLoading.skills ? <><Loader size={12} className="spin" /> Suggesting...</> : <><Sparkles size={12} /> AI Suggest Skills</>}
                     </button>
                   </div>
                 </div>
-              ))}
-              
-              <div className="skill-item add-skill" onClick={handleAddSkill}>
-                <div className="add-skill-button">+ Add Skill</div>
-              </div>
-            </div>
-            
-            <div className="ai-skills-section">
-              <button 
-                className="ai-skills-button"
-                onClick={() => showAiSuggestion('skill', 'name')}
-              >
-                Get AI Skill Suggestions Based on Job Description
-              </button>
-              
-              {showAiSuggestions && aiSuggestionType === 'skill' && (
-                <div className="ai-suggestions-panel">
-                  <EnhancedAISuggestions
-                    type="skill"
-                    currentContent=""
-                    jobDescription={jobDescription}
-                    resumeId={resumeData.id}
-                    onApplySuggestion={(skill) => {
-                      updateResumeData({
-                        ...resumeData,
-                        skills: [...skills, { name: skill, level: 'Intermediate' }]
-                      });
-                      setShowAiSuggestions(false);
-                    }}
-                  />
-                  
-                  <AISuggestionFeedback
-                    suggestionId="skills-recommendation"
-                    suggestionType="skill_suggestion"
-                  />
+              )}
+
+              {/* Projects */}
+              {id === 'projects' && (
+                <div className="section-fields">
+                  {(resumeData.projects || []).map((proj, i) => (
+                    <div key={proj.id || i} className="repeater-item">
+                      <div className="repeater-header">
+                        <span className="repeater-title">{proj.name || `Project ${i + 1}`}</span>
+                        <button className="btn btn-ghost btn-sm" onClick={() => removeProject(i)}><Trash2 size={14} /></button>
+                      </div>
+                      <div className="form-group">
+                        <label className="form-label">Project Name</label>
+                        <input className="form-input" value={proj.name || ''} onChange={(e) => updateProject(i, 'name', e.target.value)} placeholder="My Project" />
+                      </div>
+                      <div className="form-group">
+                        <label className="form-label">Description</label>
+                        <textarea className="form-textarea" rows={2} value={proj.description || ''} onChange={(e) => updateProject(i, 'description', e.target.value)} placeholder="Built a full-stack application that..." />
+                      </div>
+                      <div className="form-row">
+                        <div className="form-group">
+                          <label className="form-label">Technologies</label>
+                          <input className="form-input" value={proj.technologies || ''} onChange={(e) => updateProject(i, 'technologies', e.target.value)} placeholder="React, Node.js, PostgreSQL" />
+                        </div>
+                        <div className="form-group">
+                          <label className="form-label">URL</label>
+                          <input className="form-input" value={proj.url || ''} onChange={(e) => updateProject(i, 'url', e.target.value)} placeholder="github.com/..." />
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                  <button className="btn btn-secondary btn-sm" onClick={addProject}><Plus size={14} /> Add Project</button>
+                </div>
+              )}
+
+              {/* Certifications */}
+              {id === 'certifications' && (
+                <div className="section-fields">
+                  {(resumeData.certifications || []).map((cert, i) => (
+                    <div key={cert.id || i} className="repeater-item">
+                      <div className="repeater-header">
+                        <span className="repeater-title">{cert.name || `Certification ${i + 1}`}</span>
+                        <button className="btn btn-ghost btn-sm" onClick={() => removeCertification(i)}><Trash2 size={14} /></button>
+                      </div>
+                      <div className="form-row">
+                        <div className="form-group">
+                          <label className="form-label">Name</label>
+                          <input className="form-input" value={cert.name || ''} onChange={(e) => updateCertification(i, 'name', e.target.value)} placeholder="AWS Solutions Architect" />
+                        </div>
+                        <div className="form-group">
+                          <label className="form-label">Issuer</label>
+                          <input className="form-input" value={cert.issuer || ''} onChange={(e) => updateCertification(i, 'issuer', e.target.value)} placeholder="Amazon Web Services" />
+                        </div>
+                      </div>
+                      <div className="form-row">
+                        <div className="form-group">
+                          <label className="form-label">Date</label>
+                          <input className="form-input" type="month" value={cert.date || ''} onChange={(e) => updateCertification(i, 'date', e.target.value)} />
+                        </div>
+                        <div className="form-group">
+                          <label className="form-label">URL</label>
+                          <input className="form-input" value={cert.url || ''} onChange={(e) => updateCertification(i, 'url', e.target.value)} placeholder="credential URL" />
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                  <button className="btn btn-secondary btn-sm" onClick={addCertification}><Plus size={14} /> Add Certification</button>
+                </div>
+              )}
+
+              {/* Languages */}
+              {id === 'languages' && (
+                <div className="section-fields">
+                  {(resumeData.languages || []).map((lang, i) => (
+                    <div key={i} className="repeater-item-inline">
+                      <input className="form-input" value={lang.name || ''} onChange={(e) => updateLanguage(i, 'name', e.target.value)} placeholder="English" />
+                      <select className="form-select" value={lang.proficiency || 'Professional'} onChange={(e) => updateLanguage(i, 'proficiency', e.target.value)}>
+                        <option value="Native">Native</option>
+                        <option value="Fluent">Fluent</option>
+                        <option value="Professional">Professional</option>
+                        <option value="Intermediate">Intermediate</option>
+                        <option value="Basic">Basic</option>
+                      </select>
+                      <button className="btn btn-ghost btn-icon btn-sm" onClick={() => removeLanguage(i)}><Trash2 size={12} /></button>
+                    </div>
+                  ))}
+                  <button className="btn btn-secondary btn-sm" onClick={addLanguage}><Plus size={14} /> Add Language</button>
                 </div>
               )}
             </div>
-          </div>
-        )}
-        
-        {/* Certifications */}
-        {activeSection === 'certifications' && (
-          <div className="form-section">
-            <div className="section-header">
-              <h2>Certifications & Licenses</h2>
-              <button className="add-item-button" onClick={handleAddCertification}>
-                Add Certification
-              </button>
-            </div>
-            
-            {(resumeData.certifications || []).map((cert, certIndex) => (
-              <div key={certIndex} className="certification-item">
-                <div className="item-header">
-                  <h3>Certification {certIndex + 1}</h3>
-                  <button 
-                    className="remove-item-button"
-                    onClick={() => handleRemoveCertification(certIndex)}
-                  >
-                    Remove
-                  </button>
-                </div>
-                
-                <div className="form-row">
-                  <EnhancedField
-                    label="Certification Name"
-                    name={`certifications[${certIndex}].name`}
-                    value={cert.name || ''}
-                    onChange={(e) => handleUpdateCertification(certIndex, 'name', e.target.value)}
-                    placeholder="e.g., AWS Certified Solutions Architect"
-                  />
-                </div>
-                
-                <div className="form-row">
-                  <EnhancedField
-                    label="Issuing Organization"
-                    name={`certifications[${certIndex}].issuer`}
-                    value={cert.issuer || ''}
-                    onChange={(e) => handleUpdateCertification(certIndex, 'issuer', e.target.value)}
-                    placeholder="e.g., Amazon Web Services"
-                  />
-                  
-                  <EnhancedField
-                    label="Date Earned"
-                    name={`certifications[${certIndex}].date`}
-                    value={cert.date || ''}
-                    onChange={(e) => handleUpdateCertification(certIndex, 'date', e.target.value)}
-                    placeholder="e.g., May 2022"
-                  />
-                </div>
-                
-                <EnhancedField
-                  label="Credential URL (Optional)"
-                  name={`certifications[${certIndex}].url`}
-                  value={cert.url || ''}
-                  onChange={(e) => handleUpdateCertification(certIndex, 'url', e.target.value)}
-                  placeholder="e.g., https://www.credential.net/your-credential"
-                />
-              </div>
-            ))}
-            
-            {(!resumeData.certifications || resumeData.certifications.length === 0) && (
-              <div className="empty-section">
-                <p>No certifications added yet.</p>
-                <button className="add-item-button" onClick={handleAddCertification}>
-                  Add Certification
-                </button>
-              </div>
-            )}
-          </div>
-        )}
-      </div>
+          )}
+        </div>
+      ))}
     </div>
   );
 };

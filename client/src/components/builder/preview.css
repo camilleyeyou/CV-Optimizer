@@ -1,0 +1,227 @@
+/* Resume Preview - A4 document with refined typography */
+.preview-page {
+  width: 210mm;
+  min-height: 297mm;
+  max-width: 100%;
+  background-color: #ffffff;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08), 0 1px 4px rgba(0, 0, 0, 0.04);
+  border-radius: 4px;
+  padding: 40px 48px;
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 10.5pt;
+  line-height: 1.5;
+  color: #1a1a1a;
+}
+
+/* Header */
+.preview-header {
+  text-align: center;
+  margin-bottom: 20px;
+  padding-bottom: 16px;
+  border-bottom: 2px solid #2563eb;
+}
+
+.preview-name {
+  font-size: 22pt;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  color: #111827;
+  margin-bottom: 4px;
+  font-family: 'Inter', -apple-system, sans-serif;
+}
+
+.preview-name.preview-placeholder {
+  color: #d1d5db;
+}
+
+.preview-job-title {
+  font-size: 11pt;
+  color: #2563eb;
+  font-weight: 500;
+  margin-bottom: 10px;
+  font-family: 'Inter', -apple-system, sans-serif;
+}
+
+.preview-contact {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 12px;
+}
+
+.contact-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 8.5pt;
+  color: #4b5563;
+  font-family: 'Inter', -apple-system, sans-serif;
+}
+
+.contact-item svg {
+  color: #6b7280;
+}
+
+/* Sections */
+.preview-section {
+  margin-bottom: 16px;
+}
+
+.preview-section-title {
+  font-size: 11pt;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: #111827;
+  padding-bottom: 4px;
+  border-bottom: 1px solid #e5e7eb;
+  margin-bottom: 10px;
+  font-family: 'Inter', -apple-system, sans-serif;
+}
+
+/* Entries */
+.preview-entry {
+  margin-bottom: 12px;
+}
+
+.preview-entry:last-child {
+  margin-bottom: 0;
+}
+
+.preview-entry-compact {
+  margin-bottom: 4px;
+}
+
+.preview-entry-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.preview-entry-title {
+  font-size: 10.5pt;
+  font-weight: 700;
+  color: #111827;
+}
+
+.preview-entry-subtitle {
+  font-size: 10pt;
+  color: #4b5563;
+}
+
+.preview-entry-date {
+  font-size: 9pt;
+  color: #6b7280;
+  white-space: nowrap;
+  font-family: 'Inter', -apple-system, sans-serif;
+}
+
+.preview-entry-location {
+  font-size: 9.5pt;
+  color: #6b7280;
+  margin: 2px 0;
+}
+
+.preview-entry-link {
+  font-size: 9pt;
+  color: #2563eb;
+}
+
+.preview-entry-tech {
+  font-size: 9pt;
+  color: #6b7280;
+  font-style: italic;
+  margin-top: 4px;
+  margin-bottom: 0;
+}
+
+/* Text */
+.preview-text {
+  font-size: 10pt;
+  color: #374151;
+  line-height: 1.6;
+  margin-bottom: 0;
+}
+
+/* Bullet points */
+.preview-bullets {
+  list-style: none;
+  padding: 0;
+  margin: 6px 0 0 0;
+}
+
+.preview-bullets li {
+  position: relative;
+  padding-left: 14px;
+  font-size: 10pt;
+  color: #374151;
+  line-height: 1.5;
+  margin-bottom: 3px;
+}
+
+.preview-bullets li::before {
+  content: '\2022';
+  position: absolute;
+  left: 0;
+  color: #9ca3af;
+}
+
+/* Skills */
+.preview-skills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.preview-skill {
+  padding: 2px 10px;
+  background-color: #f3f4f6;
+  border: 1px solid #e5e7eb;
+  border-radius: 3px;
+  font-size: 9pt;
+  color: #374151;
+  font-family: 'Inter', -apple-system, sans-serif;
+}
+
+/* Languages */
+.preview-languages {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.preview-language {
+  font-size: 10pt;
+  color: #374151;
+}
+
+.lang-level {
+  color: #6b7280;
+  font-size: 9pt;
+}
+
+/* Empty state */
+.preview-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 300px;
+  text-align: center;
+}
+
+.preview-empty p {
+  color: #9ca3af;
+  font-size: 10pt;
+  font-style: italic;
+  font-family: 'Inter', -apple-system, sans-serif;
+}
+
+/* Print */
+@media print {
+  .preview-page {
+    box-shadow: none;
+    padding: 0;
+    margin: 0;
+  }
+}

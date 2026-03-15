@@ -1,64 +1,54 @@
-// server/src/middleware/auth.js
-const jwt = require('jsonwebtoken');
-const User = require('../models/User'); // Adjust path as needed
+const { createClient } = require('@supabase/supabase-js');
 
-// Existing auth middleware (requires authentication)
-const auth = async (req, res, next) => {
+const supabaseUrl = process.env.SUPABASE_URL || '';
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
+
+const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
+/**
+ * Require a valid Supabase session. Rejects with 401 if missing/invalid.
+ */
+const requireAuth = async (req, res, next) => {
+  const token = req.headers.authorization?.replace('Bearer ', '');
+
+  if (!token) {
+    return res.status(401).json({ error: 'Authentication required' });
+  }
+
   try {
-    const token = req.header('Authorization')?.replace('Bearer ', '');
-    
-    if (!token) {
-      return res.status(401).json({ error: 'Access denied. No token provided.' });
-    }
+    const { data: { user }, error } = await supabase.auth.getUser(token);
 
-    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key');
-    const user = await User.findById(decoded.userId);
-    
-    if (!user) {
-      return res.status(401).json({ error: 'Invalid token.' });
+    if (error || !user) {
+      return res.status(401).json({ error: 'Invalid or expired token' });
     }
 
     req.user = user;
     next();
-  } catch (error) {
-    res.status(401).json({ error: 'Invalid token.' });
+  } catch (err) {
+    console.error('Auth middleware error:', err.message);
+    return res.status(401).json({ error: 'Authentication failed' });
   }
 };
 
-// New optional auth middleware (works with or without authentication)
+/**
+ * Optional auth — attaches user if token present, continues either way.
+ */
 const optionalAuth = async (req, res, next) => {
-  try {
-    const token = req.header('Authorization')?.replace('Bearer ', '');
-    
-    if (!token) {
-      // No token provided - continue without authentication
-      req.user = null;
-      return next();
-    }
+  const token = req.headers.authorization?.replace('Bearer ', '');
 
-    try {
-      const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key');
-      const user = await User.findById(decoded.userId);
-      
-      if (user) {
-        req.user = user;
-      } else {
-        req.user = null;
-      }
-    } catch (tokenError) {
-      // Invalid token - continue without authentication
-      req.user = null;
-    }
-    
-    next();
-  } catch (error) {
-    // Any other error - continue without authentication
+  if (!token) {
     req.user = null;
-    next();
+    return next();
   }
+
+  try {
+    const { data: { user } } = await supabase.auth.getUser(token);
+    req.user = user || null;
+  } catch {
+    req.user = null;
+  }
+
+  next();
 };
 
-module.exports = {
-  auth,
-  optionalAuth
-};
+module.exports = { requireAuth, optionalAuth };

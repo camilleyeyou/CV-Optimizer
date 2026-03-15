@@ -1,69 +1,93 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
-import * as authService from '../services/authService';
+import { createContext, useContext, useState, useEffect } from 'react';
+import { supabase } from '../config/supabase';
 
-const AuthContext = createContext();
+const AuthContext = createContext(null);
 
-export const useAuth = () => useContext(AuthContext);
+export const useAuth = () => {
+  const context = useContext(AuthContext);
+  if (!context) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  return context;
+};
 
 export const AuthProvider = ({ children }) => {
-  const [currentUser, setCurrentUser] = useState(null);
+  const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
 
   useEffect(() => {
-    const loadUser = async () => {
-      if (authService.isAuthenticated()) {
-        try {
-          const user = await authService.getCurrentUser();
-          setCurrentUser(user);
-        } catch (err) {
-          console.error('Error loading user:', err);
-          authService.logout();
-        }
-      }
+    // Get initial session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user ?? null);
       setLoading(false);
-    };
+    });
 
-    loadUser();
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+      setLoading(false);
+    });
+
+    return () => subscription.unsubscribe();
   }, []);
 
-  const login = async (email, password) => {
-    setError(null);
-    try {
-      const response = await authService.login(email, password);
-      setCurrentUser(response.user);
-      return response;
-    } catch (err) {
-      setError(err.response?.data?.message || err.message || 'Login failed');
-      throw err;
-    }
+  const signUp = async (email, password, metadata = {}) => {
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        data: {
+          first_name: metadata.firstName || '',
+          last_name: metadata.lastName || '',
+        },
+      },
+    });
+    if (error) throw error;
+    return data;
   };
 
-  const register = async (userData) => {
-    setError(null);
-    try {
-      const response = await authService.register(userData);
-      setCurrentUser(response.user);
-      return response;
-    } catch (err) {
-      setError(err.response?.data?.message || err.message || 'Registration failed');
-      throw err;
-    }
+  const signIn = async (email, password) => {
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+    if (error) throw error;
+    return data;
   };
 
-  const logout = () => {
-    authService.logout();
-    setCurrentUser(null);
+  const signInWithGoogle = async () => {
+    const { data, error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: `${window.location.origin}/`,
+      },
+    });
+    if (error) throw error;
+    return data;
+  };
+
+  const signOut = async () => {
+    const { error } = await supabase.auth.signOut();
+    if (error) throw error;
+    setUser(null);
+  };
+
+  const resetPassword = async (email) => {
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/reset-password`,
+    });
+    if (error) throw error;
   };
 
   const value = {
-    currentUser,
+    user,
     loading,
-    error,
-    login,
-    register,
-    logout,
-    isAuthenticated: authService.isAuthenticated
+    signUp,
+    signIn,
+    signInWithGoogle,
+    signOut,
+    resetPassword,
+    isAuthenticated: !!user,
   };
 
   return (

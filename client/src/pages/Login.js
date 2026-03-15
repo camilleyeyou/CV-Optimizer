@@ -1,123 +1,130 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { Mail, Lock, ArrowRight } from 'lucide-react';
 import './Auth.css';
 
 const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
   const [error, setError] = useState('');
-  const [apiResponse, setApiResponse] = useState(null);
-  
-  const { login } = useAuth();
+
+  const { signIn, signInWithGoogle } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-  
-  // Get redirect path from location state or default to dashboard
   const from = location.state?.from?.pathname || '/';
-  
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
-    setApiResponse(null);
-    setIsLoading(true);
-    
+    setLoading(true);
+
     try {
-      // First, try a direct API call to diagnose the issue
-      try {
-        const directResponse = await fetch('/api/health');
-        const directData = await directResponse.text();
-        console.log('Direct API health check:', directData);
-      } catch (healthErr) {
-        console.warn('Health check failed:', healthErr);
-      }
-      
-      console.log('Attempting login with:', { email, password: '****' });
-      const response = await login(email, password);
-      console.log('Login response:', response);
-      setApiResponse(response);
-      navigate(from, { replace: true }); // Redirect to the page they were trying to access
+      await signIn(email, password);
+      navigate(from, { replace: true });
     } catch (err) {
-      console.error('Login error details:', err);
-      setError(err.response?.data?.message || err.message || 'Failed to login. Please check your credentials.');
-      setApiResponse({
-        error: err.message,
-        status: err.response?.status,
-        data: err.response?.data
-      });
+      setError(err.message || 'Invalid email or password.');
     } finally {
-      setIsLoading(false);
+      setLoading(false);
     }
   };
-  
+
+  const handleGoogle = async () => {
+    setGoogleLoading(true);
+    try {
+      await signInWithGoogle();
+    } catch (err) {
+      setError(err.message || 'Google sign-in failed.');
+      setGoogleLoading(false);
+    }
+  };
+
   return (
     <div className="auth-page">
-      <div className="auth-container">
+      <div className="auth-card">
         <div className="auth-header">
-          <h1>Welcome Back</h1>
-          <p>Sign in to access your resume builder</p>
+          <h1>Welcome back</h1>
+          <p>Sign in to continue building your resume</p>
         </div>
-        
-        {error && <div className="auth-error">{error}</div>}
-        
-        <form className="auth-form" onSubmit={handleSubmit}>
-          <div className="form-group">
-            <label htmlFor="email">Email</label>
-            <input
-              id="email"
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="Your email address"
-              required
-            />
-          </div>
-          
-          <div className="form-group">
-            <label htmlFor="password">Password</label>
-            <input
-              id="password"
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="Your password"
-              required
-            />
-            <div className="forgot-password">
-              <Link to="/forgot-password">Forgot password?</Link>
-            </div>
-          </div>
-          
-          <button
-            type="submit"
-            className="auth-button"
-            disabled={isLoading}
-          >
-            {isLoading ? 'Signing in...' : 'Sign In'}
-          </button>
-        </form>
-        
-        <div className="auth-footer">
-          <p>Don't have an account? <Link to="/register">Sign up</Link></p>
-          <Link to="/test-api">Test API Connection</Link>
-        </div>
-        
-        {apiResponse && (
-          <div style={{ marginTop: '20px', padding: '10px', background: '#f5f5f5', borderRadius: '4px' }}>
-            <h4>API Response:</h4>
-            <pre style={{ 
-              maxHeight: '200px', 
-              overflow: 'auto', 
-              background: '#eee', 
-              padding: '10px', 
-              borderRadius: '4px',
-              fontSize: '12px'
-            }}>
-              {JSON.stringify(apiResponse, null, 2)}
-            </pre>
+
+        {error && (
+          <div className="alert alert-error">
+            {error}
           </div>
         )}
+
+        <form className="auth-form" onSubmit={handleSubmit}>
+          <div className="form-group">
+            <label className="form-label" htmlFor="email">Email</label>
+            <div className="input-with-icon">
+              <Mail size={16} className="input-icon" />
+              <input
+                id="email"
+                type="email"
+                className="form-input has-icon"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="you@example.com"
+                required
+                autoComplete="email"
+              />
+            </div>
+          </div>
+
+          <div className="form-group">
+            <div className="form-label-row">
+              <label className="form-label" htmlFor="password">Password</label>
+              <span className="form-link form-link-disabled">Forgot password?</span>
+            </div>
+            <div className="input-with-icon">
+              <Lock size={16} className="input-icon" />
+              <input
+                id="password"
+                type="password"
+                className="form-input has-icon"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="Enter your password"
+                required
+                autoComplete="current-password"
+              />
+            </div>
+          </div>
+
+          <button type="submit" className="btn btn-primary btn-lg auth-submit" disabled={loading}>
+            {loading ? (
+              <span className="spinner" />
+            ) : (
+              <>Sign in <ArrowRight size={16} /></>
+            )}
+          </button>
+        </form>
+
+        <div className="auth-divider">
+          <span>or</span>
+        </div>
+
+        <button className="btn btn-secondary btn-lg auth-social" onClick={handleGoogle} disabled={googleLoading}>
+          {googleLoading ? (
+            <span className="spinner" />
+          ) : (
+            <>
+              <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" fill="#4285F4"/>
+                <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+                <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
+                <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+              </svg>
+              Continue with Google
+            </>
+          )}
+        </button>
+
+        <p className="auth-footer">
+          Don't have an account? <Link to="/register">Create one</Link>
+        </p>
       </div>
     </div>
   );
