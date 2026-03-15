@@ -1,4 +1,4 @@
-/* Header - Frosted glass like Partiful */
+/* Header - Frosted glass */
 .header {
   position: sticky;
   top: 0;
@@ -18,6 +18,7 @@
   margin: 0 auto;
   padding: 0 var(--space-6);
   height: 100%;
+  gap: var(--space-4);
 }
 
 /* Logo */
@@ -30,6 +31,7 @@
   color: var(--text-primary);
   text-decoration: none;
   letter-spacing: -0.02em;
+  flex-shrink: 0;
 }
 
 .header-logo:hover {
@@ -62,6 +64,7 @@
   background: none;
   border: none;
   cursor: pointer;
+  white-space: nowrap;
 }
 
 .nav-link:hover {
@@ -76,6 +79,15 @@
   font-weight: 600;
 }
 
+.nav-link-danger {
+  color: var(--error);
+}
+
+.nav-link-danger:hover {
+  color: var(--error);
+  background: var(--error-light);
+}
+
 .nav-mobile-auth {
   display: none;
 }
@@ -83,6 +95,7 @@
 /* User Menu */
 .header-user {
   position: relative;
+  flex-shrink: 0;
 }
 
 .user-trigger {
@@ -93,6 +106,8 @@
   border-radius: var(--radius-full);
   cursor: pointer;
   transition: background var(--transition-fast);
+  background: none;
+  border: none;
 }
 
 .user-trigger:hover {
@@ -110,6 +125,7 @@
   justify-content: center;
   font-size: 0.7rem;
   font-weight: 700;
+  flex-shrink: 0;
 }
 
 .user-name {
@@ -168,6 +184,9 @@
   font-size: var(--text-sm);
   color: var(--text-secondary);
   text-align: left;
+  background: none;
+  border: none;
+  cursor: pointer;
   transition: background var(--transition-fast);
 }
 
@@ -188,50 +207,74 @@
   display: flex;
   align-items: center;
   gap: 8px;
+  flex-shrink: 0;
 }
 
 /* Mobile toggle */
 .header-mobile-toggle {
   display: none;
-  padding: 8px;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  padding: 0;
   color: var(--text-primary);
   border-radius: var(--radius-md);
+  background: none;
+  border: none;
+  cursor: pointer;
+  flex-shrink: 0;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .header-mobile-toggle:hover {
   background: rgba(0, 0, 0, 0.04);
 }
 
+.header-mobile-toggle:active {
+  background: rgba(0, 0, 0, 0.08);
+}
+
 .header-overlay {
   display: none;
 }
 
-/* Mobile */
+/* ============================
+   Mobile: <= 768px
+   ============================ */
 @media (max-width: 768px) {
+  .header-inner {
+    padding: 0 var(--space-4);
+  }
+
   .header-mobile-toggle {
     display: flex;
   }
 
+  /* Hide desktop user menu */
   .header-user {
     display: none;
   }
 
+  /* Mobile nav drawer */
   .header-nav {
     position: fixed;
     top: var(--header-height);
-    left: 0;
     right: 0;
     bottom: 0;
+    width: 280px;
+    max-width: 80vw;
     flex-direction: column;
     align-items: stretch;
     gap: 2px;
-    padding: 16px;
-    background: rgba(255, 255, 255, 0.95);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
-    transform: translateX(-100%);
-    transition: transform var(--transition-slow);
+    padding: var(--space-4);
+    background: white;
+    box-shadow: -4px 0 24px rgba(0, 0, 0, 0.1);
+    transform: translateX(100%);
+    transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
     z-index: 90;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
   }
 
   .header-nav.is-open {
@@ -244,19 +287,55 @@
     border-radius: var(--radius-lg);
   }
 
+  /* Mobile user section at bottom */
   .nav-mobile-auth {
-    display: block;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
     margin-top: auto;
-    padding-top: 16px;
+    padding-top: var(--space-4);
     border-top: 1px solid var(--border);
   }
 
+  .nav-mobile-user {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    padding: var(--space-3) var(--space-4);
+  }
+
+  .nav-mobile-name {
+    display: block;
+    font-size: var(--text-sm);
+    font-weight: 600;
+    color: var(--text-primary);
+  }
+
+  .nav-mobile-email {
+    display: block;
+    font-size: var(--text-xs);
+    color: var(--text-muted);
+  }
+
+  /* Overlay */
   .header-overlay {
     display: block;
     position: fixed;
     inset: 0;
-    background: rgba(0, 0, 0, 0.2);
-    backdrop-filter: blur(4px);
+    top: var(--header-height);
+    background: rgba(0, 0, 0, 0.3);
+    backdrop-filter: blur(2px);
+    -webkit-backdrop-filter: blur(2px);
     z-index: 80;
+    -webkit-tap-highlight-color: transparent;
+  }
+}
+
+/* ============================
+   Footer-area mobile fixes
+   ============================ */
+@media (max-width: 480px) {
+  .header-logo span {
+    font-size: 0.95rem;
   }
 }

@@ -13,6 +13,23 @@ const Header = () => {
   const location = useLocation();
 
   const closeDropdown = useCallback(() => setDropdownOpen(false), []);
+  const closeMobile = useCallback(() => setMobileOpen(false), []);
+
+  // Close mobile nav on route change
+  useEffect(() => {
+    closeMobile();
+    closeDropdown();
+  }, [location.pathname, closeMobile, closeDropdown]);
+
+  // Lock body scroll when mobile menu is open
+  useEffect(() => {
+    if (mobileOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => { document.body.style.overflow = ''; };
+  }, [mobileOpen]);
 
   // Close dropdown on click outside
   useEffect(() => {
@@ -31,17 +48,17 @@ const Header = () => {
     const handleEscape = (e) => {
       if (e.key === 'Escape') {
         if (dropdownOpen) closeDropdown();
-        if (mobileOpen) setMobileOpen(false);
+        if (mobileOpen) closeMobile();
       }
     };
     document.addEventListener('keydown', handleEscape);
     return () => document.removeEventListener('keydown', handleEscape);
-  }, [dropdownOpen, mobileOpen, closeDropdown]);
+  }, [dropdownOpen, mobileOpen, closeDropdown, closeMobile]);
 
   const handleSignOut = async () => {
     await signOut();
     navigate('/login');
-    setMobileOpen(false);
+    closeMobile();
     closeDropdown();
   };
 
@@ -59,7 +76,7 @@ const Header = () => {
   return (
     <header className="header">
       <div className="header-inner">
-        <Link to="/" className="header-logo" onClick={() => setMobileOpen(false)}>
+        <Link to="/" className="header-logo">
           <FileText size={24} aria-hidden="true" />
           <span>CV Optimizer</span>
         </Link>
@@ -67,45 +84,32 @@ const Header = () => {
         {!isAuthPage && isAuthenticated && (
           <>
             <nav className={`header-nav ${mobileOpen ? 'is-open' : ''}`} aria-label="Main navigation">
-              <Link
-                to="/"
-                className={`nav-link ${isActive('/') ? 'active' : ''}`}
-                onClick={() => setMobileOpen(false)}
-              >
+              <Link to="/" className={`nav-link ${isActive('/') ? 'active' : ''}`}>
                 Dashboard
               </Link>
-              <Link
-                to="/templates"
-                className={`nav-link ${isActive('/templates') ? 'active' : ''}`}
-                onClick={() => setMobileOpen(false)}
-              >
+              <Link to="/templates" className={`nav-link ${isActive('/templates') ? 'active' : ''}`}>
                 Templates
               </Link>
-              <Link
-                to="/builder"
-                className={`nav-link ${isActive('/builder') ? 'active' : ''}`}
-                onClick={() => setMobileOpen(false)}
-              >
+              <Link to="/builder" className={`nav-link ${isActive('/builder') ? 'active' : ''}`}>
                 Builder
               </Link>
-              <Link
-                to="/ai-creator"
-                className={`nav-link ${isActive('/ai-creator') ? 'active' : ''}`}
-                onClick={() => setMobileOpen(false)}
-              >
+              <Link to="/ai-creator" className={`nav-link ${isActive('/ai-creator') ? 'active' : ''}`}>
                 AI Creator
               </Link>
-              <Link
-                to="/ats-checker"
-                className={`nav-link ${isActive('/ats-checker') ? 'active' : ''}`}
-                onClick={() => setMobileOpen(false)}
-              >
+              <Link to="/ats-checker" className={`nav-link ${isActive('/ats-checker') ? 'active' : ''}`}>
                 ATS Checker
               </Link>
 
               {/* Mobile-only auth section */}
               <div className="nav-mobile-auth">
-                <button className="nav-link" onClick={handleSignOut}>
+                <div className="nav-mobile-user">
+                  <span className="user-avatar">{initial}</span>
+                  <div>
+                    <span className="nav-mobile-name">{displayName}</span>
+                    <span className="nav-mobile-email">{user?.email}</span>
+                  </div>
+                </div>
+                <button className="nav-link nav-link-danger" onClick={handleSignOut}>
                   <LogOut size={16} aria-hidden="true" />
                   Sign out
                 </button>
@@ -158,7 +162,7 @@ const Header = () => {
               aria-label={mobileOpen ? 'Close menu' : 'Open menu'}
               aria-expanded={mobileOpen}
             >
-              {mobileOpen ? <X size={20} /> : <Menu size={20} />}
+              {mobileOpen ? <X size={22} /> : <Menu size={22} />}
             </button>
           </>
         )}
@@ -174,7 +178,7 @@ const Header = () => {
       {mobileOpen && (
         <div
           className="header-overlay"
-          onClick={() => setMobileOpen(false)}
+          onClick={closeMobile}
           aria-hidden="true"
         />
       )}
