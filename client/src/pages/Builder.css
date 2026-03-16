@@ -100,8 +100,8 @@
 
 /* ATS Score Widget */
 .ats-widget {
-  background: white;
-  border: 1px solid var(--border);
+  background: linear-gradient(135deg, #eff6ff, #ede9fe);
+  border: 1px solid rgba(99, 102, 241, 0.2);
   border-radius: var(--radius-xl);
   overflow: hidden;
   margin-bottom: var(--space-4);
@@ -112,7 +112,7 @@
   align-items: center;
   justify-content: space-between;
   width: 100%;
-  padding: 0.75rem 1rem;
+  padding: 0.85rem 1rem;
   background: none;
   border: none;
   cursor: pointer;
@@ -121,7 +121,7 @@
 }
 
 .ats-widget-header:hover {
-  background: var(--bg-secondary);
+  background: rgba(99, 102, 241, 0.06);
 }
 
 .ats-widget-title {
@@ -129,8 +129,12 @@
   align-items: center;
   gap: 0.5rem;
   font-size: var(--text-sm);
-  font-weight: 600;
-  color: var(--text-primary);
+  font-weight: 700;
+  color: var(--primary);
+}
+
+.ats-widget-title svg {
+  color: var(--primary);
 }
 
 .ats-widget-badge {
@@ -143,10 +147,12 @@
 }
 
 .ats-widget-body {
-  padding: 0 1rem 1rem;
+  padding: 0.75rem 1rem 1rem;
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
+  background: white;
+  border-top: 1px solid rgba(99, 102, 241, 0.1);
 }
 
 .ats-widget-field input,
