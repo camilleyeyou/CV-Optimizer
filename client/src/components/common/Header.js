@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { FileText, Menu, X, LogOut, User, ChevronDown } from 'lucide-react';
+import { FileText, Menu, X, LogOut, User, ChevronDown, LayoutDashboard, FileSearch, Sparkles, PenTool, Layout } from 'lucide-react';
 import './Header.css';
 
 const Header = () => {
@@ -43,7 +43,7 @@ const Header = () => {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [dropdownOpen, closeDropdown]);
 
-  // Close dropdown and mobile nav on Escape
+  // Escape key handler
   useEffect(() => {
     const handleEscape = (e) => {
       if (e.key === 'Escape') {
@@ -70,119 +70,123 @@ const Header = () => {
     'User';
 
   const initial = displayName.charAt(0).toUpperCase();
-
   const isAuthPage = ['/login', '/register'].includes(location.pathname);
+  const showNav = !isAuthPage && isAuthenticated;
+
+  const navLinks = [
+    { to: '/', label: 'Dashboard', icon: LayoutDashboard },
+    { to: '/templates', label: 'Templates', icon: Layout },
+    { to: '/builder', label: 'Builder', icon: PenTool },
+    { to: '/ai-creator', label: 'AI Creator', icon: Sparkles },
+    { to: '/ats-checker', label: 'ATS Checker', icon: FileSearch },
+  ];
 
   return (
-    <header className="header">
-      <div className="header-inner">
-        <Link to="/" className="header-logo">
-          <FileText size={24} aria-hidden="true" />
-          <span>CV Optimizer</span>
-        </Link>
+    <>
+      <header className="header">
+        <div className="header-inner">
+          <Link to="/" className="header-logo">
+            <FileText size={24} aria-hidden="true" />
+            <span>CV Optimizer</span>
+          </Link>
 
-        {!isAuthPage && isAuthenticated && (
-          <>
-            <nav className={`header-nav ${mobileOpen ? 'is-open' : ''}`} aria-label="Main navigation">
-              <Link to="/" className={`nav-link ${isActive('/') ? 'active' : ''}`}>
-                Dashboard
-              </Link>
-              <Link to="/templates" className={`nav-link ${isActive('/templates') ? 'active' : ''}`}>
-                Templates
-              </Link>
-              <Link to="/builder" className={`nav-link ${isActive('/builder') ? 'active' : ''}`}>
-                Builder
-              </Link>
-              <Link to="/ai-creator" className={`nav-link ${isActive('/ai-creator') ? 'active' : ''}`}>
-                AI Creator
-              </Link>
-              <Link to="/ats-checker" className={`nav-link ${isActive('/ats-checker') ? 'active' : ''}`}>
-                ATS Checker
-              </Link>
+          {showNav && (
+            <>
+              {/* Desktop nav */}
+              <nav className="header-nav-desktop" aria-label="Main navigation">
+                {navLinks.map(({ to, label }) => (
+                  <Link key={to} to={to} className={`nav-link ${isActive(to) ? 'active' : ''}`}>
+                    {label}
+                  </Link>
+                ))}
+              </nav>
 
-              {/* Mobile-only auth section */}
-              <div className="nav-mobile-auth">
-                <div className="nav-mobile-user">
+              {/* Desktop user dropdown */}
+              <div className="header-user" ref={dropdownRef}>
+                <button
+                  className="user-trigger"
+                  onClick={() => setDropdownOpen(!dropdownOpen)}
+                  aria-expanded={dropdownOpen}
+                  aria-haspopup="true"
+                  aria-label={`User menu for ${displayName}`}
+                >
                   <span className="user-avatar">{initial}</span>
-                  <div>
-                    <span className="nav-mobile-name">{displayName}</span>
-                    <span className="nav-mobile-email">{user?.email}</span>
-                  </div>
-                </div>
-                <button className="nav-link nav-link-danger" onClick={handleSignOut}>
-                  <LogOut size={16} aria-hidden="true" />
-                  Sign out
+                  <span className="user-name">{displayName}</span>
+                  <ChevronDown size={14} aria-hidden="true" />
                 </button>
+
+                {dropdownOpen && (
+                  <div className="user-dropdown" role="menu" aria-label="User menu">
+                    <div className="dropdown-header">
+                      <span className="dropdown-name">{displayName}</span>
+                      <span className="dropdown-email">{user?.email}</span>
+                    </div>
+                    <div className="dropdown-divider" />
+                    <button className="dropdown-item" role="menuitem" onClick={() => { navigate('/'); closeDropdown(); }}>
+                      <User size={14} aria-hidden="true" /> Dashboard
+                    </button>
+                    <button className="dropdown-item dropdown-item-danger" role="menuitem" onClick={handleSignOut}>
+                      <LogOut size={14} aria-hidden="true" /> Sign out
+                    </button>
+                  </div>
+                )}
               </div>
+
+              {/* Mobile burger */}
+              <button
+                className="header-mobile-toggle"
+                onClick={() => setMobileOpen(!mobileOpen)}
+                aria-label={mobileOpen ? 'Close menu' : 'Open menu'}
+                aria-expanded={mobileOpen}
+              >
+                {mobileOpen ? <X size={22} /> : <Menu size={22} />}
+              </button>
+            </>
+          )}
+
+          {!isAuthPage && !isAuthenticated && (
+            <div className="header-auth">
+              <Link to="/login" className="btn btn-ghost">Log in</Link>
+              <Link to="/register" className="btn btn-primary">Sign up</Link>
+            </div>
+          )}
+        </div>
+      </header>
+
+      {/* Mobile drawer — rendered OUTSIDE header to avoid backdrop-filter containing block */}
+      {showNav && (
+        <>
+          <div className={`mobile-drawer ${mobileOpen ? 'is-open' : ''}`} aria-label="Mobile navigation">
+            <nav className="mobile-drawer-nav">
+              {navLinks.map(({ to, label, icon: Icon }) => (
+                <Link key={to} to={to} className={`mobile-nav-link ${isActive(to) ? 'active' : ''}`}>
+                  <Icon size={18} aria-hidden="true" />
+                  {label}
+                </Link>
+              ))}
             </nav>
 
-            <div className="header-user" ref={dropdownRef}>
-              <button
-                className="user-trigger"
-                onClick={() => setDropdownOpen(!dropdownOpen)}
-                aria-expanded={dropdownOpen}
-                aria-haspopup="true"
-                aria-label={`User menu for ${displayName}`}
-              >
+            <div className="mobile-drawer-footer">
+              <div className="mobile-user-info">
                 <span className="user-avatar">{initial}</span>
-                <span className="user-name">{displayName}</span>
-                <ChevronDown size={14} aria-hidden="true" />
-              </button>
-
-              {dropdownOpen && (
-                <div className="user-dropdown" role="menu" aria-label="User menu">
-                  <div className="dropdown-header">
-                    <span className="dropdown-name">{displayName}</span>
-                    <span className="dropdown-email">{user?.email}</span>
-                  </div>
-                  <div className="dropdown-divider" />
-                  <button
-                    className="dropdown-item"
-                    role="menuitem"
-                    onClick={() => { navigate('/'); closeDropdown(); }}
-                  >
-                    <User size={14} aria-hidden="true" />
-                    Dashboard
-                  </button>
-                  <button
-                    className="dropdown-item dropdown-item-danger"
-                    role="menuitem"
-                    onClick={handleSignOut}
-                  >
-                    <LogOut size={14} aria-hidden="true" />
-                    Sign out
-                  </button>
+                <div>
+                  <span className="mobile-user-name">{displayName}</span>
+                  <span className="mobile-user-email">{user?.email}</span>
                 </div>
-              )}
+              </div>
+              <button className="mobile-nav-link mobile-signout" onClick={handleSignOut}>
+                <LogOut size={18} aria-hidden="true" />
+                Sign out
+              </button>
             </div>
-
-            <button
-              className="header-mobile-toggle"
-              onClick={() => setMobileOpen(!mobileOpen)}
-              aria-label={mobileOpen ? 'Close menu' : 'Open menu'}
-              aria-expanded={mobileOpen}
-            >
-              {mobileOpen ? <X size={22} /> : <Menu size={22} />}
-            </button>
-          </>
-        )}
-
-        {!isAuthPage && !isAuthenticated && (
-          <div className="header-auth">
-            <Link to="/login" className="btn btn-ghost">Log in</Link>
-            <Link to="/register" className="btn btn-primary">Sign up</Link>
           </div>
-        )}
-      </div>
 
-      {mobileOpen && (
-        <div
-          className="header-overlay"
-          onClick={closeMobile}
-          aria-hidden="true"
-        />
+          {mobileOpen && (
+            <div className="mobile-overlay" onClick={closeMobile} aria-hidden="true" />
+          )}
+        </>
       )}
-    </header>
+    </>
   );
 };
 

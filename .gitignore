@@ -49,3 +49,4 @@ preview-response.json
 
 # Backup files
 *.backup
+.vercel
