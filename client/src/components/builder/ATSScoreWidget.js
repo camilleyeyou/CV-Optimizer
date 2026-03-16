@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import { BarChart3, Loader, AlertTriangle, CheckCircle, Briefcase, ChevronDown, ChevronUp } from 'lucide-react';
+import { BarChart3, Loader, AlertTriangle, CheckCircle, ChevronDown, ChevronUp } from 'lucide-react';
 import { quickATSScore } from '../../services/api';
 import { useResume } from '../../context/ResumeContext';
 import toast from 'react-hot-toast';
@@ -10,7 +10,7 @@ const ATSScoreWidget = () => {
   const [jobDescription, setJobDescription] = useState('');
   const [result, setResult] = useState(null);
   const [loading, setLoading] = useState(false);
-  const [expanded, setExpanded] = useState(false);
+  const [expanded, setExpanded] = useState(true);
 
   const handleScore = useCallback(async () => {
     const title = jobTitle.trim() || resumeData?.personal_info?.job_title;
