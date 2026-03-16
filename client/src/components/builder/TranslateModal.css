@@ -1,10 +1,10 @@
-/* Translate Modal */
+/* Translate Modal - Dark glassmorphic */
 .translate-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.5);
-  backdrop-filter: blur(4px);
-  -webkit-backdrop-filter: blur(4px);
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
   z-index: 300;
   display: flex;
   align-items: center;
@@ -13,9 +13,12 @@
 }
 
 .translate-modal {
-  background: white;
+  background: rgba(15, 23, 42, 0.95);
+  border: 1px solid var(--glass-border);
   border-radius: var(--radius-xl);
   box-shadow: var(--shadow-xl);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
   width: 100%;
   max-width: 520px;
   max-height: 80vh;
@@ -29,7 +32,7 @@
   align-items: center;
   justify-content: space-between;
   padding: 1rem 1.25rem;
-  border-bottom: 1px solid var(--border);
+  border-bottom: 1px solid rgba(148, 163, 184, 0.1);
   flex-shrink: 0;
 }
 
@@ -141,7 +144,7 @@
 }
 
 .translate-tag.more {
-  background: var(--bg-secondary);
+  background: rgba(148, 163, 184, 0.1);
   color: var(--text-muted);
 }
 
@@ -159,7 +162,7 @@
   align-items: center;
   justify-content: space-between;
   padding: 1rem 1.25rem;
-  border-top: 1px solid var(--border);
+  border-top: 1px solid rgba(148, 163, 184, 0.1);
   flex-shrink: 0;
 }
 

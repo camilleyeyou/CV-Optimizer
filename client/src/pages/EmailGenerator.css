@@ -1,4 +1,4 @@
-/* Email Generator */
+/* Email Generator - Dark glassmorphic */
 .email-gen {
   max-width: var(--max-width);
   margin: 0 auto;
@@ -51,17 +51,19 @@
 
 .email-type-btn {
   padding: 0.75rem;
-  border: 1px solid var(--border);
+  border: 1px solid var(--glass-border);
   border-radius: var(--radius-lg);
-  background: white;
+  background: var(--glass-bg);
   cursor: pointer;
   text-align: left;
   transition: all var(--transition-fast);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
 }
 
 .email-type-btn:hover {
-  border-color: var(--primary);
-  background: var(--primary-light);
+  border-color: rgba(99, 102, 241, 0.3);
+  background: rgba(99, 102, 241, 0.08);
 }
 
 .email-type-btn.active {
@@ -112,10 +114,12 @@
 /* Result panel */
 .email-gen-result {
   min-height: 400px;
-  background: white;
-  border: 1px solid var(--border);
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
   border-radius: var(--radius-xl);
   overflow: hidden;
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
 }
 
 .email-gen-empty,
@@ -145,8 +149,8 @@
   align-items: center;
   gap: 0.5rem;
   padding: 1rem 1.25rem;
-  border-bottom: 1px solid var(--border);
-  background: var(--bg-secondary);
+  border-bottom: 1px solid rgba(148, 163, 184, 0.1);
+  background: rgba(15, 23, 42, 0.4);
 }
 
 .email-subject-label {
@@ -172,6 +176,8 @@
   line-height: 1.7;
   resize: vertical;
   min-height: 250px;
+  background: transparent;
+  color: var(--text-primary);
 }
 
 .email-body-editor:focus {
@@ -183,7 +189,7 @@
   align-items: center;
   justify-content: space-between;
   padding: 0.75rem 1.25rem;
-  border-top: 1px solid var(--border);
+  border-top: 1px solid rgba(148, 163, 184, 0.1);
 }
 
 .email-gen-actions-right {

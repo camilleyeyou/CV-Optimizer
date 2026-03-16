@@ -1,4 +1,4 @@
-/* Resume Form */
+/* Resume Form - Dark glassmorphic */
 .resume-form {
   display: flex;
   flex-direction: column;
@@ -8,16 +8,18 @@
 
 /* Section Accordion */
 .form-section {
-  background: white;
-  border: 1px solid var(--border);
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
   border-radius: var(--radius-xl);
   overflow: hidden;
   transition: border-color var(--transition-fast);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
 }
 
 .form-section.is-open {
-  border-color: var(--color-gray-300);
-  box-shadow: var(--shadow-xs);
+  border-color: rgba(99, 102, 241, 0.25);
+  box-shadow: 0 0 20px rgba(99, 102, 241, 0.08);
 }
 
 .section-header {
@@ -34,7 +36,7 @@
 }
 
 .section-header:hover {
-  background: var(--bg-secondary);
+  background: rgba(148, 163, 184, 0.06);
 }
 
 .section-header-left {
@@ -55,7 +57,7 @@
   font-size: 10px;
   font-weight: 600;
   color: var(--text-muted);
-  background: var(--color-gray-100);
+  background: rgba(148, 163, 184, 0.1);
   padding: 1px 6px;
   border-radius: var(--radius-full);
 }
@@ -70,13 +72,13 @@
   gap: var(--space-1);
 }
 
-/* Repeater Items (Experience, Education, etc.) */
+/* Repeater Items */
 .repeater-item {
   padding: var(--space-4);
-  border: 1px solid var(--border);
+  border: 1px solid var(--glass-border);
   border-radius: var(--radius-lg);
   margin-bottom: var(--space-3);
-  background: var(--bg-secondary);
+  background: rgba(15, 23, 42, 0.4);
 }
 
 .repeater-header {
@@ -170,17 +172,17 @@
   padding: 4px 10px;
   font-size: 11px;
   font-weight: 600;
-  color: var(--accent);
-  background: var(--accent-light);
-  border: 1px solid #e9d5ff;
+  color: #a78bfa;
+  background: rgba(139, 92, 246, 0.1);
+  border: 1px solid rgba(139, 92, 246, 0.2);
   border-radius: var(--radius-sm);
   cursor: pointer;
   transition: all var(--transition-fast);
 }
 
 .btn-ai:hover:not(:disabled) {
-  background: #ede9fe;
-  border-color: #c4b5fd;
+  background: rgba(139, 92, 246, 0.15);
+  border-color: rgba(139, 92, 246, 0.35);
   transform: translateY(-0.5px);
 }
 

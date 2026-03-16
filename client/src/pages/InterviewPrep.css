@@ -1,4 +1,4 @@
-/* Interview Prep */
+/* Interview Prep - Dark glassmorphic */
 .interview-prep {
   max-width: 800px;
   margin: 0 auto;
@@ -51,7 +51,7 @@
 /* Progress bar */
 .interview-progress-bar {
   height: 3px;
-  background: var(--bg-secondary);
+  background: rgba(148, 163, 184, 0.1);
   border-radius: var(--radius-full);
   margin-bottom: var(--space-4);
   overflow: hidden;
@@ -59,7 +59,7 @@
 
 .interview-progress-fill {
   height: 100%;
-  background: var(--primary);
+  background: linear-gradient(90deg, #6366f1, #d97706);
   border-radius: var(--radius-full);
   transition: width 0.4s ease;
 }
@@ -80,8 +80,8 @@
 
 /* Question Card */
 .interview-question-card {
-  background: linear-gradient(135deg, #eff6ff, #ede9fe);
-  border: 1px solid rgba(99, 102, 241, 0.15);
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(139, 92, 246, 0.08));
+  border: 1px solid rgba(99, 102, 241, 0.2);
   border-radius: var(--radius-xl);
   padding: 1.5rem;
   margin-bottom: var(--space-4);
@@ -102,18 +102,18 @@
 }
 
 .interview-type-badge.behavioral {
-  background: #dbeafe;
-  color: #1d4ed8;
+  background: rgba(99, 102, 241, 0.15);
+  color: #818cf8;
 }
 
 .interview-type-badge.technical {
-  background: #fce7f3;
-  color: #be185d;
+  background: rgba(236, 72, 153, 0.15);
+  color: #f472b6;
 }
 
 .interview-type-badge.situational {
-  background: #d1fae5;
-  color: #065f46;
+  background: rgba(16, 185, 129, 0.15);
+  color: #6ee7b7;
 }
 
 .interview-type-badge.small {
@@ -144,20 +144,26 @@
 .interview-answer-input {
   width: 100%;
   padding: 1rem;
-  border: 1px solid var(--border);
+  border: 1px solid var(--glass-border);
   border-radius: var(--radius-lg);
   font-family: inherit;
   font-size: var(--text-sm);
   line-height: 1.6;
   resize: vertical;
   min-height: 120px;
+  background: rgba(15, 23, 42, 0.5);
+  color: var(--text-primary);
   transition: border-color var(--transition-fast);
+}
+
+.interview-answer-input::placeholder {
+  color: var(--text-muted);
 }
 
 .interview-answer-input:focus {
   outline: none;
   border-color: var(--primary);
-  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
 }
 
 .interview-answer-actions {
@@ -168,13 +174,15 @@
 
 /* Evaluation */
 .interview-evaluation {
-  background: white;
-  border: 1px solid var(--border);
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
   border-radius: var(--radius-xl);
   padding: 1.25rem;
   margin-bottom: var(--space-4);
   display: flex;
   gap: 1.25rem;
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
 }
 
 .interview-eval-score {
@@ -248,13 +256,13 @@
 }
 
 .interview-eval-section ul li::before {
-  content: '→ ';
+  content: '\2192 ';
   color: var(--primary);
   font-weight: 600;
 }
 
 .interview-eval-section.sample {
-  background: var(--bg-secondary);
+  background: rgba(15, 23, 42, 0.4);
   border-radius: var(--radius-lg);
   padding: 0.75rem;
 }
@@ -271,7 +279,7 @@
   display: flex;
   justify-content: space-between;
   padding-top: var(--space-4);
-  border-top: 1px solid var(--border);
+  border-top: 1px solid rgba(148, 163, 184, 0.1);
 }
 
 /* Review */
@@ -317,10 +325,12 @@
 }
 
 .interview-review-item {
-  background: white;
-  border: 1px solid var(--border);
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
   border-radius: var(--radius-lg);
   padding: 1rem;
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
 }
 
 .interview-review-q {
@@ -360,16 +370,16 @@
   flex-shrink: 0;
 }
 
-.interview-review-score.good { background: #dcfce7; color: #16a34a; }
-.interview-review-score.ok { background: #fef3c7; color: #d97706; }
-.interview-review-score.low { background: #fee2e2; color: #dc2626; }
+.interview-review-score.good { background: rgba(34, 197, 94, 0.15); color: #4ade80; }
+.interview-review-score.ok { background: rgba(245, 158, 11, 0.15); color: #fbbf24; }
+.interview-review-score.low { background: rgba(239, 68, 68, 0.15); color: #f87171; }
 
 .interview-review-answer {
   font-size: var(--text-xs);
   color: var(--text-secondary);
   margin-top: 0.5rem;
   padding-top: 0.5rem;
-  border-top: 1px solid var(--border);
+  border-top: 1px solid rgba(148, 163, 184, 0.1);
   line-height: 1.6;
 }
 

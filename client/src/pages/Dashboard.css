@@ -1,4 +1,4 @@
-/* Dashboard - Clean, airy layout */
+/* Dashboard - Dark glassmorphic layout */
 .dashboard {
   padding: 2rem 0 4rem;
   min-height: calc(100vh - var(--header-height));
@@ -23,6 +23,10 @@
   font-weight: 800;
   margin-bottom: 4px;
   letter-spacing: -0.02em;
+  background: linear-gradient(135deg, #f1f5f9, #a78bfa);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 
 .dashboard-subtitle {
@@ -47,17 +51,19 @@
 /* Resume Card */
 .resume-card {
   position: relative;
-  background: white;
-  border: 1px solid var(--border);
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
   border-radius: var(--radius-xl);
   overflow: hidden;
   cursor: pointer;
   transition: all var(--transition-base);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
 }
 
 .resume-card:hover {
-  border-color: var(--color-gray-300);
-  box-shadow: var(--shadow-md);
+  border-color: rgba(99, 102, 241, 0.3);
+  box-shadow: 0 8px 32px rgba(99, 102, 241, 0.15);
   transform: translateY(-2px);
 }
 
@@ -65,13 +71,13 @@
 .resume-card-preview {
   position: relative;
   padding: 1.25rem 1.25rem 1rem;
-  background: linear-gradient(135deg, #f8fafc, #f1f5f9);
+  background: linear-gradient(135deg, rgba(30, 41, 59, 0.5), rgba(15, 23, 42, 0.5));
   border-bottom: 1px solid var(--border-light);
 }
 
 .preview-mock {
   padding: 1rem;
-  background: white;
+  background: rgba(30, 41, 59, 0.6);
   border-radius: var(--radius-md);
   box-shadow: var(--shadow-xs);
 }
@@ -79,14 +85,14 @@
 .preview-mock-header {
   height: 10px;
   width: 50%;
-  background: var(--text-primary);
+  background: var(--text-secondary);
   border-radius: 3px;
   margin-bottom: 8px;
 }
 
 .preview-mock-line {
   height: 5px;
-  background: var(--color-gray-200);
+  background: rgba(148, 163, 184, 0.15);
   border-radius: 3px;
   margin-bottom: 4px;
 }
@@ -96,9 +102,12 @@
 }
 
 .w-40 { width: 40%; }
+.w-50 { width: 50%; }
 .w-60 { width: 60%; }
 .w-70 { width: 70%; }
+.w-75 { width: 75%; }
 .w-80 { width: 80%; }
+.w-85 { width: 85%; }
 .w-90 { width: 90%; }
 
 .resume-card-template {
@@ -111,10 +120,10 @@
   text-transform: uppercase;
   letter-spacing: 0.04em;
   color: var(--text-muted);
-  background: rgba(255, 255, 255, 0.9);
+  background: rgba(15, 23, 42, 0.7);
   backdrop-filter: blur(8px);
   border-radius: var(--radius-full);
-  border: 1px solid rgba(226, 232, 240, 0.5);
+  border: 1px solid var(--glass-border);
 }
 
 /* Card Body */
@@ -154,14 +163,14 @@
 .progress-bar {
   flex: 1;
   height: 4px;
-  background: var(--color-gray-100);
+  background: rgba(148, 163, 184, 0.1);
   border-radius: var(--radius-full);
   overflow: hidden;
 }
 
 .progress-fill {
   height: 100%;
-  background: linear-gradient(90deg, var(--primary), #7c3aed);
+  background: linear-gradient(90deg, #6366f1, #d97706);
   border-radius: var(--radius-full);
   transition: width var(--transition-slow);
 }
@@ -185,10 +194,11 @@
   top: calc(100% + 4px);
   left: 0;
   min-width: 150px;
-  background: white;
-  border: 1px solid var(--border);
+  background: rgba(15, 23, 42, 0.95);
+  border: 1px solid var(--glass-border);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-lg);
+  backdrop-filter: blur(20px);
   overflow: hidden;
   z-index: 10;
 }
@@ -206,7 +216,7 @@
 }
 
 .card-menu-item:hover {
-  background: var(--bg-secondary);
+  background: rgba(148, 163, 184, 0.08);
 }
 
 .card-menu-danger {
@@ -225,7 +235,7 @@
   justify-content: center;
   gap: 8px;
   min-height: 280px;
-  border: 2px dashed var(--color-gray-300);
+  border: 2px dashed rgba(148, 163, 184, 0.2);
   background: transparent;
   color: var(--text-muted);
   font-size: var(--text-sm);
@@ -244,8 +254,8 @@
 
 /* Skeleton */
 .resume-card-skeleton {
-  background: white;
-  border: 1px solid var(--border);
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
   border-radius: var(--radius-xl);
   overflow: hidden;
 }
