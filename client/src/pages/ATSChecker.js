@@ -1,7 +1,9 @@
 import { useState, useRef } from 'react';
-import { Upload, FileText, Briefcase, BarChart3, AlertTriangle, CheckCircle, XCircle, Loader, ChevronDown, ChevronUp } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { Upload, FileText, Briefcase, BarChart3, AlertTriangle, CheckCircle, XCircle, Loader, ChevronDown, ChevronUp, Sparkles } from 'lucide-react';
 import toast from 'react-hot-toast';
 import api from '../services/api';
+import { useResume } from '../context/ResumeContext';
 import './ATSChecker.css';
 
 const ScoreRing = ({ score }) => {
@@ -59,8 +61,11 @@ const ATSChecker = () => {
   const [jobTitle, setJobTitle] = useState('');
   const [jobDescription, setJobDescription] = useState('');
   const [loading, setLoading] = useState(false);
+  const [optimizing, setOptimizing] = useState(false);
   const [results, setResults] = useState(null);
   const fileInputRef = useRef(null);
+  const navigate = useNavigate();
+  const { createResume, updateResume } = useResume();
 
   const handleFileDrop = (e) => {
     e.preventDefault();
@@ -118,6 +123,51 @@ const ATSChecker = () => {
     setJobDescription('');
     setResults(null);
     if (fileInputRef.current) fileInputRef.current.value = '';
+  };
+
+  const handleOptimize = async () => {
+    if (!file || !results) return;
+
+    setOptimizing(true);
+    try {
+      const formData = new FormData();
+      formData.append('resume', file);
+      formData.append('jobTitle', jobTitle.trim());
+      if (jobDescription.trim()) {
+        formData.append('jobDescription', jobDescription.trim());
+      }
+      formData.append('atsResults', JSON.stringify(results));
+
+      const response = await api.post('/api/ats/optimize', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+
+      const optimizedData = response.data;
+
+      // Create a new resume and populate it with optimized data
+      const newResume = await createResume('modern');
+      if (newResume) {
+        updateResume({
+          title: `${jobTitle.trim()} - Optimized`,
+          personal_info: optimizedData.personal_info || {},
+          summary: optimizedData.summary || '',
+          work_experience: optimizedData.work_experience || [],
+          education: optimizedData.education || [],
+          skills: optimizedData.skills || [],
+          projects: optimizedData.projects || [],
+          certifications: optimizedData.certifications || [],
+          languages: optimizedData.languages || [],
+        });
+
+        toast.success('Resume optimized! Redirecting to builder...');
+        navigate('/builder');
+      }
+    } catch (err) {
+      const message = err.response?.data?.error || 'Optimization failed. Please try again.';
+      toast.error(message);
+    } finally {
+      setOptimizing(false);
+    }
   };
 
   return (
@@ -238,6 +288,25 @@ const ATSChecker = () => {
                 </h2>
                 <p>{results.summary}</p>
               </div>
+            </div>
+
+            {/* Optimize CTA */}
+            <div className="ats-optimize-cta">
+              <div className="optimize-cta-text">
+                <h3>Want AI to fix this for you?</h3>
+                <p>We'll rewrite your resume to incorporate missing keywords, improve bullet points, and maximize your ATS score for this role.</p>
+              </div>
+              <button
+                className="btn btn-primary btn-lg optimize-btn"
+                onClick={handleOptimize}
+                disabled={optimizing}
+              >
+                {optimizing ? (
+                  <><Loader size={16} className="spin" /> Optimizing...</>
+                ) : (
+                  <><Sparkles size={16} /> Optimize Resume with AI</>
+                )}
+              </button>
             </div>
 
             {/* Section Breakdown */}

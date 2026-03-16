@@ -62,4 +62,62 @@ const analyzeResume = async (req, res) => {
   });
 };
 
-module.exports = { analyzeResume };
+const optimizeResume = async (req, res) => {
+  upload(req, res, async (err) => {
+    if (err) {
+      if (err instanceof multer.MulterError) {
+        return res.status(400).json({ error: 'File too large. Max 5MB.' });
+      }
+      return res.status(400).json({ error: err.message });
+    }
+
+    try {
+      const { jobTitle, jobDescription, atsResults } = req.body;
+
+      if (!req.file) {
+        return res.status(400).json({ error: 'Please upload a PDF resume.' });
+      }
+
+      if (!jobTitle || typeof jobTitle !== 'string' || jobTitle.trim().length < 2) {
+        return res.status(400).json({ error: 'Job title is required (at least 2 characters).' });
+      }
+
+      if (jobDescription && typeof jobDescription === 'string' && jobDescription.length > 10000) {
+        return res.status(400).json({ error: 'Job description is too long (max 10000 characters).' });
+      }
+
+      const resumeText = await atsService.extractTextFromPDF(req.file.buffer);
+
+      if (!resumeText || resumeText.length < 50) {
+        return res.status(400).json({
+          error: 'Could not extract enough text from the PDF. Make sure it is not a scanned image.',
+        });
+      }
+
+      const truncatedText = resumeText.slice(0, MAX_RESUME_TEXT_LENGTH);
+
+      // Parse atsResults if it's a string (from FormData)
+      let parsedAtsResults = null;
+      if (atsResults) {
+        try {
+          parsedAtsResults = typeof atsResults === 'string' ? JSON.parse(atsResults) : atsResults;
+        } catch {
+          // Ignore invalid ATS results — optimization still works without them
+        }
+      }
+
+      const optimized = await atsService.optimizeResume(
+        truncatedText,
+        jobTitle.trim(),
+        (jobDescription || '').trim(),
+        parsedAtsResults
+      );
+
+      res.json(optimized);
+    } catch (error) {
+      res.status(500).json({ error: 'Failed to optimize resume. Please try again.' });
+    }
+  });
+};
+
+module.exports = { analyzeResume, optimizeResume };

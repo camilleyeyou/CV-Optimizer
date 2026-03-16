@@ -194,6 +194,38 @@
   margin: 0;
 }
 
+/* Optimize CTA */
+.ats-optimize-cta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.5rem;
+  padding: 1.5rem 2rem;
+  background: linear-gradient(135deg, var(--primary-light), #ede9fe);
+  border: 1px solid rgba(99, 102, 241, 0.2);
+  border-radius: var(--radius-xl);
+}
+
+.optimize-cta-text h3 {
+  font-size: var(--text-base);
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0 0 0.35rem;
+}
+
+.optimize-cta-text p {
+  font-size: var(--text-xs);
+  color: var(--text-secondary);
+  margin: 0;
+  line-height: 1.6;
+  max-width: 460px;
+}
+
+.optimize-btn {
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
 /* Sections */
 .ats-sections h3,
 .ats-keywords h3,
@@ -423,5 +455,19 @@
 
   .section-score-name {
     width: 70px;
+  }
+
+  .ats-optimize-cta {
+    flex-direction: column;
+    text-align: center;
+    padding: 1.25rem;
+  }
+
+  .optimize-cta-text p {
+    max-width: none;
+  }
+
+  .optimize-btn {
+    width: 100%;
   }
 }

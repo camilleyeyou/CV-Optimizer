@@ -94,6 +94,111 @@ Be specific and actionable. Don't be generic.`,
       throw new Error('Failed to parse ATS analysis');
     }
   }
+  async optimizeResume(resumeText, jobTitle, jobDescription, atsResults) {
+    const prompt = `You are an expert resume writer. Given the following resume text, job title, and job description, rewrite the resume to maximize ATS compatibility and match the job requirements.
+
+CURRENT RESUME TEXT:
+${resumeText}
+
+TARGET JOB TITLE: ${jobTitle}
+${jobDescription ? `\nJOB DESCRIPTION:\n${jobDescription}` : ''}
+${atsResults ? `\nATS ANALYSIS (missing keywords to incorporate):\nMissing keywords: ${(atsResults.keyword_match?.missing || []).join(', ')}\nKey improvements needed: ${(atsResults.improvements || []).map(i => i.suggestion).join('; ')}` : ''}
+
+INSTRUCTIONS:
+- Keep all factual information (dates, companies, schools, degrees) from the original resume
+- Rewrite bullet points to be more impactful and incorporate missing keywords naturally
+- Optimize the summary/objective for the target role
+- Reorder and emphasize skills relevant to the job
+- Do NOT fabricate experience, education, or skills not implied by the original resume
+- Make bullet points start with strong action verbs and include quantifiable results where possible
+
+Respond with ONLY valid JSON in this exact format:
+{
+  "personal_info": {
+    "first_name": "",
+    "last_name": "",
+    "email": "",
+    "phone": "",
+    "job_title": "${jobTitle}",
+    "location": "",
+    "linkedin": "",
+    "website": ""
+  },
+  "summary": "A compelling 2-3 sentence professional summary tailored to the target role",
+  "work_experience": [
+    {
+      "position": "Job Title",
+      "company": "Company Name",
+      "location": "City, State",
+      "start_date": "YYYY-MM",
+      "end_date": "YYYY-MM or Present",
+      "current": false,
+      "description": "• Bullet point 1\\n• Bullet point 2\\n• Bullet point 3"
+    }
+  ],
+  "education": [
+    {
+      "degree": "Degree Name",
+      "school": "School Name",
+      "location": "City, State",
+      "start_date": "YYYY",
+      "end_date": "YYYY",
+      "description": ""
+    }
+  ],
+  "skills": ["skill1", "skill2", "skill3"],
+  "projects": [],
+  "certifications": [],
+  "languages": []
+}
+
+Extract and optimize ALL information from the original resume. Fill in every field you can from the source text.`;
+
+    const response = await this.client.chat.completions.create({
+      model: this.model,
+      messages: [
+        {
+          role: 'system',
+          content: 'You are an expert ATS resume optimizer. You rewrite resumes to maximize ATS scores while keeping all factual information accurate. Always respond with valid JSON only.',
+        },
+        {
+          role: 'user',
+          content: prompt,
+        },
+      ],
+      max_tokens: 3000,
+      temperature: 0.4,
+    });
+
+    const choice = response.choices?.[0];
+    if (!choice?.message?.content) {
+      throw new Error('Empty response from AI');
+    }
+
+    const content = choice.message.content.trim();
+    const jsonMatch = content.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) {
+      throw new Error('Failed to parse optimized resume');
+    }
+
+    try {
+      const parsed = JSON.parse(jsonMatch[0]);
+
+      // Ensure required structure
+      return {
+        personal_info: parsed.personal_info || {},
+        summary: parsed.summary || '',
+        work_experience: Array.isArray(parsed.work_experience) ? parsed.work_experience : [],
+        education: Array.isArray(parsed.education) ? parsed.education : [],
+        skills: Array.isArray(parsed.skills) ? parsed.skills : [],
+        projects: Array.isArray(parsed.projects) ? parsed.projects : [],
+        certifications: Array.isArray(parsed.certifications) ? parsed.certifications : [],
+        languages: Array.isArray(parsed.languages) ? parsed.languages : [],
+      };
+    } catch {
+      throw new Error('Failed to parse optimized resume');
+    }
+  }
 }
 
 module.exports = new ATSService();

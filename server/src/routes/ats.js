@@ -6,5 +6,6 @@ const atsController = require('../controllers/atsController');
 router.use(requireAuth);
 
 router.post('/analyze', atsController.analyzeResume);
+router.post('/optimize', atsController.optimizeResume);
 
 module.exports = router;
