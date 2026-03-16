@@ -98,6 +98,143 @@
   justify-content: center;
 }
 
+/* ATS Score Widget */
+.ats-widget {
+  background: white;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xl);
+  overflow: hidden;
+  margin-bottom: var(--space-4);
+}
+
+.ats-widget-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 0.75rem 1rem;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-family: inherit;
+  color: var(--text-secondary);
+}
+
+.ats-widget-header:hover {
+  background: var(--bg-secondary);
+}
+
+.ats-widget-title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.ats-widget-badge {
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: white;
+  padding: 2px 7px;
+  border-radius: var(--radius-full);
+  line-height: 1;
+}
+
+.ats-widget-body {
+  padding: 0 1rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.ats-widget-field input,
+.ats-widget-field textarea {
+  font-size: var(--text-xs);
+}
+
+.ats-widget-btn {
+  width: 100%;
+}
+
+.ats-widget-result {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--border);
+}
+
+.ats-widget-score-ring {
+  position: relative;
+  width: 80px;
+  height: 80px;
+}
+
+.ats-widget-score-num {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 1.25rem;
+  font-weight: 800;
+}
+
+.ats-widget-section {
+  width: 100%;
+}
+
+.ats-widget-section h4 {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin: 0 0 0.35rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.ats-widget-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+}
+
+.ats-widget-tag {
+  font-size: 0.65rem;
+  padding: 2px 8px;
+  border-radius: var(--radius-full);
+  font-weight: 500;
+}
+
+.ats-widget-tag.missing {
+  background: var(--error-light);
+  color: #b91c1c;
+}
+
+.ats-widget-tips {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.ats-widget-tips li {
+  font-size: var(--text-xs);
+  color: var(--text-secondary);
+  padding: 0.2rem 0;
+  line-height: 1.5;
+}
+
+.ats-widget-tips li::before {
+  content: '→ ';
+  color: var(--primary);
+  font-weight: 600;
+}
+
 /* Mobile */
 @media (max-width: 768px) {
   .builder-layout {

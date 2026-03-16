@@ -162,6 +162,17 @@
   margin-top: 2px;
 }
 
+.dropdown-credits {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  font-size: var(--text-xs);
+  font-weight: 600;
+  color: var(--primary);
+  background: var(--primary-light);
+}
+
 .dropdown-divider {
   height: 1px;
   background: var(--border);

@@ -1,7 +1,8 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { FileText, Menu, X, LogOut, User, ChevronDown, LayoutDashboard, FileSearch, Sparkles, PenTool, Layout } from 'lucide-react';
+import { getCredits } from '../../services/api';
+import { FileText, Menu, X, LogOut, User, ChevronDown, LayoutDashboard, FileSearch, Sparkles, PenTool, Layout, Mail, Zap } from 'lucide-react';
 import './Header.css';
 
 const Header = () => {
@@ -12,8 +13,16 @@ const Header = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
+  const [credits, setCredits] = useState(null);
+
   const closeDropdown = useCallback(() => setDropdownOpen(false), []);
   const closeMobile = useCallback(() => setMobileOpen(false), []);
+
+  // Fetch credits
+  useEffect(() => {
+    if (!isAuthenticated) return;
+    getCredits().then(setCredits).catch(() => {});
+  }, [isAuthenticated, location.pathname]);
 
   // Close mobile nav on route change
   useEffect(() => {
@@ -79,6 +88,7 @@ const Header = () => {
     { to: '/builder', label: 'Builder', icon: PenTool },
     { to: '/ai-creator', label: 'AI Creator', icon: Sparkles },
     { to: '/ats-checker', label: 'ATS Checker', icon: FileSearch },
+    { to: '/cover-letter', label: 'Cover Letter', icon: Mail },
   ];
 
   return (
@@ -121,6 +131,16 @@ const Header = () => {
                       <span className="dropdown-name">{displayName}</span>
                       <span className="dropdown-email">{user?.email}</span>
                     </div>
+                    {credits && (
+                      <div className="dropdown-credits">
+                        <Zap size={12} />
+                        <span>
+                          {credits.credits === -1
+                            ? `${credits.plan.charAt(0).toUpperCase() + credits.plan.slice(1)} — Unlimited`
+                            : `${credits.credits}/${credits.max_credits} AI credits`}
+                        </span>
+                      </div>
+                    )}
                     <div className="dropdown-divider" />
                     <button className="dropdown-item" role="menuitem" onClick={() => { navigate('/'); closeDropdown(); }}>
                       <User size={14} aria-hidden="true" /> Dashboard

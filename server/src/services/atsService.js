@@ -94,6 +94,202 @@ Be specific and actionable. Don't be generic.`,
       throw new Error('Failed to parse ATS analysis');
     }
   }
+  async quickScore(resumeData, jobTitle, jobDescription) {
+    const resumeText = this._resumeDataToText(resumeData);
+
+    const prompt = jobDescription
+      ? `Score this resume for ATS compatibility against the job posting.\n\nResume:\n${resumeText}\n\nJob Title: ${jobTitle}\nJob Description:\n${jobDescription}`
+      : `Score this resume for ATS compatibility for the role: ${jobTitle}\n\nResume:\n${resumeText}`;
+
+    const response = await this.client.chat.completions.create({
+      model: this.model,
+      messages: [
+        {
+          role: 'system',
+          content: `You are an ATS scoring engine. Respond with ONLY valid JSON:
+{"score": <0-100>, "tips": ["tip1", "tip2", "tip3"], "missing_keywords": ["kw1", "kw2"]}
+- score: overall ATS compatibility score
+- tips: top 3 most impactful improvements (short, actionable)
+- missing_keywords: top 5 missing keywords from the job
+Be concise. Each tip under 15 words.`,
+        },
+        { role: 'user', content: prompt },
+      ],
+      max_tokens: 400,
+      temperature: 0.3,
+    });
+
+    const choice = response.choices?.[0];
+    if (!choice?.message?.content) {
+      throw new Error('Empty response from AI');
+    }
+
+    const content = choice.message.content.trim();
+    const jsonMatch = content.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) {
+      throw new Error('Failed to parse score');
+    }
+
+    try {
+      return JSON.parse(jsonMatch[0]);
+    } catch {
+      throw new Error('Failed to parse score');
+    }
+  }
+
+  _resumeDataToText(data) {
+    const parts = [];
+    const p = data.personal_info || {};
+    if (p.first_name || p.last_name) parts.push(`${p.first_name || ''} ${p.last_name || ''}`.trim());
+    if (p.job_title) parts.push(p.job_title);
+    if (data.summary) parts.push(`Summary: ${data.summary}`);
+    if (data.work_experience?.length) {
+      parts.push('Experience:');
+      for (const exp of data.work_experience) {
+        parts.push(`${exp.position || ''} at ${exp.company || ''}`);
+        const desc = Array.isArray(exp.description) ? exp.description : [];
+        desc.forEach((d) => parts.push(`- ${d}`));
+      }
+    }
+    if (data.education?.length) {
+      parts.push('Education:');
+      for (const edu of data.education) {
+        parts.push(`${edu.degree || ''} ${edu.field_of_study || ''} - ${edu.institution || ''}`);
+      }
+    }
+    if (data.skills?.length) {
+      parts.push(`Skills: ${data.skills.join(', ')}`);
+    }
+    return parts.join('\n');
+  }
+
+  async parseResumeToJSON(resumeText) {
+    const prompt = `Extract all information from this resume text and return it as structured JSON.
+
+RESUME TEXT:
+${resumeText}
+
+Return ONLY valid JSON in this exact format:
+{
+  "personal_info": {
+    "first_name": "",
+    "last_name": "",
+    "email": "",
+    "phone": "",
+    "job_title": "",
+    "location": "",
+    "linkedin": "",
+    "website": ""
+  },
+  "summary": "The professional summary or objective if present",
+  "work_experience": [
+    {
+      "position": "Job Title",
+      "company": "Company Name",
+      "location": "City, State",
+      "start_date": "YYYY-MM",
+      "end_date": "YYYY-MM",
+      "current": false,
+      "description": ["Achievement bullet 1", "Achievement bullet 2"]
+    }
+  ],
+  "education": [
+    {
+      "institution": "School Name",
+      "degree": "Degree",
+      "field_of_study": "Field",
+      "location": "",
+      "start_date": "YYYY",
+      "end_date": "YYYY",
+      "gpa": ""
+    }
+  ],
+  "skills": ["skill1", "skill2"],
+  "projects": [
+    {"name": "", "description": "", "technologies": "", "url": ""}
+  ],
+  "certifications": [
+    {"name": "", "issuer": "", "date": ""}
+  ],
+  "languages": [
+    {"name": "", "proficiency": "Native|Fluent|Professional|Intermediate|Basic"}
+  ]
+}
+
+Rules:
+- Extract ALL information from the resume text — do not skip anything
+- If a field is not found in the resume, use empty string or empty array
+- Parse dates into YYYY-MM format when possible
+- Split description into individual bullet points as array items
+- Do not fabricate information not present in the resume`;
+
+    const response = await this.client.chat.completions.create({
+      model: this.model,
+      messages: [
+        {
+          role: 'system',
+          content: 'You are a resume parser. Extract structured data from resume text. Always respond with valid JSON only. Be thorough — capture every detail.',
+        },
+        { role: 'user', content: prompt },
+      ],
+      max_tokens: 3000,
+      temperature: 0.2,
+    });
+
+    const choice = response.choices?.[0];
+    if (!choice?.message?.content) {
+      throw new Error('Empty response from AI');
+    }
+
+    const content = choice.message.content.trim();
+    const jsonMatch = content.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) {
+      throw new Error('Failed to parse resume');
+    }
+
+    try {
+      const parsed = JSON.parse(jsonMatch[0]);
+      return this._normalizeResumeData(parsed);
+    } catch {
+      throw new Error('Failed to parse resume');
+    }
+  }
+
+  _normalizeResumeData(parsed) {
+    const normalizeDescription = (desc) => {
+      if (Array.isArray(desc)) return desc.map(String);
+      if (typeof desc === 'string') {
+        return desc
+          .split(/\n|•|▪|‣|➤/)
+          .map((s) => s.replace(/^[-–—]\s*/, '').trim())
+          .filter(Boolean);
+      }
+      return [];
+    };
+
+    const workExperience = (Array.isArray(parsed.work_experience) ? parsed.work_experience : []).map((exp) => ({
+      ...exp,
+      description: normalizeDescription(exp.description),
+      current: exp.current || (exp.end_date && /present/i.test(exp.end_date)),
+      end_date: exp.end_date && /present/i.test(exp.end_date) ? '' : exp.end_date || '',
+    }));
+
+    const skills = (Array.isArray(parsed.skills) ? parsed.skills : [])
+      .map((s) => (typeof s === 'string' ? s : String(s)))
+      .filter(Boolean);
+
+    return {
+      personal_info: parsed.personal_info || {},
+      summary: parsed.summary || '',
+      work_experience: workExperience,
+      education: Array.isArray(parsed.education) ? parsed.education : [],
+      skills,
+      projects: Array.isArray(parsed.projects) ? parsed.projects : [],
+      certifications: Array.isArray(parsed.certifications) ? parsed.certifications : [],
+      languages: Array.isArray(parsed.languages) ? parsed.languages : [],
+    };
+  }
+
   async optimizeResume(resumeText, jobTitle, jobDescription, atsResults) {
     const prompt = `You are an expert resume writer. Given the following resume text, job title, and job description, rewrite the resume to maximize ATS compatibility and match the job requirements.
 
@@ -183,41 +379,7 @@ Extract and optimize ALL information from the original resume. Fill in every fie
 
     try {
       const parsed = JSON.parse(jsonMatch[0]);
-
-      // Normalize description fields: AI may return string or array
-      const normalizeDescription = (desc) => {
-        if (Array.isArray(desc)) return desc.map(String);
-        if (typeof desc === 'string') {
-          return desc
-            .split(/\n|•|▪|‣|➤/)
-            .map((s) => s.replace(/^[-–—]\s*/, '').trim())
-            .filter(Boolean);
-        }
-        return [];
-      };
-
-      const workExperience = (Array.isArray(parsed.work_experience) ? parsed.work_experience : []).map((exp) => ({
-        ...exp,
-        description: normalizeDescription(exp.description),
-        current: exp.current || (exp.end_date && /present/i.test(exp.end_date)),
-        end_date: exp.end_date && /present/i.test(exp.end_date) ? '' : exp.end_date || '',
-      }));
-
-      // Ensure skills are flat strings
-      const skills = (Array.isArray(parsed.skills) ? parsed.skills : [])
-        .map((s) => (typeof s === 'string' ? s : String(s)))
-        .filter(Boolean);
-
-      return {
-        personal_info: parsed.personal_info || {},
-        summary: parsed.summary || '',
-        work_experience: workExperience,
-        education: Array.isArray(parsed.education) ? parsed.education : [],
-        skills,
-        projects: Array.isArray(parsed.projects) ? parsed.projects : [],
-        certifications: Array.isArray(parsed.certifications) ? parsed.certifications : [],
-        languages: Array.isArray(parsed.languages) ? parsed.languages : [],
-      };
+      return this._normalizeResumeData(parsed);
     } catch {
       throw new Error('Failed to parse optimized resume');
     }

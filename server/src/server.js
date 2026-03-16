@@ -55,6 +55,11 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
+// Credits endpoint
+const { requireAuth } = require('./middleware/auth');
+const { getCredits } = require('./middleware/credits');
+app.get('/api/credits', requireAuth, getCredits);
+
 // Routes
 app.use('/api/ai', require('./routes/ai'));
 app.use('/api/pdf', require('./routes/pdf'));

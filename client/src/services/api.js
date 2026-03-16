@@ -47,6 +47,17 @@ export const tailorResume = (resumeData, jobDescription) =>
 export const generatePDF = (resumeData, template) =>
   api.post('/api/pdf/generate', { resumeData, template }, { responseType: 'blob' }).then((r) => r.data);
 
+// DOCX generation
+export const generateDOCX = (resumeData, template) =>
+  api.post('/api/pdf/generate-docx', { resumeData, template }, { responseType: 'blob' }).then((r) => r.data);
+
+// ATS quick score
+export const quickATSScore = (resumeData, jobTitle, jobDescription) =>
+  api.post('/api/ats/quick-score', { resumeData, jobTitle, jobDescription }).then((r) => r.data);
+
+// Credits
+export const getCredits = () => api.get('/api/credits').then((r) => r.data);
+
 // Health check
 export const healthCheck = () => api.get('/api/health').then((r) => r.data);
 

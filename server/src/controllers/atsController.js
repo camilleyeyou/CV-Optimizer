@@ -120,4 +120,54 @@ const optimizeResume = async (req, res) => {
   });
 };
 
-module.exports = { analyzeResume, optimizeResume };
+const parseResume = async (req, res) => {
+  upload(req, res, async (err) => {
+    if (err) {
+      if (err instanceof multer.MulterError) {
+        return res.status(400).json({ error: 'File too large. Max 5MB.' });
+      }
+      return res.status(400).json({ error: err.message });
+    }
+
+    try {
+      if (!req.file) {
+        return res.status(400).json({ error: 'Please upload a PDF resume.' });
+      }
+
+      const resumeText = await atsService.extractTextFromPDF(req.file.buffer);
+
+      if (!resumeText || resumeText.length < 50) {
+        return res.status(400).json({
+          error: 'Could not extract enough text from the PDF. Make sure it is not a scanned image.',
+        });
+      }
+
+      const truncatedText = resumeText.slice(0, MAX_RESUME_TEXT_LENGTH);
+      const parsed = await atsService.parseResumeToJSON(truncatedText);
+
+      res.json(parsed);
+    } catch (error) {
+      res.status(500).json({ error: 'Failed to parse resume. Please try again.' });
+    }
+  });
+};
+
+const quickScore = async (req, res) => {
+  try {
+    const { resumeData, jobTitle, jobDescription } = req.body;
+
+    if (!resumeData || typeof resumeData !== 'object') {
+      return res.status(400).json({ error: 'Resume data is required.' });
+    }
+    if (!jobTitle || typeof jobTitle !== 'string' || jobTitle.trim().length < 2) {
+      return res.status(400).json({ error: 'Job title is required.' });
+    }
+
+    const result = await atsService.quickScore(resumeData, jobTitle.trim(), (jobDescription || '').trim());
+    res.json(result);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to score resume.' });
+  }
+};
+
+module.exports = { analyzeResume, optimizeResume, parseResume, quickScore };

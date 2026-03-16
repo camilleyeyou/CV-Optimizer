@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { requireAuth } = require('../middleware/auth');
+const { requireCredits } = require('../middleware/credits');
 const aiController = require('../controllers/aiController');
 const {
   validateSummary,
@@ -14,12 +15,12 @@ const {
 
 router.use(requireAuth);
 
-router.post('/summary', validateSummary, aiController.generateSummary);
-router.post('/enhance-experience', validateEnhanceExperience, aiController.enhanceExperience);
-router.post('/cover-letter', validateCoverLetter, aiController.generateCoverLetter);
-router.post('/suggest-skills', validateSuggestSkills, aiController.suggestSkills);
-router.post('/tailor', validateTailor, aiController.tailorResume);
-router.post('/generate-questions', validateGenerateQuestions, aiController.generateQuestions);
-router.post('/generate-resume', validateGenerateResume, aiController.generateResumeFromAnswers);
+router.post('/summary', validateSummary, requireCredits, aiController.generateSummary);
+router.post('/enhance-experience', validateEnhanceExperience, requireCredits, aiController.enhanceExperience);
+router.post('/cover-letter', validateCoverLetter, requireCredits, aiController.generateCoverLetter);
+router.post('/suggest-skills', validateSuggestSkills, requireCredits, aiController.suggestSkills);
+router.post('/tailor', validateTailor, requireCredits, aiController.tailorResume);
+router.post('/generate-questions', validateGenerateQuestions, requireCredits, aiController.generateQuestions);
+router.post('/generate-resume', validateGenerateResume, requireCredits, aiController.generateResumeFromAnswers);
 
 module.exports = router;

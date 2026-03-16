@@ -67,3 +67,40 @@ create trigger resumes_updated_at
   before update on resumes
   for each row
   execute function update_updated_at();
+
+-- User profiles (credits, plan)
+create table if not exists user_profiles (
+  id uuid references auth.users(id) on delete cascade primary key,
+  plan text default 'free' check (plan in ('free', 'pro', 'premium')),
+  ai_credits integer default 5,
+  credits_reset_at timestamptz default now(),
+  created_at timestamptz default now()
+);
+
+-- Auto-create profile on signup via trigger
+create or replace function create_user_profile()
+returns trigger as $$
+begin
+  insert into user_profiles (id) values (new.id);
+  return new;
+end;
+$$ language plpgsql security definer;
+
+create trigger on_auth_user_created
+  after insert on auth.users
+  for each row
+  execute function create_user_profile();
+
+-- RLS for user_profiles
+alter table user_profiles enable row level security;
+
+create policy "Users can view own profile"
+  on user_profiles for select
+  using (auth.uid() = id);
+
+create policy "Users can update own profile"
+  on user_profiles for update
+  using (auth.uid() = id);
+
+-- Service role can manage all profiles (for server-side credit deduction)
+-- No policy needed — service role bypasses RLS

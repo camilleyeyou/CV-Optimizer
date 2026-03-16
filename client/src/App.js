@@ -13,6 +13,7 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import ATSChecker from './pages/ATSChecker';
 import AICreator from './pages/AICreator';
+import CoverLetter from './pages/CoverLetter';
 import './styles.css';
 
 function App() {
@@ -36,6 +37,7 @@ function App() {
                   <Route path="/builder/:id" element={<PrivateRoute><Builder /></PrivateRoute>} />
                   <Route path="/ats-checker" element={<PrivateRoute><ATSChecker /></PrivateRoute>} />
                   <Route path="/ai-creator" element={<PrivateRoute><AICreator /></PrivateRoute>} />
+                  <Route path="/cover-letter" element={<PrivateRoute><CoverLetter /></PrivateRoute>} />
 
                   {/* Fallback */}
                   <Route path="*" element={<Navigate to="/" replace />} />

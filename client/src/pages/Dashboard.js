@@ -10,17 +10,23 @@ import {
   Copy,
   MoreVertical,
   AlertTriangle,
+  Upload,
+  Loader,
 } from 'lucide-react';
 import { useState, useEffect, useRef, useCallback } from 'react';
+import toast from 'react-hot-toast';
+import api from '../services/api';
 import './Dashboard.css';
 
 const Dashboard = () => {
   const navigate = useNavigate();
-  const { resumes, loading, deleteResume, duplicateResume } = useResume();
+  const { resumes, loading, deleteResume, duplicateResume, createResume, updateResume } = useResume();
   const { user } = useAuth();
   const [menuOpen, setMenuOpen] = useState(null);
   const [deleteTarget, setDeleteTarget] = useState(null);
+  const [importing, setImporting] = useState(false);
   const menuRef = useRef(null);
+  const importInputRef = useRef(null);
 
   const displayName =
     user?.user_metadata?.first_name || user?.email?.split('@')[0] || 'there';
@@ -62,6 +68,44 @@ const Dashboard = () => {
   const handleDuplicate = async (id) => {
     closeMenu();
     await duplicateResume(id);
+  };
+
+  const handleImport = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.type !== 'application/pdf') {
+      toast.error('Please upload a PDF file');
+      return;
+    }
+
+    setImporting(true);
+    try {
+      const formData = new FormData();
+      formData.append('resume', file);
+
+      const response = await api.post('/api/ats/parse', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+
+      const parsed = response.data;
+      const name = `${parsed.personal_info?.first_name || ''} ${parsed.personal_info?.last_name || ''}`.trim();
+      const newResume = await createResume('modern');
+
+      if (newResume) {
+        updateResume({
+          title: name || 'Imported Resume',
+          ...parsed,
+        });
+        toast.success('Resume imported! Redirecting to builder...');
+        navigate(`/builder/${newResume.id}`);
+      }
+    } catch (err) {
+      const message = err.response?.data?.error || 'Failed to import resume';
+      toast.error(message);
+    } finally {
+      setImporting(false);
+      if (importInputRef.current) importInputRef.current.value = '';
+    }
   };
 
   const formatDate = (dateStr) => {
@@ -113,10 +157,30 @@ const Dashboard = () => {
                 : `You have ${resumes.length} resume${resumes.length !== 1 ? 's' : ''}.`}
             </p>
           </div>
-          <button className="btn btn-primary btn-lg" onClick={handleCreate}>
-            <Plus size={18} aria-hidden="true" />
-            New Resume
-          </button>
+          <div className="dashboard-header-actions">
+            <input
+              ref={importInputRef}
+              type="file"
+              accept=".pdf"
+              onChange={handleImport}
+              hidden
+            />
+            <button
+              className="btn btn-secondary btn-lg"
+              onClick={() => importInputRef.current?.click()}
+              disabled={importing}
+            >
+              {importing ? (
+                <><Loader size={16} className="spin" /> Importing...</>
+              ) : (
+                <><Upload size={16} aria-hidden="true" /> Import PDF</>
+              )}
+            </button>
+            <button className="btn btn-primary btn-lg" onClick={handleCreate}>
+              <Plus size={18} aria-hidden="true" />
+              New Resume
+            </button>
+          </div>
         </div>
 
         {/* Content */}

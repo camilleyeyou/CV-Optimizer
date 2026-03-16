@@ -97,8 +97,10 @@ class OpenAIService {
   }
 
   async generateCoverLetter(resume, jobDescription) {
-    const name = `${resume.personalInfo?.firstName || ''} ${resume.personalInfo?.lastName || ''}`.trim();
-    const position = resume.workExperience?.[0]?.position || '';
+    const pi = resume.personal_info || resume.personalInfo || {};
+    const name = `${pi.first_name || pi.firstName || ''} ${pi.last_name || pi.lastName || ''}`.trim();
+    const we = resume.work_experience || resume.workExperience || [];
+    const position = we[0]?.position || pi.job_title || '';
     const skills = Array.isArray(resume.skills)
       ? resume.skills.join(', ')
       : Object.values(resume.skills || {}).flat().join(', ');

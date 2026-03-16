@@ -3,8 +3,9 @@ import { useParams } from 'react-router-dom';
 import { useResume } from '../context/ResumeContext';
 import ResumeForm from '../components/builder/ResumeForm';
 import ResumePreview from '../components/builder/ResumePreview';
-import { Download, CheckCircle, Loader, Eye, Edit3, ChevronLeft, ChevronRight } from 'lucide-react';
-import { generatePDF } from '../services/api';
+import ATSScoreWidget from '../components/builder/ATSScoreWidget';
+import { Download, CheckCircle, Loader, Eye, Edit3, ChevronLeft, ChevronRight, FileText } from 'lucide-react';
+import { generatePDF, generateDOCX } from '../services/api';
 import toast from 'react-hot-toast';
 import './Builder.css';
 
@@ -25,32 +26,35 @@ const Builder = () => {
     init();
   }, [id, loadResume, createResume, resumeData?.id]);
 
-  const [exporting, setExporting] = useState(false);
+  const [exporting, setExporting] = useState(null); // null | 'pdf' | 'docx'
 
-  const handleDownloadPDF = async () => {
+  const handleExport = async (format) => {
     if (!resumeData) {
       toast.error('No resume to export');
       return;
     }
 
-    setExporting(true);
+    setExporting(format);
     try {
-      const blob = await generatePDF(resumeData, resumeData.template || 'modern');
+      const template = resumeData.template || 'modern';
+      const blob = format === 'docx'
+        ? await generateDOCX(resumeData, template)
+        : await generatePDF(resumeData, template);
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
       const firstName = resumeData.personal_info?.first_name || 'Resume';
       const lastName = resumeData.personal_info?.last_name || '';
-      a.download = `${firstName}${lastName ? '_' + lastName : ''}_Resume.pdf`;
+      a.download = `${firstName}${lastName ? '_' + lastName : ''}_Resume.${format}`;
       document.body.appendChild(a);
       a.click();
       a.remove();
       window.URL.revokeObjectURL(url);
-      toast.success('PDF downloaded');
+      toast.success(`${format.toUpperCase()} downloaded`);
     } catch (err) {
-      toast.error('Failed to export PDF. Please try again.');
+      toast.error(`Failed to export ${format.toUpperCase()}. Please try again.`);
     } finally {
-      setExporting(false);
+      setExporting(null);
     }
   };
 
@@ -103,8 +107,11 @@ const Builder = () => {
             {previewCollapsed ? <><ChevronLeft size={14} /> Show Preview</> : <><ChevronRight size={14} /> Hide Preview</>}
           </button>
 
-          <button className="btn btn-primary btn-sm" onClick={handleDownloadPDF} disabled={exporting}>
-            {exporting ? <><Loader size={14} className="spin" /> Exporting...</> : <><Download size={14} /> Export PDF</>}
+          <button className="btn btn-secondary btn-sm" onClick={() => handleExport('docx')} disabled={!!exporting}>
+            {exporting === 'docx' ? <><Loader size={14} className="spin" /> Exporting...</> : <><FileText size={14} /> DOCX</>}
+          </button>
+          <button className="btn btn-primary btn-sm" onClick={() => handleExport('pdf')} disabled={!!exporting}>
+            {exporting === 'pdf' ? <><Loader size={14} className="spin" /> Exporting...</> : <><Download size={14} /> PDF</>}
           </button>
         </div>
       </div>
@@ -112,6 +119,7 @@ const Builder = () => {
       {/* Main content */}
       <div className={`builder-layout ${previewCollapsed ? 'preview-collapsed' : ''}`}>
         <div className={`builder-form-panel ${mobileView === 'preview' ? 'mobile-hidden' : ''}`}>
+          <ATSScoreWidget />
           <ResumeForm />
         </div>
 

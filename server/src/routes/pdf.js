@@ -7,5 +7,6 @@ const { validatePDF } = require('../middleware/validate');
 router.use(requireAuth);
 
 router.post('/generate', validatePDF, pdfController.generatePDF);
+router.post('/generate-docx', validatePDF, pdfController.generateDOCX);
 
 module.exports = router;

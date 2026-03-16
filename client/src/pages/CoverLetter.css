@@ -1,0 +1,174 @@
+/* Cover Letter Page */
+.cl-page {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 2rem 1.5rem 4rem;
+  min-height: calc(100vh - var(--header-height));
+}
+
+.cl-header {
+  text-align: center;
+  margin-bottom: 2.5rem;
+}
+
+.cl-header h1 {
+  font-size: 1.75rem;
+  font-weight: 800;
+  color: var(--text-primary);
+  margin: 0 0 0.5rem;
+  letter-spacing: -0.02em;
+}
+
+.cl-header p {
+  color: var(--text-muted);
+  font-size: var(--text-sm);
+  margin: 0;
+}
+
+.cl-content {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+/* Input Panel */
+.cl-input-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.cl-input-panel .form-label {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.cl-input-panel .form-select {
+  width: 100%;
+}
+
+.cl-generate-btn {
+  align-self: flex-start;
+}
+
+/* Loading */
+.cl-loading {
+  text-align: center;
+  padding: 3rem 1rem;
+  color: var(--text-secondary);
+}
+
+.cl-loading p {
+  margin-top: 1rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.cl-loading span {
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+}
+
+/* Result */
+.cl-result {
+  background: white;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xl);
+  overflow: hidden;
+}
+
+.cl-result-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 1.5rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.cl-result-header h3 {
+  font-size: var(--text-sm);
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.cl-result-actions {
+  display: flex;
+  gap: 0.25rem;
+}
+
+/* Letter display */
+.cl-letter {
+  padding: 2rem 2.5rem;
+  line-height: 1.8;
+  font-size: var(--text-sm);
+  color: var(--text-primary);
+}
+
+.cl-letter p {
+  margin: 0 0 1rem;
+}
+
+.cl-letter p:last-child {
+  margin-bottom: 0;
+}
+
+.cl-letter p:empty {
+  height: 0.5rem;
+}
+
+/* Editor */
+.cl-editor {
+  display: block;
+  width: 100%;
+  padding: 1.5rem 2.5rem;
+  border: none;
+  border-top: 1px solid var(--border);
+  font-family: var(--font-sans);
+  font-size: var(--text-sm);
+  line-height: 1.8;
+  color: var(--text-primary);
+  resize: vertical;
+  background: var(--bg-secondary);
+}
+
+.cl-editor:focus {
+  outline: none;
+  background: white;
+}
+
+.cl-edit-hint {
+  display: block;
+  padding: 0.5rem 2.5rem 1rem;
+  background: var(--bg-secondary);
+}
+
+/* Mobile */
+@media (max-width: 640px) {
+  .cl-page {
+    padding: 1.5rem 1rem 3rem;
+  }
+
+  .cl-result-header {
+    flex-direction: column;
+    gap: 0.75rem;
+    align-items: flex-start;
+  }
+
+  .cl-letter {
+    padding: 1.5rem;
+  }
+
+  .cl-editor {
+    padding: 1rem 1.5rem;
+  }
+
+  .cl-edit-hint {
+    padding: 0.5rem 1.5rem 1rem;
+  }
+
+  .cl-generate-btn {
+    width: 100%;
+  }
+}
