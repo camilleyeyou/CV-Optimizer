@@ -140,6 +140,57 @@
   margin-bottom: 0;
 }
 
+/* Locked / Premium */
+.template-card.is-locked {
+  cursor: default;
+}
+
+.template-card.is-locked .template-mock {
+  opacity: 0.5;
+  filter: blur(1px);
+}
+
+.template-card.is-locked:hover {
+  border-color: var(--border);
+  box-shadow: none;
+  transform: none;
+}
+
+.template-lock-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.25rem;
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+  border-radius: var(--radius-xl);
+}
+
+.template-lock-overlay svg {
+  color: var(--primary);
+}
+
+.template-lock-overlay span {
+  font-size: 0.6rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--primary);
+  background: var(--primary-light);
+  padding: 2px 8px;
+  border-radius: var(--radius-full);
+}
+
+.template-crown {
+  color: #d97706;
+  margin-left: 4px;
+  vertical-align: middle;
+}
+
 /* Action */
 .templates-action {
   display: flex;

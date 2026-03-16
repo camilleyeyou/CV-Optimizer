@@ -16,6 +16,8 @@ import AICreator from './pages/AICreator';
 import CoverLetter from './pages/CoverLetter';
 import Tracker from './pages/Tracker';
 import InterviewPrep from './pages/InterviewPrep';
+import EmailGenerator from './pages/EmailGenerator';
+import Analytics from './pages/Analytics';
 import './styles.css';
 
 function App() {
@@ -42,6 +44,8 @@ function App() {
                   <Route path="/cover-letter" element={<PrivateRoute><CoverLetter /></PrivateRoute>} />
                   <Route path="/tracker" element={<PrivateRoute><Tracker /></PrivateRoute>} />
                   <Route path="/interview-prep" element={<PrivateRoute><InterviewPrep /></PrivateRoute>} />
+                  <Route path="/emails" element={<PrivateRoute><EmailGenerator /></PrivateRoute>} />
+                  <Route path="/analytics" element={<PrivateRoute><Analytics /></PrivateRoute>} />
 
                   {/* Fallback */}
                   <Route path="*" element={<Navigate to="/" replace />} />

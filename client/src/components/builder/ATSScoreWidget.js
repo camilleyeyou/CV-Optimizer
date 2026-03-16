@@ -2,10 +2,13 @@ import { useState, useCallback } from 'react';
 import { BarChart3, Loader, AlertTriangle, CheckCircle, ChevronDown, ChevronUp } from 'lucide-react';
 import { quickATSScore } from '../../services/api';
 import { useResume } from '../../context/ResumeContext';
+import { useAuth } from '../../context/AuthContext';
+import { supabase } from '../../config/supabase';
 import toast from 'react-hot-toast';
 
 const ATSScoreWidget = () => {
   const { resumeData } = useResume();
+  const { user } = useAuth();
   const [jobTitle, setJobTitle] = useState('');
   const [jobDescription, setJobDescription] = useState('');
   const [result, setResult] = useState(null);
@@ -24,6 +27,17 @@ const ATSScoreWidget = () => {
       const data = await quickATSScore(resumeData, title, jobDescription.trim());
       setResult(data);
       setExpanded(true);
+
+      // Save score to analytics
+      if (user && resumeData?.id && data.score != null) {
+        supabase.from('resume_scores').insert({
+          user_id: user.id,
+          resume_id: resumeData.id,
+          job_title: title,
+          score: data.score,
+          missing_keywords: data.missing_keywords || [],
+        }).then(() => {});
+      }
     } catch {
       toast.error('Failed to score resume');
     } finally {

@@ -13,6 +13,8 @@ const {
   validateGenerateResume,
   validateInterviewQuestions,
   validateEvaluateAnswer,
+  validateGenerateEmail,
+  validateTranslateResume,
 } = require('../middleware/validate');
 
 router.use(requireAuth);
@@ -26,5 +28,7 @@ router.post('/generate-questions', validateGenerateQuestions, requireCredits, ai
 router.post('/generate-resume', validateGenerateResume, requireCredits, aiController.generateResumeFromAnswers);
 router.post('/interview-questions', validateInterviewQuestions, requireCredits, aiController.generateInterviewQuestions);
 router.post('/evaluate-answer', validateEvaluateAnswer, requireCredits, aiController.evaluateAnswer);
+router.post('/generate-email', validateGenerateEmail, requireCredits, aiController.generateEmail);
+router.post('/translate-resume', validateTranslateResume, requireCredits, aiController.translateResume);
 
 module.exports = router;

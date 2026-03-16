@@ -5,7 +5,8 @@ import ResumeForm from '../components/builder/ResumeForm';
 import ResumePreview from '../components/builder/ResumePreview';
 import ATSScoreWidget from '../components/builder/ATSScoreWidget';
 import TailorModal from '../components/builder/TailorModal';
-import { Download, CheckCircle, Loader, Eye, Edit3, ChevronLeft, ChevronRight, FileText, Wand2 } from 'lucide-react';
+import TranslateModal from '../components/builder/TranslateModal';
+import { Download, CheckCircle, Loader, Eye, Edit3, ChevronLeft, ChevronRight, FileText, Wand2, Languages } from 'lucide-react';
 import { generatePDF, generateDOCX } from '../services/api';
 import toast from 'react-hot-toast';
 import './Builder.css';
@@ -16,6 +17,7 @@ const Builder = () => {
   const [previewCollapsed, setPreviewCollapsed] = useState(false);
   const [mobileView, setMobileView] = useState('edit'); // 'edit' | 'preview'
   const [tailorOpen, setTailorOpen] = useState(false);
+  const [translateOpen, setTranslateOpen] = useState(false);
 
   useEffect(() => {
     const init = async () => {
@@ -113,6 +115,10 @@ const Builder = () => {
             <Wand2 size={14} /> Tailor
           </button>
 
+          <button className="btn btn-secondary btn-sm" onClick={() => setTranslateOpen(true)}>
+            <Languages size={14} /> Translate
+          </button>
+
           <button className="btn btn-secondary btn-sm" onClick={() => handleExport('docx')} disabled={!!exporting}>
             {exporting === 'docx' ? <><Loader size={14} className="spin" /> Exporting...</> : <><FileText size={14} /> DOCX</>}
           </button>
@@ -138,6 +144,7 @@ const Builder = () => {
         )}
       </div>
       <TailorModal open={tailorOpen} onClose={() => setTailorOpen(false)} />
+      <TranslateModal open={translateOpen} onClose={() => setTranslateOpen(false)} />
     </div>
   );
 };

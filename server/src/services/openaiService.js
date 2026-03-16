@@ -405,6 +405,125 @@ Return JSON:
     return parsed;
   }
 
+  async generateEmail(type, context) {
+    const templates = {
+      'follow-up': `Write a professional follow-up email after a job application.
+Context: Applied for ${context.position} at ${context.company}${context.appliedDate ? ` on ${context.appliedDate}` : ''}.
+${context.notes ? `Additional context: ${context.notes}` : ''}
+
+Rules:
+- Subject line included
+- Polite, brief (under 150 words body)
+- Reaffirm interest in the role
+- Reference something specific about the company if possible
+- Professional but warm tone`,
+
+      'thank-you': `Write a professional thank-you email after a job interview.
+Context: Interviewed for ${context.position} at ${context.company}.
+${context.interviewerName ? `Interviewer: ${context.interviewerName}` : ''}
+${context.notes ? `Topics discussed: ${context.notes}` : ''}
+
+Rules:
+- Subject line included
+- Under 200 words body
+- Reference specific topics from the interview
+- Express enthusiasm for the role
+- Professional and genuine tone`,
+
+      'accept': `Write a professional job offer acceptance email.
+Context: Accepting the ${context.position} role at ${context.company}.
+${context.startDate ? `Start date: ${context.startDate}` : ''}
+${context.notes ? `Additional details: ${context.notes}` : ''}
+
+Rules:
+- Subject line included
+- Under 150 words body
+- Confirm acceptance clearly
+- Express excitement
+- Ask about next steps if appropriate`,
+
+      'decline': `Write a professional and gracious job offer decline email.
+Context: Declining the ${context.position} role at ${context.company}.
+${context.notes ? `Reason (keep vague): ${context.notes}` : ''}
+
+Rules:
+- Subject line included
+- Under 150 words body
+- Be gracious and leave the door open
+- Don't over-explain
+- Thank them for the opportunity`,
+    };
+
+    const prompt = templates[type];
+    if (!prompt) throw new Error('Invalid email type');
+
+    const response = await this.client.chat.completions.create({
+      model: this.model,
+      messages: [
+        {
+          role: 'system',
+          content: 'You are a professional communication expert. Write concise, effective job-related emails. Return JSON with "subject" and "body" fields only.',
+        },
+        {
+          role: 'user',
+          content: `${prompt}\n\nReturn JSON:\n{"subject": "email subject line", "body": "full email body text"}`,
+        },
+      ],
+      max_tokens: 400,
+      temperature: 0.6,
+    });
+
+    const content = this._getResponse(response);
+    const parsed = this._safeJsonParse(content, null);
+    if (!parsed) throw new Error('Failed to generate email');
+    return parsed;
+  }
+
+  async translateResume(resumeData, targetLanguage) {
+    const response = await this.client.chat.completions.create({
+      model: this.model,
+      messages: [
+        {
+          role: 'system',
+          content: `You are a professional translator specializing in resume/CV translation. Translate the resume content to ${targetLanguage}. Keep formatting, structure, and professional tone. Do NOT translate proper nouns (company names, school names, certifications). Always respond with valid JSON.`,
+        },
+        {
+          role: 'user',
+          content: `Translate this resume to ${targetLanguage}. Return the SAME JSON structure with translated content.
+
+${JSON.stringify({
+  summary: resumeData.summary || '',
+  work_experience: (resumeData.work_experience || []).map((e) => ({
+    position: e.position,
+    description: e.description,
+  })),
+  education: (resumeData.education || []).map((e) => ({
+    degree: e.degree,
+    field_of_study: e.field_of_study,
+  })),
+  skills: resumeData.skills || [],
+}, null, 2)}
+
+Return JSON:
+{
+  "summary": "translated summary",
+  "work_experience": [{"position": "translated", "description": ["translated bullets"]}],
+  "education": [{"degree": "translated", "field_of_study": "translated"}],
+  "skills": ["translated skill1", "translated skill2"],
+  "language_name": "${targetLanguage}"
+}`,
+        },
+      ],
+      max_tokens: 2000,
+      temperature: 0.3,
+    });
+
+    const content = this._getResponse(response);
+    const parsed = this._safeJsonParse(content, null);
+    if (!parsed) throw new Error('Failed to translate resume');
+    return parsed;
+  }
+
   _calculateYears(resume) {
     if (!resume.workExperience?.length) return 1;
     try {

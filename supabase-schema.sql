@@ -139,3 +139,24 @@ create policy "Users can delete own applications"
 create trigger applications_updated_at
   before update on applications
   for each row execute function update_updated_at();
+
+-- Resume Analytics (ATS score history)
+create table if not exists resume_scores (
+  id uuid default uuid_generate_v4() primary key,
+  user_id uuid references auth.users(id) on delete cascade not null,
+  resume_id uuid references resumes(id) on delete cascade not null,
+  job_title text default '',
+  score integer not null check (score >= 0 and score <= 100),
+  missing_keywords jsonb default '[]'::jsonb,
+  created_at timestamptz default now()
+);
+
+create index if not exists idx_resume_scores_user_id on resume_scores(user_id);
+create index if not exists idx_resume_scores_resume_id on resume_scores(resume_id);
+
+alter table resume_scores enable row level security;
+
+create policy "Users can view own scores"
+  on resume_scores for select using (auth.uid() = user_id);
+create policy "Users can create own scores"
+  on resume_scores for insert with check (auth.uid() = user_id);

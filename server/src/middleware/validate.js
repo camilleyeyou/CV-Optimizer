@@ -85,6 +85,20 @@ const validateEvaluateAnswer = [
   handleValidation,
 ];
 
+const validateGenerateEmail = [
+  body('type').isString().isIn(['follow-up', 'thank-you', 'accept', 'decline']).withMessage('Invalid email type'),
+  body('context').isObject().withMessage('Context is required'),
+  body('context.position').isString().isLength({ min: 1 }).withMessage('Position is required'),
+  body('context.company').isString().isLength({ min: 1 }).withMessage('Company is required'),
+  handleValidation,
+];
+
+const validateTranslateResume = [
+  body('resumeData').isObject().withMessage('Resume data is required'),
+  body('targetLanguage').isString().isLength({ min: 2, max: 50 }).withMessage('Target language is required'),
+  handleValidation,
+];
+
 // PDF route validators
 const validatePDF = [
   body('resumeData').isObject().withMessage('Resume data is required'),
@@ -102,5 +116,7 @@ module.exports = {
   validateGenerateResume,
   validateInterviewQuestions,
   validateEvaluateAnswer,
+  validateGenerateEmail,
+  validateTranslateResume,
   validatePDF,
 };

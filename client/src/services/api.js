@@ -55,6 +55,14 @@ export const generateDOCX = (resumeData, template) =>
 export const quickATSScore = (resumeData, jobTitle, jobDescription) =>
   api.post('/api/ats/quick-score', { resumeData, jobTitle, jobDescription }).then((r) => r.data);
 
+// Email Generator
+export const generateEmail = (type, context) =>
+  api.post('/api/ai/generate-email', { type, context }).then((r) => r.data);
+
+// Resume Translation
+export const translateResume = (resumeData, targetLanguage) =>
+  api.post('/api/ai/translate-resume', { resumeData, targetLanguage }).then((r) => r.data);
+
 // Interview Prep
 export const generateInterviewQuestions = (resumeData, jobDescription) =>
   api.post('/api/ai/interview-questions', { resumeData, jobDescription }).then((r) => r.data);

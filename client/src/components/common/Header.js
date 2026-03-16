@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { getCredits } from '../../services/api';
-import { FileText, Menu, X, LogOut, User, ChevronDown, LayoutDashboard, FileSearch, Sparkles, PenTool, Layout, Mail, Zap, Briefcase, MessageSquare } from 'lucide-react';
+import { FileText, Menu, X, LogOut, User, ChevronDown, LayoutDashboard, FileSearch, Sparkles, PenTool, Layout, Mail, Zap, Briefcase, MessageSquare, BarChart3 } from 'lucide-react';
 import './Header.css';
 
 const Header = () => {
@@ -89,6 +89,7 @@ const Header = () => {
     { to: '/ai-creator', label: 'AI Creator', icon: Sparkles },
     { to: '/ats-checker', label: 'ATS Checker', icon: FileSearch },
     { to: '/cover-letter', label: 'Cover Letter', icon: Mail },
+    { to: '/emails', label: 'Emails', icon: Mail },
     { to: '/tracker', label: 'Tracker', icon: Briefcase },
     { to: '/interview-prep', label: 'Interview', icon: MessageSquare },
   ];
@@ -146,6 +147,9 @@ const Header = () => {
                     <div className="dropdown-divider" />
                     <button className="dropdown-item" role="menuitem" onClick={() => { navigate('/'); closeDropdown(); }}>
                       <User size={14} aria-hidden="true" /> Dashboard
+                    </button>
+                    <button className="dropdown-item" role="menuitem" onClick={() => { navigate('/analytics'); closeDropdown(); }}>
+                      <BarChart3 size={14} aria-hidden="true" /> Analytics
                     </button>
                     <button className="dropdown-item dropdown-item-danger" role="menuitem" onClick={handleSignOut}>
                       <LogOut size={14} aria-hidden="true" /> Sign out

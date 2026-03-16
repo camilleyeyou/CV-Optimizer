@@ -90,6 +90,26 @@ const evaluateAnswer = async (req, res) => {
   }
 };
 
+const generateEmail = async (req, res) => {
+  try {
+    const { type, context } = req.body;
+    const email = await openaiService.generateEmail(type, context);
+    res.json(email);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to generate email' });
+  }
+};
+
+const translateResume = async (req, res) => {
+  try {
+    const { resumeData, targetLanguage } = req.body;
+    const translated = await openaiService.translateResume(resumeData, targetLanguage);
+    res.json(translated);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to translate resume' });
+  }
+};
+
 module.exports = {
   generateSummary,
   enhanceExperience,
@@ -100,4 +120,6 @@ module.exports = {
   generateResumeFromAnswers,
   generateInterviewQuestions,
   evaluateAnswer,
+  generateEmail,
+  translateResume,
 };
