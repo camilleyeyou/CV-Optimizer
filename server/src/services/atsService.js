@@ -133,7 +133,7 @@ Respond with ONLY valid JSON in this exact format:
       "start_date": "YYYY-MM",
       "end_date": "YYYY-MM or Present",
       "current": false,
-      "description": "• Bullet point 1\\n• Bullet point 2\\n• Bullet point 3"
+      "description": ["Bullet point 1", "Bullet point 2", "Bullet point 3"]
     }
   ],
   "education": [
@@ -184,13 +184,36 @@ Extract and optimize ALL information from the original resume. Fill in every fie
     try {
       const parsed = JSON.parse(jsonMatch[0]);
 
-      // Ensure required structure
+      // Normalize description fields: AI may return string or array
+      const normalizeDescription = (desc) => {
+        if (Array.isArray(desc)) return desc.map(String);
+        if (typeof desc === 'string') {
+          return desc
+            .split(/\n|•|▪|‣|➤/)
+            .map((s) => s.replace(/^[-–—]\s*/, '').trim())
+            .filter(Boolean);
+        }
+        return [];
+      };
+
+      const workExperience = (Array.isArray(parsed.work_experience) ? parsed.work_experience : []).map((exp) => ({
+        ...exp,
+        description: normalizeDescription(exp.description),
+        current: exp.current || (exp.end_date && /present/i.test(exp.end_date)),
+        end_date: exp.end_date && /present/i.test(exp.end_date) ? '' : exp.end_date || '',
+      }));
+
+      // Ensure skills are flat strings
+      const skills = (Array.isArray(parsed.skills) ? parsed.skills : [])
+        .map((s) => (typeof s === 'string' ? s : String(s)))
+        .filter(Boolean);
+
       return {
         personal_info: parsed.personal_info || {},
         summary: parsed.summary || '',
-        work_experience: Array.isArray(parsed.work_experience) ? parsed.work_experience : [],
+        work_experience: workExperience,
         education: Array.isArray(parsed.education) ? parsed.education : [],
-        skills: Array.isArray(parsed.skills) ? parsed.skills : [],
+        skills,
         projects: Array.isArray(parsed.projects) ? parsed.projects : [],
         certifications: Array.isArray(parsed.certifications) ? parsed.certifications : [],
         languages: Array.isArray(parsed.languages) ? parsed.languages : [],
