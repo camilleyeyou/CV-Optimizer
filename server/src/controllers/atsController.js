@@ -143,7 +143,8 @@ const parseResume = async (req, res) => {
       }
 
       const truncatedText = resumeText.slice(0, MAX_RESUME_TEXT_LENGTH);
-      const parsed = await atsService.parseResumeToJSON(truncatedText);
+      const source = req.body.source || 'resume';
+      const parsed = await atsService.parseResumeToJSON(truncatedText, source);
 
       res.json(parsed);
     } catch (error) {

@@ -14,6 +14,8 @@ import Register from './pages/Register';
 import ATSChecker from './pages/ATSChecker';
 import AICreator from './pages/AICreator';
 import CoverLetter from './pages/CoverLetter';
+import Tracker from './pages/Tracker';
+import InterviewPrep from './pages/InterviewPrep';
 import './styles.css';
 
 function App() {
@@ -38,6 +40,8 @@ function App() {
                   <Route path="/ats-checker" element={<PrivateRoute><ATSChecker /></PrivateRoute>} />
                   <Route path="/ai-creator" element={<PrivateRoute><AICreator /></PrivateRoute>} />
                   <Route path="/cover-letter" element={<PrivateRoute><CoverLetter /></PrivateRoute>} />
+                  <Route path="/tracker" element={<PrivateRoute><Tracker /></PrivateRoute>} />
+                  <Route path="/interview-prep" element={<PrivateRoute><InterviewPrep /></PrivateRoute>} />
 
                   {/* Fallback */}
                   <Route path="*" element={<Navigate to="/" replace />} />

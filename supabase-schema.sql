@@ -104,3 +104,38 @@ create policy "Users can update own profile"
 
 -- Service role can manage all profiles (for server-side credit deduction)
 -- No policy needed — service role bypasses RLS
+
+-- Job Applications (tracker/kanban)
+create table if not exists applications (
+  id uuid default uuid_generate_v4() primary key,
+  user_id uuid references auth.users(id) on delete cascade not null,
+  resume_id uuid references resumes(id) on delete set null,
+  company text not null default '',
+  position text not null default '',
+  url text default '',
+  status text default 'saved' check (status in ('saved', 'applied', 'interview', 'offer', 'rejected')),
+  notes text default '',
+  applied_at date,
+  created_at timestamptz default now(),
+  updated_at timestamptz default now()
+);
+
+create index if not exists idx_applications_user_id on applications(user_id);
+
+alter table applications enable row level security;
+
+create policy "Users can view own applications"
+  on applications for select using (auth.uid() = user_id);
+
+create policy "Users can create own applications"
+  on applications for insert with check (auth.uid() = user_id);
+
+create policy "Users can update own applications"
+  on applications for update using (auth.uid() = user_id);
+
+create policy "Users can delete own applications"
+  on applications for delete using (auth.uid() = user_id);
+
+create trigger applications_updated_at
+  before update on applications
+  for each row execute function update_updated_at();

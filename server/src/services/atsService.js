@@ -163,10 +163,20 @@ Be concise. Each tip under 15 words.`,
     return parts.join('\n');
   }
 
-  async parseResumeToJSON(resumeText) {
-    const prompt = `Extract all information from this resume text and return it as structured JSON.
+  async parseResumeToJSON(resumeText, source = 'resume') {
+    const sourceHint = source === 'linkedin'
+      ? `\nThis text was extracted from a LinkedIn PDF export. LinkedIn PDFs have a specific format:
+- Name and headline at the top
+- "Experience" section with company, title, dates, and descriptions
+- "Education" section
+- "Skills" section (may include endorsement counts — ignore the numbers)
+- "Languages", "Certifications", "Projects", "Volunteer" sections may be present
+- Ignore "connections", "people also viewed", and other LinkedIn UI artifacts\n`
+      : '';
 
-RESUME TEXT:
+    const prompt = `Extract all information from this ${source === 'linkedin' ? 'LinkedIn profile' : 'resume'} text and return it as structured JSON.
+${sourceHint}
+${source === 'linkedin' ? 'LINKEDIN PROFILE' : 'RESUME'} TEXT:
 ${resumeText}
 
 Return ONLY valid JSON in this exact format:

@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { getCredits } from '../../services/api';
-import { FileText, Menu, X, LogOut, User, ChevronDown, LayoutDashboard, FileSearch, Sparkles, PenTool, Layout, Mail, Zap } from 'lucide-react';
+import { FileText, Menu, X, LogOut, User, ChevronDown, LayoutDashboard, FileSearch, Sparkles, PenTool, Layout, Mail, Zap, Briefcase, MessageSquare } from 'lucide-react';
 import './Header.css';
 
 const Header = () => {
@@ -89,6 +89,8 @@ const Header = () => {
     { to: '/ai-creator', label: 'AI Creator', icon: Sparkles },
     { to: '/ats-checker', label: 'ATS Checker', icon: FileSearch },
     { to: '/cover-letter', label: 'Cover Letter', icon: Mail },
+    { to: '/tracker', label: 'Tracker', icon: Briefcase },
+    { to: '/interview-prep', label: 'Interview', icon: MessageSquare },
   ];
 
   return (

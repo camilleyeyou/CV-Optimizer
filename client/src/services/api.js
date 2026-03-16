@@ -55,6 +55,13 @@ export const generateDOCX = (resumeData, template) =>
 export const quickATSScore = (resumeData, jobTitle, jobDescription) =>
   api.post('/api/ats/quick-score', { resumeData, jobTitle, jobDescription }).then((r) => r.data);
 
+// Interview Prep
+export const generateInterviewQuestions = (resumeData, jobDescription) =>
+  api.post('/api/ai/interview-questions', { resumeData, jobDescription }).then((r) => r.data);
+
+export const evaluateAnswer = (question, answer, jobDescription) =>
+  api.post('/api/ai/evaluate-answer', { question, answer, jobDescription }).then((r) => r.data);
+
 // Credits
 export const getCredits = () => api.get('/api/credits').then((r) => r.data);
 

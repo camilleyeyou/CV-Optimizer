@@ -4,7 +4,8 @@ import { useResume } from '../context/ResumeContext';
 import ResumeForm from '../components/builder/ResumeForm';
 import ResumePreview from '../components/builder/ResumePreview';
 import ATSScoreWidget from '../components/builder/ATSScoreWidget';
-import { Download, CheckCircle, Loader, Eye, Edit3, ChevronLeft, ChevronRight, FileText } from 'lucide-react';
+import TailorModal from '../components/builder/TailorModal';
+import { Download, CheckCircle, Loader, Eye, Edit3, ChevronLeft, ChevronRight, FileText, Wand2 } from 'lucide-react';
 import { generatePDF, generateDOCX } from '../services/api';
 import toast from 'react-hot-toast';
 import './Builder.css';
@@ -14,6 +15,7 @@ const Builder = () => {
   const { resumeData, loadResume, createResume, saving, loading } = useResume();
   const [previewCollapsed, setPreviewCollapsed] = useState(false);
   const [mobileView, setMobileView] = useState('edit'); // 'edit' | 'preview'
+  const [tailorOpen, setTailorOpen] = useState(false);
 
   useEffect(() => {
     const init = async () => {
@@ -107,6 +109,10 @@ const Builder = () => {
             {previewCollapsed ? <><ChevronLeft size={14} /> Show Preview</> : <><ChevronRight size={14} /> Hide Preview</>}
           </button>
 
+          <button className="btn btn-accent btn-sm" onClick={() => setTailorOpen(true)}>
+            <Wand2 size={14} /> Tailor
+          </button>
+
           <button className="btn btn-secondary btn-sm" onClick={() => handleExport('docx')} disabled={!!exporting}>
             {exporting === 'docx' ? <><Loader size={14} className="spin" /> Exporting...</> : <><FileText size={14} /> DOCX</>}
           </button>
@@ -131,6 +137,7 @@ const Builder = () => {
           </div>
         )}
       </div>
+      <TailorModal open={tailorOpen} onClose={() => setTailorOpen(false)} />
     </div>
   );
 };

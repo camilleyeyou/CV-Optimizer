@@ -152,21 +152,63 @@ class OpenAIService {
   }
 
   async tailorResume(resume, jobDescription) {
+    const workExp = (resume.work_experience || resume.workExperience || []).map((e) => ({
+      position: e.position,
+      company: e.company,
+      description: Array.isArray(e.description) ? e.description : [],
+    }));
+
     const response = await this.client.chat.completions.create({
       model: this.model,
       messages: [
         {
           role: 'system',
           content:
-            'You are an ATS optimization expert. Analyze resumes against job descriptions and provide specific, actionable improvements. Always respond with valid JSON.',
+            'You are an ATS optimization expert. Tailor resumes to match job descriptions by incorporating relevant keywords and improving content. Always respond with valid JSON.',
         },
         {
           role: 'user',
-          content: `Analyze this resume against the job description and suggest improvements.\n\nResume Summary: ${resume.summary || 'None'}\nSkills: ${JSON.stringify(resume.skills || [])}\nExperience: ${JSON.stringify((resume.workExperience || []).map((e) => ({ position: e.position, company: e.company, description: e.description })))}\n\nJob Description:\n${jobDescription}\n\nReturn JSON:\n{\n  "score": <0-100>,\n  "summary_suggestion": "improved summary",\n  "missing_keywords": ["keyword1", "keyword2"],\n  "improvements": [\n    {"section": "experience|skills|summary", "suggestion": "specific change"}\n  ]\n}`,
+          content: `Tailor this resume to better match the job description. Return the MODIFIED content alongside a list of changes you made.
+
+Resume Summary: ${resume.summary || 'None'}
+Skills: ${JSON.stringify(resume.skills || [])}
+Experience: ${JSON.stringify(workExp)}
+
+Job Description:
+${jobDescription}
+
+Return JSON with this EXACT structure:
+{
+  "score": <0-100 ATS match score after changes>,
+  "tailored_summary": "the improved summary text",
+  "tailored_skills": ["skill1", "skill2", ...],
+  "tailored_experience": [
+    {
+      "index": 0,
+      "description": ["improved bullet 1", "improved bullet 2", ...]
+    }
+  ],
+  "changes": [
+    {
+      "id": "change_1",
+      "section": "summary|skills|experience",
+      "label": "short human-readable label of what changed",
+      "before": "original text or value",
+      "after": "new text or value"
+    }
+  ]
+}
+
+Rules:
+- Keep the same number of experience entries (use index to map back)
+- Only modify content that improves ATS match — don't change for no reason
+- Each change must have a clear before/after so the user can review it
+- For experience changes, set label to "Job title at Company — bullet changes"
+- For skills, show added/removed skills in before/after`,
         },
       ],
-      max_tokens: 800,
-      temperature: 0.5,
+      max_tokens: 2000,
+      temperature: 0.4,
     });
 
     const content = this._getResponse(response);
@@ -279,6 +321,87 @@ Rules:
     const content = this._getResponse(response);
     const parsed = this._safeJsonParse(content, null);
     if (!parsed) throw new Error('Failed to generate resume');
+    return parsed;
+  }
+
+  async generateInterviewQuestions(resumeData, jobDescription) {
+    const summary = resumeData.summary || '';
+    const skills = (resumeData.skills || []).join(', ');
+    const experience = (resumeData.work_experience || [])
+      .map((e) => `${e.position} at ${e.company}`)
+      .join('; ');
+
+    const response = await this.client.chat.completions.create({
+      model: this.model,
+      messages: [
+        {
+          role: 'system',
+          content: 'You are an expert interview coach. Generate realistic interview questions based on the candidate\'s resume and the job they\'re applying for. Always respond with valid JSON.',
+        },
+        {
+          role: 'user',
+          content: `Generate 8 interview questions for this candidate and job.
+
+Resume Summary: ${summary}
+Skills: ${skills}
+Experience: ${experience}
+
+Job Description:
+${jobDescription}
+
+Return JSON array:
+[
+  {
+    "id": "q1",
+    "question": "the interview question",
+    "type": "behavioral|technical|situational",
+    "tip": "brief tip on how to approach this question"
+  }
+]
+
+Mix of types: 3 behavioral, 3 technical, 2 situational. Tailor to the specific job and candidate background.`,
+        },
+      ],
+      max_tokens: 1200,
+      temperature: 0.6,
+    });
+
+    const content = this._getResponse(response);
+    return this._safeJsonParse(content, []);
+  }
+
+  async evaluateAnswer(question, answer, jobDescription) {
+    const response = await this.client.chat.completions.create({
+      model: this.model,
+      messages: [
+        {
+          role: 'system',
+          content: 'You are an expert interview coach. Evaluate candidate answers and provide constructive feedback. Always respond with valid JSON.',
+        },
+        {
+          role: 'user',
+          content: `Evaluate this interview answer.
+
+Question: ${question}
+Candidate's Answer: ${answer}
+Job Context: ${jobDescription.slice(0, 500)}
+
+Return JSON:
+{
+  "score": <1-10>,
+  "strengths": ["strength 1", "strength 2"],
+  "improvements": ["improvement 1", "improvement 2"],
+  "sample_answer": "a strong example answer for comparison"
+}`,
+        },
+      ],
+      max_tokens: 600,
+      temperature: 0.4,
+    });
+
+    const content = this._getResponse(response);
+    const parsed = this._safeJsonParse(content, null);
+    if (!parsed) throw new Error('Failed to evaluate answer');
     return parsed;
   }
 

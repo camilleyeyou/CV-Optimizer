@@ -70,6 +70,26 @@ const generateResumeFromAnswers = async (req, res) => {
   }
 };
 
+const generateInterviewQuestions = async (req, res) => {
+  try {
+    const { resumeData, jobDescription } = req.body;
+    const questions = await openaiService.generateInterviewQuestions(resumeData, jobDescription);
+    res.json({ questions });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to generate interview questions' });
+  }
+};
+
+const evaluateAnswer = async (req, res) => {
+  try {
+    const { question, answer, jobDescription } = req.body;
+    const evaluation = await openaiService.evaluateAnswer(question, answer, jobDescription);
+    res.json(evaluation);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to evaluate answer' });
+  }
+};
+
 module.exports = {
   generateSummary,
   enhanceExperience,
@@ -78,4 +98,6 @@ module.exports = {
   tailorResume,
   generateQuestions,
   generateResumeFromAnswers,
+  generateInterviewQuestions,
+  evaluateAnswer,
 };

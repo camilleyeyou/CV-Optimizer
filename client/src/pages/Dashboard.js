@@ -25,6 +25,7 @@ const Dashboard = () => {
   const [menuOpen, setMenuOpen] = useState(null);
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [importing, setImporting] = useState(false);
+  const [importSource, setImportSource] = useState('resume');
   const menuRef = useRef(null);
   const importInputRef = useRef(null);
 
@@ -78,10 +79,12 @@ const Dashboard = () => {
       return;
     }
 
+    const source = importSource;
     setImporting(true);
     try {
       const formData = new FormData();
       formData.append('resume', file);
+      formData.append('source', source);
 
       const response = await api.post('/api/ats/parse', formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
@@ -167,13 +170,24 @@ const Dashboard = () => {
             />
             <button
               className="btn btn-secondary btn-lg"
-              onClick={() => importInputRef.current?.click()}
+              onClick={() => { setImportSource('resume'); importInputRef.current?.click(); }}
               disabled={importing}
             >
-              {importing ? (
+              {importing && importSource === 'resume' ? (
                 <><Loader size={16} className="spin" /> Importing...</>
               ) : (
                 <><Upload size={16} aria-hidden="true" /> Import PDF</>
+              )}
+            </button>
+            <button
+              className="btn btn-secondary btn-lg"
+              onClick={() => { setImportSource('linkedin'); importInputRef.current?.click(); }}
+              disabled={importing}
+            >
+              {importing && importSource === 'linkedin' ? (
+                <><Loader size={16} className="spin" /> Importing...</>
+              ) : (
+                <><Upload size={16} aria-hidden="true" /> LinkedIn PDF</>
               )}
             </button>
             <button className="btn btn-primary btn-lg" onClick={handleCreate}>

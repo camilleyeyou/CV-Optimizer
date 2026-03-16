@@ -11,6 +11,8 @@ const {
   validateTailor,
   validateGenerateQuestions,
   validateGenerateResume,
+  validateInterviewQuestions,
+  validateEvaluateAnswer,
 } = require('../middleware/validate');
 
 router.use(requireAuth);
@@ -22,5 +24,7 @@ router.post('/suggest-skills', validateSuggestSkills, requireCredits, aiControll
 router.post('/tailor', validateTailor, requireCredits, aiController.tailorResume);
 router.post('/generate-questions', validateGenerateQuestions, requireCredits, aiController.generateQuestions);
 router.post('/generate-resume', validateGenerateResume, requireCredits, aiController.generateResumeFromAnswers);
+router.post('/interview-questions', validateInterviewQuestions, requireCredits, aiController.generateInterviewQuestions);
+router.post('/evaluate-answer', validateEvaluateAnswer, requireCredits, aiController.evaluateAnswer);
 
 module.exports = router;
