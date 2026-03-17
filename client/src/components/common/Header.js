@@ -106,7 +106,7 @@ const Header = () => {
           {showNav && (
             <>
               {/* Desktop nav */}
-              <nav className="header-nav-desktop" aria-label="Main navigation">
+              <nav className="header-nav-desktop" aria-label="Main navigation" data-tour="dashboard-nav">
                 {navLinks.map(({ to, label }) => (
                   <Link key={to} to={to} className={`nav-link ${isActive(to) ? 'active' : ''}`}>
                     {label}

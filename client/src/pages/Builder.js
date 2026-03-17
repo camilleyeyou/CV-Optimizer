@@ -9,6 +9,8 @@ import TranslateModal from '../components/builder/TranslateModal';
 import { Download, CheckCircle, Loader, Eye, Edit3, ChevronLeft, ChevronRight, FileText, Wand2, Languages } from 'lucide-react';
 import { generatePDF, generateDOCX } from '../services/api';
 import toast from 'react-hot-toast';
+import Spotlight from '../components/onboarding/Spotlight';
+import { tours } from '../components/onboarding/tourSteps';
 import './Builder.css';
 
 const Builder = () => {
@@ -111,18 +113,18 @@ const Builder = () => {
             {previewCollapsed ? <><ChevronLeft size={14} /> Show Preview</> : <><ChevronRight size={14} /> Hide Preview</>}
           </button>
 
-          <button className="btn btn-accent btn-sm" onClick={() => setTailorOpen(true)}>
+          <button className="btn btn-accent btn-sm" onClick={() => setTailorOpen(true)} data-tour="builder-tailor">
             <Wand2 size={14} /> Tailor
           </button>
 
-          <button className="btn btn-secondary btn-sm" onClick={() => setTranslateOpen(true)}>
+          <button className="btn btn-secondary btn-sm" onClick={() => setTranslateOpen(true)} data-tour="builder-translate">
             <Languages size={14} /> Translate
           </button>
 
           <button className="btn btn-secondary btn-sm" onClick={() => handleExport('docx')} disabled={!!exporting}>
             {exporting === 'docx' ? <><Loader size={14} className="spin" /> Exporting...</> : <><FileText size={14} /> DOCX</>}
           </button>
-          <button className="btn btn-primary btn-sm" onClick={() => handleExport('pdf')} disabled={!!exporting}>
+          <button className="btn btn-primary btn-sm" onClick={() => handleExport('pdf')} disabled={!!exporting} data-tour="builder-export">
             {exporting === 'pdf' ? <><Loader size={14} className="spin" /> Exporting...</> : <><Download size={14} /> PDF</>}
           </button>
         </div>
@@ -130,13 +132,15 @@ const Builder = () => {
 
       {/* Main content */}
       <div className={`builder-layout ${previewCollapsed ? 'preview-collapsed' : ''}`}>
-        <div className={`builder-form-panel ${mobileView === 'preview' ? 'mobile-hidden' : ''}`}>
-          <ATSScoreWidget />
+        <div className={`builder-form-panel ${mobileView === 'preview' ? 'mobile-hidden' : ''}`} data-tour="builder-form">
+          <div data-tour="builder-ats">
+            <ATSScoreWidget />
+          </div>
           <ResumeForm />
         </div>
 
         {!previewCollapsed && (
-          <div className={`builder-preview-panel ${mobileView === 'edit' ? 'mobile-hidden' : ''}`}>
+          <div className={`builder-preview-panel ${mobileView === 'edit' ? 'mobile-hidden' : ''}`} data-tour="builder-preview">
             <div className="preview-container">
               <ResumePreview />
             </div>
@@ -145,6 +149,7 @@ const Builder = () => {
       </div>
       <TailorModal open={tailorOpen} onClose={() => setTailorOpen(false)} />
       <TranslateModal open={translateOpen} onClose={() => setTranslateOpen(false)} />
+      <Spotlight tour={tours.builder} />
     </div>
   );
 };

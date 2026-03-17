@@ -16,6 +16,8 @@ import {
 import { useState, useEffect, useRef, useCallback } from 'react';
 import toast from 'react-hot-toast';
 import api from '../services/api';
+import Spotlight from '../components/onboarding/Spotlight';
+import { tours } from '../components/onboarding/tourSteps';
 import './Dashboard.css';
 
 const Dashboard = () => {
@@ -151,7 +153,7 @@ const Dashboard = () => {
     <div className="dashboard">
       <div className="dashboard-container">
         {/* Header */}
-        <div className="dashboard-header">
+        <div className="dashboard-header" data-tour="dashboard-welcome">
           <div>
             <h1>Hi, {displayName}</h1>
             <p className="dashboard-subtitle">
@@ -172,6 +174,7 @@ const Dashboard = () => {
               className="btn btn-secondary btn-lg"
               onClick={() => { setImportSource('resume'); importInputRef.current?.click(); }}
               disabled={importing}
+              data-tour="dashboard-import"
             >
               {importing && importSource === 'resume' ? (
                 <><Loader size={16} className="spin" /> Importing...</>
@@ -190,7 +193,7 @@ const Dashboard = () => {
                 <><Upload size={16} aria-hidden="true" /> LinkedIn PDF</>
               )}
             </button>
-            <button className="btn btn-primary btn-lg" onClick={handleCreate}>
+            <button className="btn btn-primary btn-lg" onClick={handleCreate} data-tour="dashboard-create">
               <Plus size={18} aria-hidden="true" />
               New Resume
             </button>
@@ -318,6 +321,8 @@ const Dashboard = () => {
           </div>
         )}
       </div>
+
+      <Spotlight tour={tours.dashboard} />
 
       {/* Delete confirmation dialog */}
       {deleteTarget && (
