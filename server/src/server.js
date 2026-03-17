@@ -78,7 +78,7 @@ app.use((err, req, res, _next) => {
 });
 
 // Start server (non-production uses direct listen; production uses module export)
-if (process.env.NODE_ENV !== 'production') {
+if (process.env.NODE_ENV !== 'production' && process.env.NODE_ENV !== 'test') {
   app.listen(PORT, () => {
     // eslint-disable-next-line no-console
     console.log(`Server running on port ${PORT}`);
