@@ -3,6 +3,7 @@ const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
+const logger = require('./logger');
 
 const app = express();
 const PORT = process.env.PORT || 5002;
@@ -14,8 +15,7 @@ if (missing.length > 0) {
   if (process.env.NODE_ENV === 'production') {
     throw new Error(`Missing required environment variables: ${missing.join(', ')}`);
   }
-  // eslint-disable-next-line no-console
-  console.warn(`Warning: Missing env vars: ${missing.join(', ')}`);
+  logger.warn({ missing }, 'Missing environment variables');
 }
 
 // CORS — on Vercel (same-origin), CLIENT_URL is optional
@@ -74,14 +74,16 @@ app.use((req, res) => {
 app.use((err, req, res, _next) => {
   const status = err.status || 500;
   const message = status === 500 ? 'Internal server error' : err.message;
+  if (status >= 500) {
+    logger.error({ err, path: req.path }, 'Unhandled server error');
+  }
   res.status(status).json({ error: message });
 });
 
 // Start server (non-production uses direct listen; production uses module export)
 if (process.env.NODE_ENV !== 'production' && process.env.NODE_ENV !== 'test') {
   app.listen(PORT, () => {
-    // eslint-disable-next-line no-console
-    console.log(`Server running on port ${PORT}`);
+    logger.info({ port: PORT }, 'Server running');
   });
 }
 

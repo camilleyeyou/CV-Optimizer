@@ -81,9 +81,9 @@ cp client/.env.example client/.env
 **Client** (`client/.env`):
 | Variable | Description |
 |----------|-------------|
-| `REACT_APP_SUPABASE_URL` | Your Supabase project URL |
-| `REACT_APP_SUPABASE_ANON_KEY` | Supabase anonymous key |
-| `REACT_APP_API_URL` | API URL (leave blank for Vercel) |
+| `VITE_SUPABASE_URL` | Your Supabase project URL |
+| `VITE_SUPABASE_ANON_KEY` | Supabase anonymous key |
+| `VITE_API_URL` | API URL (leave blank for Vercel) |
 
 ### Development
 
