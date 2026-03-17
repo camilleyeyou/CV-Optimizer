@@ -38,6 +38,19 @@ const requireCredits = async (req, res, next) => {
       profile = newProfile;
     }
 
+    // Check student expiry
+    if (profile.is_student && profile.student_expires_at) {
+      const expiresAt = new Date(profile.student_expires_at);
+      if (expiresAt < new Date()) {
+        await supabase
+          .from('user_profiles')
+          .update({ plan: 'free', is_student: false, ai_credits: FREE_MONTHLY_CREDITS })
+          .eq('id', req.user.id);
+        profile.plan = 'free';
+        profile.ai_credits = FREE_MONTHLY_CREDITS;
+      }
+    }
+
     // Pro/Premium = unlimited
     if (profile.plan === 'pro' || profile.plan === 'premium') {
       req.userPlan = profile.plan;

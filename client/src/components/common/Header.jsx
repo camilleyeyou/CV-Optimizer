@@ -83,7 +83,7 @@ const Header = () => {
   const showNav = !isAuthPage && isAuthenticated;
 
   const navLinks = [
-    { to: '/', label: 'Dashboard', icon: LayoutDashboard },
+    { to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { to: '/templates', label: 'Templates', icon: Layout },
     { to: '/builder', label: 'Builder', icon: PenTool },
     { to: '/ai-creator', label: 'AI Creator', icon: Sparkles },
@@ -98,7 +98,7 @@ const Header = () => {
     <>
       <header className="header">
         <div className="header-inner">
-          <Link to="/" className="header-logo">
+          <Link to={isAuthenticated ? '/dashboard' : '/'} className="header-logo">
             <FileText size={24} aria-hidden="true" />
             <span>CV Optimizer</span>
           </Link>
@@ -145,7 +145,7 @@ const Header = () => {
                       </div>
                     )}
                     <div className="dropdown-divider" />
-                    <button className="dropdown-item" role="menuitem" onClick={() => { navigate('/'); closeDropdown(); }}>
+                    <button className="dropdown-item" role="menuitem" onClick={() => { navigate('/dashboard'); closeDropdown(); }}>
                       <User size={14} aria-hidden="true" /> Dashboard
                     </button>
                     <button className="dropdown-item" role="menuitem" onClick={() => { navigate('/analytics'); closeDropdown(); }}>

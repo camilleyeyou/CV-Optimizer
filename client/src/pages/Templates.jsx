@@ -159,7 +159,7 @@ const Templates = () => {
           <p>Pick a design that fits your style. You can always change it later.</p>
         </div>
 
-        <div className="templates-grid">
+        <div className="templates-grid animate-stagger">
           {TEMPLATES.map((template) => {
             const locked = template.premium && !isPremiumUser;
             return (

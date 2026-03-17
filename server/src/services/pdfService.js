@@ -233,6 +233,69 @@ class PDFService {
     }
   }
 
+  async generateCoverLetterPDF({ coverLetterText, personalInfo, companyName, jobTitle }) {
+    return new Promise((resolve, reject) => {
+      try {
+        const p = personalInfo || {};
+        const name = `${p.first_name || ''} ${p.last_name || ''}`.trim();
+
+        const doc = new PDFDocument({
+          size: 'A4',
+          margin: 60,
+          info: {
+            Title: `Cover Letter${jobTitle ? ` - ${jobTitle}` : ''}`,
+            Author: name || 'CV Optimizer',
+            Creator: 'CV Optimizer',
+          },
+        });
+
+        // Sender info
+        if (name) {
+          doc.fontSize(14).fillColor('#1f2937').font('Helvetica-Bold').text(name);
+        }
+        const contacts = [p.email, p.phone, p.location].filter(Boolean);
+        if (contacts.length > 0) {
+          doc.fontSize(9).fillColor('#6b7280').font('Helvetica').text(contacts.join('  |  '));
+        }
+
+        doc.moveDown(1.5);
+
+        // Date
+        const date = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+        doc.fontSize(10).fillColor('#4b5563').text(date);
+        doc.moveDown(0.5);
+
+        // Company
+        if (companyName) {
+          doc.fontSize(10).fillColor('#4b5563').text(companyName);
+        }
+        if (jobTitle) {
+          doc.fontSize(10).fillColor('#4b5563').text(`Re: ${jobTitle}`);
+        }
+
+        doc.moveDown(1);
+
+        // Body
+        const paragraphs = coverLetterText.split('\n').filter((p) => p.trim());
+        paragraphs.forEach((para) => {
+          doc.fontSize(10.5).fillColor('#1f2937').font('Helvetica').text(para.trim(), {
+            align: 'left',
+            lineGap: 3,
+          });
+          doc.moveDown(0.8);
+        });
+
+        const chunks = [];
+        doc.on('data', (chunk) => chunks.push(chunk));
+        doc.on('end', () => resolve(Buffer.concat(chunks)));
+        doc.on('error', reject);
+        doc.end();
+      } catch (error) {
+        reject(error);
+      }
+    });
+  }
+
   _getColors(template) {
     const palettes = {
       modern: { primary: '#2563eb', secondary: '#4b5563', text: '#1f2937', muted: '#6b7280' },

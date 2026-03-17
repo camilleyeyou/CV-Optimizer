@@ -233,6 +233,96 @@ class DocxService {
     return Packer.toBuffer(doc);
   }
 
+  async generateCoverLetter({ coverLetterText, personalInfo, companyName, jobTitle }) {
+    const p = personalInfo || {};
+    const name = `${p.first_name || ''} ${p.last_name || ''}`.trim();
+    const sections = [];
+
+    // Sender name
+    if (name) {
+      sections.push(
+        new Paragraph({
+          spacing: { after: 40 },
+          children: [
+            new TextRun({ text: name, bold: true, size: 28, font: 'Calibri' }),
+          ],
+        })
+      );
+    }
+
+    // Contact info
+    const contacts = [p.email, p.phone, p.location].filter(Boolean);
+    if (contacts.length > 0) {
+      sections.push(
+        new Paragraph({
+          spacing: { after: 200 },
+          children: [
+            new TextRun({ text: contacts.join('  |  '), size: 18, color: '666666', font: 'Calibri' }),
+          ],
+        })
+      );
+    }
+
+    // Date
+    const date = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+    sections.push(
+      new Paragraph({
+        spacing: { after: 80 },
+        children: [
+          new TextRun({ text: date, size: 20, color: '555555', font: 'Calibri' }),
+        ],
+      })
+    );
+
+    // Company and job title
+    if (companyName) {
+      sections.push(
+        new Paragraph({
+          spacing: { after: 40 },
+          children: [
+            new TextRun({ text: companyName, size: 20, font: 'Calibri' }),
+          ],
+        })
+      );
+    }
+    if (jobTitle) {
+      sections.push(
+        new Paragraph({
+          spacing: { after: 200 },
+          children: [
+            new TextRun({ text: `Re: ${jobTitle}`, size: 20, font: 'Calibri' }),
+          ],
+        })
+      );
+    }
+
+    // Body paragraphs
+    const paragraphs = coverLetterText.split('\n').filter((t) => t.trim());
+    paragraphs.forEach((para) => {
+      sections.push(
+        new Paragraph({
+          spacing: { after: 160 },
+          children: [
+            new TextRun({ text: para.trim(), size: 21, font: 'Calibri' }),
+          ],
+        })
+      );
+    });
+
+    const doc = new Document({
+      sections: [{
+        properties: {
+          page: {
+            margin: { top: 720, bottom: 720, left: 720, right: 720 },
+          },
+        },
+        children: sections,
+      }],
+    });
+
+    return Packer.toBuffer(doc);
+  }
+
   _sectionHeading(title) {
     return new Paragraph({
       spacing: { before: 240, after: 80 },

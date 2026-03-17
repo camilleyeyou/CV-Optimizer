@@ -70,6 +70,21 @@ export const generateInterviewQuestions = (resumeData, jobDescription) =>
 export const evaluateAnswer = (question, answer, jobDescription) =>
   api.post('/api/ai/evaluate-answer', { question, answer, jobDescription }).then((r) => r.data);
 
+// Cover letter PDF/DOCX
+export const generateCoverLetterPDF = (coverLetterText, personalInfo, companyName, jobTitle) =>
+  api.post('/api/pdf/cover-letter-pdf', { coverLetterText, personalInfo, companyName, jobTitle }, { responseType: 'blob' }).then((r) => r.data);
+
+export const generateCoverLetterDOCX = (coverLetterText, personalInfo, companyName, jobTitle) =>
+  api.post('/api/pdf/cover-letter-docx', { coverLetterText, personalInfo, companyName, jobTitle }, { responseType: 'blob' }).then((r) => r.data);
+
+// Resume sharing
+export const createShare = (resumeId) => api.post('/api/share/create', { resumeId }).then((r) => r.data);
+export const getShareByToken = (token) => api.get(`/api/share/${token}`).then((r) => r.data);
+export const deleteShare = (shareId) => api.delete(`/api/share/${shareId}`).then((r) => r.data);
+
+// Student verification
+export const verifyStudent = () => api.post('/api/student/verify').then((r) => r.data);
+
 // Credits
 export const getCredits = () => api.get('/api/credits').then((r) => r.data);
 

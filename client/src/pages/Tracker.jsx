@@ -1,7 +1,10 @@
 import { useState, useEffect, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { supabase } from '../config/supabase';
 import { useAuth } from '../context/AuthContext';
-import { Briefcase, Plus, X, GripVertical, ExternalLink, Trash2, Edit3, Loader } from 'lucide-react';
+import { useResume } from '../context/ResumeContext';
+import { tailorResume } from '../services/api';
+import { Briefcase, Plus, X, GripVertical, ExternalLink, Trash2, Edit3, Loader, Sparkles, FileText } from 'lucide-react';
 import toast from 'react-hot-toast';
 import './Tracker.css';
 
@@ -15,12 +18,18 @@ const COLUMNS = [
 
 const Tracker = () => {
   const { user } = useAuth();
+  const { resumes, createResume } = useResume();
+  const navigate = useNavigate();
   const [apps, setApps] = useState([]);
   const [loading, setLoading] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState(null);
   const [dragItem, setDragItem] = useState(null);
-  const [form, setForm] = useState({ company: '', position: '', url: '', status: 'saved', notes: '', applied_at: '' });
+  const [form, setForm] = useState({ company: '', position: '', url: '', status: 'saved', notes: '', applied_at: '', job_description: '' });
+  const [tailorModalOpen, setTailorModalOpen] = useState(false);
+  const [tailorApp, setTailorApp] = useState(null);
+  const [tailorResumeId, setTailorResumeId] = useState('');
+  const [tailoring, setTailoring] = useState(false);
 
   const fetchApps = useCallback(async () => {
     const { data, error } = await supabase
@@ -41,7 +50,7 @@ const Tracker = () => {
 
   const openNew = (status = 'saved') => {
     setEditing(null);
-    setForm({ company: '', position: '', url: '', status, notes: '', applied_at: '' });
+    setForm({ company: '', position: '', url: '', status, notes: '', applied_at: '', job_description: '' });
     setModalOpen(true);
   };
 
@@ -54,8 +63,56 @@ const Tracker = () => {
       status: app.status,
       notes: app.notes || '',
       applied_at: app.applied_at || '',
+      job_description: app.job_description || '',
     });
     setModalOpen(true);
+  };
+
+  const openTailorModal = (app) => {
+    setTailorApp(app);
+    setTailorResumeId(resumes.length > 0 ? resumes[0].id : '');
+    setTailorModalOpen(true);
+  };
+
+  const handleTailor = async () => {
+    if (!tailorResumeId || !tailorApp) return;
+    const resume = resumes.find((r) => r.id === tailorResumeId);
+    if (!resume) { toast.error('Resume not found'); return; }
+
+    const jobDesc = tailorApp.job_description || `${tailorApp.position} at ${tailorApp.company}`;
+    if (jobDesc.length < 10) {
+      toast.error('Add a job description to the application first');
+      return;
+    }
+
+    setTailoring(true);
+    try {
+      const tailored = await tailorResume(resume, jobDesc);
+      const newResume = await createResume(resume.template || 'modern');
+      if (newResume?.id) {
+        await supabase
+          .from('resumes')
+          .update({
+            ...tailored,
+            title: `${tailorApp.position} at ${tailorApp.company}`,
+          })
+          .eq('id', newResume.id);
+
+        // Link resume to application
+        await supabase
+          .from('applications')
+          .update({ resume_id: newResume.id })
+          .eq('id', tailorApp.id);
+
+        toast.success('Resume tailored! Opening builder...');
+        setTailorModalOpen(false);
+        navigate(`/builder/${newResume.id}`);
+      }
+    } catch {
+      toast.error('Failed to tailor resume');
+    } finally {
+      setTailoring(false);
+    }
   };
 
   const handleSave = async () => {
@@ -71,6 +128,7 @@ const Tracker = () => {
       url: form.url.trim(),
       notes: form.notes.trim(),
       applied_at: form.applied_at || null,
+      job_description: form.job_description.trim(),
     };
 
     if (editing) {
@@ -175,6 +233,9 @@ const Tracker = () => {
                     )}
                   </div>
                   <div className="kanban-card-actions">
+                    <button className="kanban-card-action" onClick={() => openTailorModal(app)} title="Tailor Resume">
+                      <Sparkles size={12} />
+                    </button>
                     {app.url && (
                       <a href={app.url} target="_blank" rel="noopener noreferrer" className="kanban-card-action" title="Open URL">
                         <ExternalLink size={12} />
@@ -257,6 +318,16 @@ const Tracker = () => {
                 </div>
               </div>
               <div className="tracker-form-row">
+                <label>Job Description</label>
+                <textarea
+                  className="form-textarea"
+                  value={form.job_description}
+                  onChange={(e) => setForm({ ...form, job_description: e.target.value })}
+                  placeholder="Paste the job description to enable AI resume tailoring..."
+                  rows={4}
+                />
+              </div>
+              <div className="tracker-form-row">
                 <label>Notes</label>
                 <textarea
                   className="form-textarea"
@@ -272,6 +343,52 @@ const Tracker = () => {
               <button className="btn btn-ghost" onClick={() => setModalOpen(false)}>Cancel</button>
               <button className="btn btn-primary" onClick={handleSave}>
                 {editing ? 'Update' : 'Add Application'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {/* Tailor Resume Modal */}
+      {tailorModalOpen && tailorApp && (
+        <div className="tracker-overlay" onClick={() => setTailorModalOpen(false)}>
+          <div className="tracker-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="tracker-modal-header">
+              <h3><Sparkles size={16} /> Tailor Resume</h3>
+              <button className="tailor-close" onClick={() => setTailorModalOpen(false)}><X size={18} /></button>
+            </div>
+
+            <div className="tracker-modal-body">
+              <p style={{ fontSize: 'var(--text-sm)', color: 'var(--text-secondary)', margin: 0 }}>
+                Tailor a resume for <strong>{tailorApp.position}</strong> at <strong>{tailorApp.company}</strong>
+              </p>
+
+              <div className="tracker-form-row">
+                <label><FileText size={12} /> Select a resume to tailor</label>
+                <select
+                  className="form-input"
+                  value={tailorResumeId}
+                  onChange={(e) => setTailorResumeId(e.target.value)}
+                >
+                  <option value="">-- Select a resume --</option>
+                  {resumes.map((r) => (
+                    <option key={r.id} value={r.id}>
+                      {r.title || `${r.personal_info?.first_name || ''} ${r.personal_info?.last_name || ''}`.trim() || 'Untitled'}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {!tailorApp.job_description && (
+                <div className="alert alert-warning" style={{ fontSize: 'var(--text-xs)' }}>
+                  No job description saved. Edit the application to add one for better results.
+                </div>
+              )}
+            </div>
+
+            <div className="tracker-modal-footer">
+              <button className="btn btn-ghost" onClick={() => setTailorModalOpen(false)}>Cancel</button>
+              <button className="btn btn-primary" onClick={handleTailor} disabled={tailoring || !tailorResumeId}>
+                {tailoring ? <><Loader size={14} className="spin" /> Tailoring...</> : <><Sparkles size={14} /> Tailor Resume</>}
               </button>
             </div>
           </div>

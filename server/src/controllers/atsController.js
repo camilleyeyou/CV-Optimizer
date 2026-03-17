@@ -171,4 +171,23 @@ const quickScore = async (req, res) => {
   }
 };
 
-module.exports = { analyzeResume, optimizeResume, parseResume, quickScore };
+const publicQuickScore = async (req, res) => {
+  try {
+    const { resumeText, jobTitle } = req.body;
+
+    if (!resumeText || typeof resumeText !== 'string' || resumeText.trim().length < 50) {
+      return res.status(400).json({ error: 'Resume text is required (at least 50 characters).' });
+    }
+    if (!jobTitle || typeof jobTitle !== 'string' || jobTitle.trim().length < 2) {
+      return res.status(400).json({ error: 'Job title is required.' });
+    }
+
+    const truncatedText = resumeText.slice(0, MAX_RESUME_TEXT_LENGTH);
+    const result = await atsService.quickScoreFromText(truncatedText, jobTitle.trim());
+    res.json(result);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to score resume.' });
+  }
+};
+
+module.exports = { analyzeResume, optimizeResume, parseResume, quickScore, publicQuickScore };

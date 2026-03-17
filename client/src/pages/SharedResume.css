@@ -1,0 +1,133 @@
+/* Shared Resume - Public View */
+.shared-resume {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: var(--space-8) var(--space-6);
+  min-height: 80vh;
+}
+
+.shared-resume-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-4);
+  min-height: 60vh;
+  color: var(--text-muted);
+  font-size: var(--text-sm);
+}
+
+.shared-resume-error {
+  text-align: center;
+  padding: var(--space-16) var(--space-6);
+}
+
+.shared-resume-error h2 {
+  margin-bottom: var(--space-3);
+}
+
+.shared-resume-card {
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-2xl);
+  padding: var(--space-10);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+}
+
+.shared-resume-header {
+  text-align: center;
+  margin-bottom: var(--space-6);
+  padding-bottom: var(--space-6);
+  border-bottom: 1px solid var(--glass-border);
+}
+
+.shared-resume-name {
+  font-size: var(--text-3xl);
+  margin-bottom: var(--space-1);
+}
+
+.shared-resume-title {
+  font-size: var(--text-lg);
+  color: var(--text-secondary);
+  margin-bottom: var(--space-3);
+}
+
+.shared-resume-contact {
+  font-size: var(--text-sm);
+  color: var(--text-muted);
+}
+
+.shared-resume-section {
+  margin-bottom: var(--space-6);
+}
+
+.shared-resume-section h3 {
+  font-size: var(--text-base);
+  color: var(--primary);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-bottom: var(--space-3);
+  padding-bottom: var(--space-2);
+  border-bottom: 1px solid rgba(99, 102, 241, 0.2);
+}
+
+.shared-resume-section p {
+  font-size: var(--text-sm);
+  line-height: 1.7;
+}
+
+.shared-resume-entry {
+  margin-bottom: var(--space-4);
+}
+
+.shared-resume-entry-title {
+  font-weight: 700;
+  font-size: var(--text-sm);
+  color: var(--text-primary);
+}
+
+.shared-resume-entry-sub {
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+
+.shared-resume-entry ul {
+  margin: var(--space-2) 0 0;
+  padding-left: var(--space-5);
+}
+
+.shared-resume-entry li {
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+  line-height: 1.6;
+  margin-bottom: 2px;
+}
+
+.shared-resume-skills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.shared-resume-watermark {
+  text-align: center;
+  margin-top: var(--space-8);
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+}
+
+.shared-resume-watermark a {
+  color: var(--primary);
+}
+
+@media (max-width: 768px) {
+  .shared-resume {
+    padding: var(--space-4);
+  }
+
+  .shared-resume-card {
+    padding: var(--space-6);
+  }
+}

@@ -137,6 +137,44 @@ Be concise. Each tip under 15 words.`,
     }
   }
 
+  async quickScoreFromText(resumeText, jobTitle) {
+    const prompt = `Score this resume for ATS compatibility for the role: ${jobTitle}\n\nResume:\n${resumeText}`;
+
+    const response = await this.client.chat.completions.create({
+      model: this.model,
+      messages: [
+        {
+          role: 'system',
+          content: `You are an ATS scoring engine. Respond with ONLY valid JSON:
+{"score": <0-100>, "missing_keywords": ["kw1", "kw2"]}
+- score: overall ATS compatibility score
+- missing_keywords: top 5 missing keywords for the job
+Be concise.`,
+        },
+        { role: 'user', content: prompt },
+      ],
+      max_tokens: 300,
+      temperature: 0.3,
+    });
+
+    const choice = response.choices?.[0];
+    if (!choice?.message?.content) {
+      throw new Error('Empty response from AI');
+    }
+
+    const content = choice.message.content.trim();
+    const jsonMatch = content.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) {
+      throw new Error('Failed to parse score');
+    }
+
+    try {
+      return JSON.parse(jsonMatch[0]);
+    } catch {
+      throw new Error('Failed to parse score');
+    }
+  }
+
   _resumeDataToText(data) {
     const parts = [];
     const p = data.personal_info || {};

@@ -46,8 +46,16 @@ const aiLimiter = rateLimit({
   message: { error: 'AI request limit reached. Please try again later.' },
 });
 
+const publicAtsLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000, // 1 hour
+  max: 5,
+  message: { error: 'Free ATS check limit reached. Sign up for more checks.' },
+  keyGenerator: (req) => req.ip,
+});
+
 app.use('/api/', apiLimiter);
 app.use('/api/ai', aiLimiter);
+app.use('/api/ats/public-score', publicAtsLimiter);
 app.use('/api/ats', aiLimiter);
 
 // Health check — no sensitive info
@@ -64,6 +72,8 @@ app.get('/api/credits', requireAuth, getCredits);
 app.use('/api/ai', require('./routes/ai'));
 app.use('/api/pdf', require('./routes/pdf'));
 app.use('/api/ats', require('./routes/ats'));
+app.use('/api/share', require('./routes/share'));
+app.use('/api/student', require('./routes/student'));
 
 // 404
 app.use((req, res) => {

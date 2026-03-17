@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { Mail, Lock, User, ArrowRight } from 'lucide-react';
+import { verifyStudent } from '../services/api';
+import { Mail, Lock, User, ArrowRight, GraduationCap } from 'lucide-react';
 import './Auth.css';
 
 const Register = () => {
@@ -44,7 +45,12 @@ const Register = () => {
         firstName: formData.firstName,
         lastName: formData.lastName,
       });
-      navigate('/');
+      // Auto-verify student emails
+      const domain = formData.email.split('@')[1] || '';
+      if (/\.edu$/i.test(domain) || /\.ac\.[a-z]{2}$/i.test(domain)) {
+        try { await verifyStudent(); } catch { /* non-blocking */ }
+      }
+      navigate('/dashboard');
     } catch (err) {
       setError(err.message || 'Failed to create account.');
     } finally {
@@ -193,6 +199,13 @@ const Register = () => {
             </>
           )}
         </button>
+
+        {formData.email && /\.(edu|ac\.[a-z]{2})$/i.test(formData.email.split('@')[1] || '') && (
+          <div className="alert alert-success" style={{ marginBottom: 'var(--space-4)', fontSize: 'var(--text-sm)' }}>
+            <GraduationCap size={16} />
+            <span>Student email detected! You&apos;ll get Pro features free for 6 months.</span>
+          </div>
+        )}
 
         <p className="auth-footer">
           Already have an account? <Link to="/login">Sign in</Link>

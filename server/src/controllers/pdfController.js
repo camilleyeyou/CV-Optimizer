@@ -39,4 +39,42 @@ const generateDOCX = async (req, res) => {
   }
 };
 
-module.exports = { generatePDF, generateDOCX };
+const generateCoverLetterPDF = async (req, res) => {
+  try {
+    const { coverLetterText, personalInfo, companyName, jobTitle } = req.body;
+    const pdfBuffer = await pdfService.generateCoverLetterPDF({
+      coverLetterText, personalInfo, companyName, jobTitle,
+    });
+
+    const firstName = sanitizeFilename(personalInfo?.first_name) || 'Cover';
+    const lastName = sanitizeFilename(personalInfo?.last_name);
+    const filename = `${firstName}${lastName ? '_' + lastName : ''}_Cover_Letter.pdf`;
+
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+    res.send(pdfBuffer);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to generate cover letter PDF' });
+  }
+};
+
+const generateCoverLetterDOCX = async (req, res) => {
+  try {
+    const { coverLetterText, personalInfo, companyName, jobTitle } = req.body;
+    const docxBuffer = await docxService.generateCoverLetter({
+      coverLetterText, personalInfo, companyName, jobTitle,
+    });
+
+    const firstName = sanitizeFilename(personalInfo?.first_name) || 'Cover';
+    const lastName = sanitizeFilename(personalInfo?.last_name);
+    const filename = `${firstName}${lastName ? '_' + lastName : ''}_Cover_Letter.docx`;
+
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document');
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+    res.send(Buffer.from(docxBuffer));
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to generate cover letter DOCX' });
+  }
+};
+
+module.exports = { generatePDF, generateDOCX, generateCoverLetterPDF, generateCoverLetterDOCX };

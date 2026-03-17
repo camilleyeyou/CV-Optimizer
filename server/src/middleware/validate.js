@@ -100,9 +100,23 @@ const validateTranslateResume = [
 ];
 
 // PDF route validators
+const validTemplates = [
+  'modern', 'professional', 'minimal', 'creative', 'technical', 'executive',
+  'elegant', 'startup', 'academic', 'nordic', 'bold', 'gradient',
+  'compact', 'sidebar', 'infographic', 'dark', 'classic',
+];
+
 const validatePDF = [
   body('resumeData').isObject().withMessage('Resume data is required'),
-  body('template').optional().isString().isIn(['modern', 'classic', 'minimal', 'professional']).withMessage('Invalid template'),
+  body('template').optional().isString().isIn(validTemplates).withMessage('Invalid template'),
+  handleValidation,
+];
+
+const validateCoverLetterPDF = [
+  body('coverLetterText').isString().isLength({ min: 10 }).withMessage('Cover letter text is required'),
+  body('personalInfo').optional().isObject(),
+  body('companyName').optional().isString(),
+  body('jobTitle').optional().isString(),
   handleValidation,
 ];
 
@@ -119,4 +133,5 @@ module.exports = {
   validateGenerateEmail,
   validateTranslateResume,
   validatePDF,
+  validateCoverLetterPDF,
 };

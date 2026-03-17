@@ -1,8 +1,8 @@
 import { useState } from 'react';
-import { FileText, Briefcase, Sparkles, Loader, Copy, Check, Download, RotateCcw } from 'lucide-react';
+import { FileText, Briefcase, Sparkles, Loader, Copy, Check, Download, RotateCcw, FileDown } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useResume } from '../context/ResumeContext';
-import { generateCoverLetter, generatePDF } from '../services/api';
+import { generateCoverLetter, generateCoverLetterPDF, generateCoverLetterDOCX } from '../services/api';
 import './CoverLetter.css';
 
 const CoverLetter = () => {
@@ -59,7 +59,7 @@ const CoverLetter = () => {
     }
   };
 
-  const handleDownload = () => {
+  const handleDownloadTxt = () => {
     const blob = new Blob([coverLetter], { type: 'text/plain' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -67,6 +67,48 @@ const CoverLetter = () => {
     a.download = 'Cover_Letter.txt';
     a.click();
     URL.revokeObjectURL(url);
+  };
+
+  const handleDownloadPDF = async () => {
+    try {
+      const resume = getResumeForGeneration();
+      const blob = await generateCoverLetterPDF(
+        coverLetter,
+        resume?.personal_info,
+        '',
+        '',
+      );
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'Cover_Letter.pdf';
+      a.click();
+      URL.revokeObjectURL(url);
+      toast.success('PDF downloaded');
+    } catch {
+      toast.error('Failed to generate PDF');
+    }
+  };
+
+  const handleDownloadDOCX = async () => {
+    try {
+      const resume = getResumeForGeneration();
+      const blob = await generateCoverLetterDOCX(
+        coverLetter,
+        resume?.personal_info,
+        '',
+        '',
+      );
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'Cover_Letter.docx';
+      a.click();
+      URL.revokeObjectURL(url);
+      toast.success('DOCX downloaded');
+    } catch {
+      toast.error('Failed to generate DOCX');
+    }
   };
 
   const handleReset = () => {
@@ -154,8 +196,14 @@ const CoverLetter = () => {
                 <button className="btn btn-ghost btn-sm" onClick={handleCopy}>
                   {copied ? <><Check size={14} /> Copied</> : <><Copy size={14} /> Copy</>}
                 </button>
-                <button className="btn btn-ghost btn-sm" onClick={handleDownload}>
-                  <Download size={14} /> Download
+                <button className="btn btn-ghost btn-sm" onClick={handleDownloadPDF}>
+                  <FileDown size={14} /> PDF
+                </button>
+                <button className="btn btn-ghost btn-sm" onClick={handleDownloadDOCX}>
+                  <FileDown size={14} /> DOCX
+                </button>
+                <button className="btn btn-ghost btn-sm" onClick={handleDownloadTxt}>
+                  <Download size={14} /> TXT
                 </button>
                 <button className="btn btn-ghost btn-sm" onClick={handleReset}>
                   <RotateCcw size={14} /> Start Over

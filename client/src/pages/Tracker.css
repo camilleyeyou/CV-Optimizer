@@ -299,11 +299,33 @@
 
   .kanban {
     grid-template-columns: 1fr;
-    gap: var(--space-4);
+    gap: var(--space-3);
   }
 
   .kanban-column {
     min-height: auto;
+  }
+
+  .kanban-column-header {
+    cursor: pointer;
+    padding: 0.6rem 0.5rem;
+    border-radius: var(--radius-lg);
+    transition: background var(--transition-fast);
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .kanban-column-header:active {
+    background: rgba(148, 163, 184, 0.08);
+  }
+
+  .kanban-cards {
+    max-height: 300px;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .kanban-card-actions {
+    opacity: 1;
   }
 
   .tracker-header {
