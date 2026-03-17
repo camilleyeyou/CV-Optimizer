@@ -10,7 +10,7 @@
     "dev:server": "cd server && npm run dev",
     "start": "npm run dev",
     "test": "cd server && npx jest",
-    "prepare": "husky"
+    "prepare": "husky || true"
   },
   "repository": {
     "type": "git",
@@ -38,5 +38,8 @@
     "pdf-parse": "^2.4.5",
     "pdfkit": "^0.18.0",
     "uuid": "^13.0.0"
+  },
+  "devDependencies": {
+    "husky": "^9.1.7"
   }
 }
