@@ -102,39 +102,39 @@ class PDFService {
 
       resume.work_experience.forEach((exp, i) => {
         const dateStr = this._formatDateRange(exp.start_date, exp.end_date, exp.current);
-        const leftMargin = doc.page.margins.left;
-        const pageRight = doc.page.width - doc.page.margins.right;
+        const left = doc.page.margins.left;
+        const right = doc.page.width - doc.page.margins.right;
         const titleY = doc.y;
 
-        // Draw title on the left
-        doc.fontSize(10.5)
-          .fillColor('#111827')
-          .font('Helvetica-Bold');
-        // Render position bold, then company normal weight
-        if (exp.company) {
-          doc.text(exp.position || '', leftMargin, titleY, { continued: true })
-            .font('Helvetica')
-            .fillColor('#4b5563')
-            .text(` \u00B7 ${exp.company}`, { continued: false });
-        } else {
-          doc.text(exp.position || '', leftMargin, titleY);
+        // Draw date right-aligned FIRST (so we know how much space it takes)
+        let dateWidth = 0;
+        if (dateStr) {
+          doc.fontSize(9).font('Helvetica');
+          dateWidth = doc.widthOfString(dateStr) + 10; // 10px gap from title
+          doc.fillColor('#6b7280')
+            .text(dateStr, right - dateWidth + 10, titleY, { width: dateWidth, lineBreak: false });
         }
 
-        // Draw date right-aligned on same line as title
-        if (dateStr) {
-          doc.fontSize(9)
-            .fillColor('#6b7280')
-            .font('Helvetica');
-          const dateWidth = doc.widthOfString(dateStr);
-          doc.text(dateStr, pageRight - dateWidth, titleY);
-        }
+        // Draw title on the left, constrained to not overlap the date
+        const titleWidth = right - left - dateWidth;
+        doc.fontSize(10.5).font('Helvetica-Bold').fillColor('#111827');
+        const titleText = exp.company
+          ? `${exp.position || ''}  \u00B7  ${exp.company}`
+          : (exp.position || '');
+        // Save cursor Y after title wraps (may be multi-line)
+        doc.text(titleText, left, titleY, { width: titleWidth });
+        const afterTitleY = doc.y;
+
+        // Move cursor below whichever is taller (title or date)
+        doc.x = left;
+        doc.y = afterTitleY;
 
         // Location
         if (exp.location) {
           doc.fontSize(9)
             .fillColor('#6b7280')
             .font('Helvetica')
-            .text(exp.location);
+            .text(exp.location, left, doc.y, { width: right - left });
         }
 
         doc.moveDown(0.2);
@@ -145,7 +145,7 @@ class PDFService {
             doc.fontSize(10)
               .fillColor('#374151')
               .font('Helvetica')
-              .text(`\u2022  ${bullet}`, { indent: 14, lineGap: 1 });
+              .text(`\u2022  ${bullet}`, left, doc.y, { width: right - left, indent: 14, lineGap: 1 });
           });
         }
 
@@ -162,35 +162,38 @@ class PDFService {
       this._sectionTitle(doc, 'EDUCATION', colors);
 
       resume.education.forEach((edu, i) => {
+        const left = doc.page.margins.left;
+        const right = doc.page.width - doc.page.margins.right;
         const eduY = doc.y;
-        const pageRight = doc.page.width - doc.page.margins.right;
+
+        // Date right-aligned FIRST
+        const dateStr = this._formatDateRange(edu.start_date, edu.end_date);
+        let dateWidth = 0;
+        if (dateStr) {
+          doc.fontSize(9).font('Helvetica');
+          dateWidth = doc.widthOfString(dateStr) + 10;
+          doc.fillColor('#6b7280')
+            .text(dateStr, right - dateWidth + 10, eduY, { width: dateWidth, lineBreak: false });
+        }
 
         // Degree + field on the left
+        const titleWidth = right - left - dateWidth;
+        const degreeText = edu.field_of_study
+          ? `${edu.degree || ''} in ${edu.field_of_study}`
+          : (edu.degree || '');
         doc.fontSize(10.5)
           .fillColor('#111827')
           .font('Helvetica-Bold')
-          .text(edu.degree || '', doc.page.margins.left, eduY, { continued: !!edu.field_of_study });
+          .text(degreeText, left, eduY, { width: titleWidth });
 
-        if (edu.field_of_study) {
-          doc.font('Helvetica')
-            .text(` in ${edu.field_of_study}`);
-        }
-
-        // Date right-aligned on same line
-        const dateStr = this._formatDateRange(edu.start_date, edu.end_date);
-        if (dateStr) {
-          doc.fontSize(9)
-            .fillColor('#6b7280')
-            .font('Helvetica');
-          const dateWidth = doc.widthOfString(dateStr);
-          doc.text(dateStr, pageRight - dateWidth, eduY);
-        }
+        // Reset cursor
+        doc.x = left;
 
         const meta = [edu.institution, edu.gpa ? `GPA: ${edu.gpa}` : null].filter(Boolean).join(' - ');
         if (meta) {
           doc.fontSize(9.5)
             .fillColor('#6b7280')
-            .text(meta);
+            .text(meta, left, doc.y, { width: right - left });
         }
 
         if (i < resume.education.length - 1) {
