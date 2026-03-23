@@ -170,13 +170,17 @@ class PDFService {
 
         doc.moveDown(0.2);
 
-        // Bullet points
+        // Bullet points (hanging indent so wrapped lines align with text, not the bullet)
         if (exp.description?.length > 0) {
+          const bulletIndent = 14;
           exp.description.filter(Boolean).forEach((bullet) => {
-            doc.fontSize(10)
-              .fillColor('#374151')
-              .font('Helvetica')
-              .text(`\u2022  ${bullet}`, left, doc.y, { width: right - left, indent: 14, lineGap: 1 });
+            const bulletY = doc.y;
+            // Draw bullet character at left margin
+            doc.fontSize(10).fillColor('#9ca3af').font('Helvetica')
+              .text('\u2022', left, bulletY, { lineBreak: false });
+            // Draw text indented, full width minus indent
+            doc.fontSize(10).fillColor('#374151').font('Helvetica')
+              .text(bullet, left + bulletIndent, bulletY, { width: right - left - bulletIndent, lineGap: 1 });
           });
         }
 
@@ -247,24 +251,47 @@ class PDFService {
     if (resume.projects?.length > 0) {
       this._sectionTitle(doc, 'PROJECTS', colors);
 
+      const left = doc.page.margins.left;
+      const right = doc.page.width - doc.page.margins.right;
+
       resume.projects.forEach((proj, i) => {
+        // Project name
         doc.fontSize(10.5)
           .fillColor('#111827')
           .font('Helvetica-Bold')
-          .text(proj.name || '');
+          .text(proj.name || '', left, doc.y, { width: right - left });
+
+        // Project URL as clickable link
+        if (proj.url) {
+          const projUrl = proj.url.startsWith('http') ? proj.url : `https://${proj.url}`;
+          let label;
+          try {
+            const parsed = new URL(projUrl);
+            // Show "GitHub" for github links, otherwise show clean domain + path
+            label = parsed.hostname.includes('github.com')
+              ? `GitHub: ${parsed.pathname.replace(/^\//, '')}`
+              : parsed.hostname.replace(/^www\./, '') + parsed.pathname.replace(/\/$/, '');
+          } catch {
+            label = proj.url;
+          }
+          doc.fontSize(9)
+            .fillColor('#2563eb')
+            .font('Helvetica')
+            .text(label, left, doc.y, { width: right - left, link: projUrl });
+        }
 
         if (proj.description) {
           doc.fontSize(10)
             .fillColor('#374151')
             .font('Helvetica')
-            .text(proj.description, { lineGap: 1 });
+            .text(proj.description, left, doc.y, { width: right - left, lineGap: 1 });
         }
 
         if (proj.technologies) {
           doc.fontSize(9)
             .fillColor('#6b7280')
             .font('Helvetica-Oblique')
-            .text(`Tech: ${proj.technologies}`);
+            .text(`Tech: ${proj.technologies}`, left, doc.y, { width: right - left });
         }
 
         if (i < resume.projects.length - 1) {
