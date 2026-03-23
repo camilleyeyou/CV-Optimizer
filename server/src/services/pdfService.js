@@ -6,7 +6,7 @@ class PDFService {
       try {
         const doc = new PDFDocument({
           size: 'A4',
-          margin: 50,
+          margins: { top: 40, bottom: 40, left: 48, right: 48 },
           info: {
             Title: `${resume.personal_info?.first_name || ''} ${resume.personal_info?.last_name || ''} - Resume`,
             Author: `${resume.personal_info?.first_name || ''} ${resume.personal_info?.last_name || ''}`,
@@ -31,42 +31,57 @@ class PDFService {
     const p = resume.personal_info || {};
     const colors = this._getColors(template);
 
-    // Header - Name
-    doc.fontSize(24)
-      .fillColor(colors.primary)
+    // Header - Name (centered, large, bold)
+    doc.fontSize(22)
+      .fillColor('#111827')
       .font('Helvetica-Bold')
       .text(`${p.first_name || ''} ${p.last_name || ''}`.trim() || 'Your Name', { align: 'center' });
 
-    // Job title
+    // Job title (centered, blue)
     if (p.job_title) {
       doc.fontSize(11)
-        .fillColor(colors.secondary)
+        .fillColor(colors.primary)
         .font('Helvetica')
         .text(p.job_title, { align: 'center' });
     }
 
-    doc.moveDown(0.5);
+    doc.moveDown(0.4);
 
-    // Contact info
-    const contactItems = [p.email, p.phone, p.location, p.linkedin, p.website].filter(Boolean);
+    // Contact info (centered, with icons represented by symbols)
+    const contactItems = [];
+    if (p.email) contactItems.push(`\u2709 ${p.email}`);
+    if (p.phone) contactItems.push(`\u260E ${p.phone}`);
+    if (p.location) contactItems.push(`\u25CB ${p.location}`);
+    if (p.linkedin) contactItems.push(p.linkedin);
+    if (p.website) contactItems.push(p.website);
+
     if (contactItems.length > 0) {
-      doc.fontSize(9)
-        .fillColor(colors.muted)
-        .text(contactItems.join('  |  '), { align: 'center' });
+      doc.fontSize(8.5)
+        .fillColor('#4b5563')
+        .font('Helvetica')
+        .text(contactItems.join('   '), { align: 'center' });
     }
 
     doc.moveDown(0.5);
-    this._drawLine(doc, colors.primary);
-    doc.moveDown(0.5);
+
+    // Header divider line (blue, matching preview)
+    const lineY = doc.y;
+    doc.moveTo(doc.page.margins.left, lineY)
+      .lineTo(doc.page.width - doc.page.margins.right, lineY)
+      .strokeColor(colors.primary)
+      .lineWidth(2)
+      .stroke();
+
+    doc.moveDown(0.6);
 
     // Summary
     if (resume.summary) {
       this._sectionTitle(doc, 'PROFESSIONAL SUMMARY', colors);
       doc.fontSize(10)
-        .fillColor(colors.text)
+        .fillColor('#374151')
         .font('Helvetica')
-        .text(resume.summary, { align: 'justify', lineGap: 2 });
-      doc.moveDown(0.8);
+        .text(resume.summary, { lineGap: 2 });
+      doc.moveDown(0.7);
     }
 
     // Experience
@@ -74,36 +89,44 @@ class PDFService {
       this._sectionTitle(doc, 'EXPERIENCE', colors);
 
       resume.work_experience.forEach((exp, i) => {
-        // Position & Company
-        doc.fontSize(11)
-          .fillColor(colors.text)
+        // Row: Position · Company          Date
+        const dateStr = this._formatDateRange(exp.start_date, exp.end_date, exp.current);
+
+        doc.fontSize(10.5)
+          .fillColor('#111827')
           .font('Helvetica-Bold')
           .text(exp.position || '', { continued: !!exp.company });
 
         if (exp.company) {
           doc.font('Helvetica')
-            .fillColor(colors.secondary)
-            .text(`  |  ${exp.company}`);
+            .fillColor('#4b5563')
+            .text(` \u00B7 ${exp.company}`, { continued: false });
         }
 
-        // Date & Location
-        const dateStr = this._formatDateRange(exp.start_date, exp.end_date, exp.current);
-        const locationDate = [dateStr, exp.location].filter(Boolean).join('  |  ');
-        if (locationDate) {
+        // Date on same conceptual line (right-aligned)
+        if (dateStr) {
           doc.fontSize(9)
-            .fillColor(colors.muted)
-            .text(locationDate);
+            .fillColor('#6b7280')
+            .font('Helvetica')
+            .text(dateStr);
         }
 
-        doc.moveDown(0.3);
+        // Location
+        if (exp.location) {
+          doc.fontSize(9)
+            .fillColor('#6b7280')
+            .text(exp.location);
+        }
 
-        // Bullets
+        doc.moveDown(0.2);
+
+        // Bullet points
         if (exp.description?.length > 0) {
           exp.description.filter(Boolean).forEach((bullet) => {
             doc.fontSize(10)
-              .fillColor(colors.text)
+              .fillColor('#374151')
               .font('Helvetica')
-              .text(`\u2022  ${bullet}`, { indent: 15, lineGap: 1 });
+              .text(`\u2022  ${bullet}`, { indent: 14, lineGap: 1 });
           });
         }
 
@@ -112,7 +135,7 @@ class PDFService {
         }
       });
 
-      doc.moveDown(0.8);
+      doc.moveDown(0.7);
     }
 
     // Education
@@ -120,8 +143,8 @@ class PDFService {
       this._sectionTitle(doc, 'EDUCATION', colors);
 
       resume.education.forEach((edu, i) => {
-        doc.fontSize(11)
-          .fillColor(colors.text)
+        doc.fontSize(10.5)
+          .fillColor('#111827')
           .font('Helvetica-Bold')
           .text(edu.degree || '', { continued: !!edu.field_of_study });
 
@@ -130,16 +153,18 @@ class PDFService {
             .text(` in ${edu.field_of_study}`);
         }
 
-        doc.fontSize(10)
-          .fillColor(colors.text)
-          .font('Helvetica')
-          .text(edu.institution || '');
-
         const dateStr = this._formatDateRange(edu.start_date, edu.end_date);
-        const meta = [dateStr, edu.gpa ? `GPA: ${edu.gpa}` : null].filter(Boolean).join('  |  ');
-        if (meta) {
+        if (dateStr) {
           doc.fontSize(9)
-            .fillColor(colors.muted)
+            .fillColor('#6b7280')
+            .font('Helvetica')
+            .text(dateStr);
+        }
+
+        const meta = [edu.institution, edu.gpa ? `GPA: ${edu.gpa}` : null].filter(Boolean).join(' \u2014 ');
+        if (meta) {
+          doc.fontSize(9.5)
+            .fillColor('#6b7280')
             .text(meta);
         }
 
@@ -148,18 +173,18 @@ class PDFService {
         }
       });
 
-      doc.moveDown(0.8);
+      doc.moveDown(0.7);
     }
 
-    // Skills
+    // Skills (inline with bullet separators, matching preview)
     const skills = resume.skills?.filter(Boolean);
     if (skills?.length > 0) {
       this._sectionTitle(doc, 'SKILLS', colors);
       doc.fontSize(10)
-        .fillColor(colors.text)
+        .fillColor('#374151')
         .font('Helvetica')
         .text(skills.join('  \u2022  '), { lineGap: 2 });
-      doc.moveDown(0.8);
+      doc.moveDown(0.7);
     }
 
     // Projects
@@ -167,23 +192,23 @@ class PDFService {
       this._sectionTitle(doc, 'PROJECTS', colors);
 
       resume.projects.forEach((proj, i) => {
-        doc.fontSize(11)
-          .fillColor(colors.text)
+        doc.fontSize(10.5)
+          .fillColor('#111827')
           .font('Helvetica-Bold')
           .text(proj.name || '');
 
         if (proj.description) {
           doc.fontSize(10)
-            .fillColor(colors.text)
+            .fillColor('#374151')
             .font('Helvetica')
             .text(proj.description, { lineGap: 1 });
         }
 
         if (proj.technologies) {
           doc.fontSize(9)
-            .fillColor(colors.muted)
+            .fillColor('#6b7280')
             .font('Helvetica-Oblique')
-            .text(`Technologies: ${proj.technologies}`);
+            .text(`Tech: ${proj.technologies}`);
         }
 
         if (i < resume.projects.length - 1) {
@@ -191,7 +216,7 @@ class PDFService {
         }
       });
 
-      doc.moveDown(0.8);
+      doc.moveDown(0.7);
     }
 
     // Certifications
@@ -200,34 +225,34 @@ class PDFService {
 
       resume.certifications.forEach((cert) => {
         doc.fontSize(10)
-          .fillColor(colors.text)
+          .fillColor('#111827')
           .font('Helvetica-Bold')
           .text(cert.name || '', { continued: !!cert.issuer });
 
         if (cert.issuer) {
           doc.font('Helvetica')
-            .fillColor(colors.secondary)
-            .text(`  -  ${cert.issuer}`);
+            .fillColor('#4b5563')
+            .text(` - ${cert.issuer}`);
         }
 
         if (cert.date) {
           doc.fontSize(9)
-            .fillColor(colors.muted)
+            .fillColor('#6b7280')
             .text(this._formatDate(cert.date));
         }
       });
 
-      doc.moveDown(0.8);
+      doc.moveDown(0.7);
     }
 
-    // Languages
+    // Languages (inline with bullet separators)
     if (resume.languages?.length > 0) {
       this._sectionTitle(doc, 'LANGUAGES', colors);
       const langStr = resume.languages
         .map((l) => `${l.name} (${l.proficiency})`)
         .join('  \u2022  ');
       doc.fontSize(10)
-        .fillColor(colors.text)
+        .fillColor('#374151')
         .font('Helvetica')
         .text(langStr);
     }
@@ -309,25 +334,25 @@ class PDFService {
   }
 
   _sectionTitle(doc, title, colors) {
-    doc.fontSize(12)
-      .fillColor(colors.primary)
+    doc.fontSize(11)
+      .fillColor('#111827')
       .font('Helvetica-Bold')
-      .text(title);
+      .text(title, { characterSpacing: 1 });
 
-    const y = doc.y + 3;
-    doc.moveTo(50, y)
-      .lineTo(545, y)
-      .strokeColor(colors.primary)
+    const y = doc.y + 2;
+    doc.moveTo(doc.page.margins.left, y)
+      .lineTo(doc.page.width - doc.page.margins.right, y)
+      .strokeColor('#e5e7eb')
       .lineWidth(0.5)
       .stroke();
 
-    doc.moveDown(0.4);
+    doc.moveDown(0.35);
   }
 
   _drawLine(doc, color) {
     const y = doc.y;
-    doc.moveTo(50, y)
-      .lineTo(545, y)
+    doc.moveTo(doc.page.margins.left, y)
+      .lineTo(doc.page.width - doc.page.margins.right, y)
       .strokeColor(color)
       .lineWidth(1)
       .stroke();
@@ -344,7 +369,7 @@ class PDFService {
     const s = this._formatDate(start);
     const e = current ? 'Present' : this._formatDate(end);
     if (!s && !e) return '';
-    return `${s} - ${e}`;
+    return `${s} \u2014 ${e}`;
   }
 }
 

@@ -231,12 +231,19 @@ img {
 
 .btn-primary {
   background: linear-gradient(135deg, #6366f1, #8b5cf6);
-  color: white;
+  color: #ffffff;
   box-shadow: 0 2px 12px rgba(99, 102, 241, 0.35);
+}
+
+/* Override anchor color when used as a link button */
+a.btn-primary,
+a.btn-primary:hover {
+  color: #ffffff;
 }
 
 .btn-primary:hover:not(:disabled) {
   background: linear-gradient(135deg, #4f46e5, #7c3aed);
+  color: #ffffff;
   box-shadow: 0 4px 20px rgba(99, 102, 241, 0.5);
   transform: translateY(-1px);
 }
@@ -257,12 +264,18 @@ img {
 
 .btn-accent {
   background: linear-gradient(135deg, #6366f1, #8b5cf6);
-  color: white;
+  color: #ffffff;
   box-shadow: 0 1px 2px rgba(99, 102, 241, 0.3);
+}
+
+a.btn-accent,
+a.btn-accent:hover {
+  color: #ffffff;
 }
 
 .btn-accent:hover:not(:disabled) {
   background: linear-gradient(135deg, #4f46e5, #7c3aed);
+  color: #ffffff;
   box-shadow: 0 2px 8px rgba(99, 102, 241, 0.4);
   transform: translateY(-0.5px);
 }
@@ -325,6 +338,14 @@ img {
   background: rgba(15, 23, 42, 0.5);
   transition: all var(--transition-fast);
   line-height: 1.5;
+  color-scheme: dark;
+}
+
+/* Date picker icon visible on dark background */
+input[type="date"]::-webkit-calendar-picker-indicator,
+input[type="datetime-local"]::-webkit-calendar-picker-indicator {
+  filter: invert(0.8);
+  cursor: pointer;
 }
 
 .form-select option {

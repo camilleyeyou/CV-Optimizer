@@ -75,7 +75,8 @@ const AICreator = () => {
       setStep('done');
       toast.success('Resume generated successfully!');
     } catch (err) {
-      toast.error('Failed to generate resume. Please try again.');
+      const msg = err.response?.data?.error || 'Failed to generate resume. Please try again.';
+      toast.error(msg);
       setStep('questions');
     } finally {
       setLoading(false);
