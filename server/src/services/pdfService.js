@@ -47,31 +47,62 @@ class PDFService {
 
     doc.moveDown(0.4);
 
-    // Contact info (centered, pipe-separated, with friendly labels)
-    const contactLabels = [];
-    if (p.email) contactLabels.push(p.email);
-    if (p.phone) contactLabels.push(p.phone);
-    if (p.location) contactLabels.push(p.location);
+    // Contact info (centered, with clickable links)
+    const contactItems = [];
+    if (p.email) contactItems.push({ label: p.email, url: `mailto:${p.email}` });
+    if (p.phone) contactItems.push({ label: p.phone, url: `tel:${p.phone.replace(/\s/g, '')}` });
+    if (p.location) contactItems.push({ label: p.location, url: null });
     if (p.linkedin) {
-      // Show "LinkedIn" instead of full URL
-      const match = p.linkedin.match(/linkedin\.com\/in\/([^/]+)/);
-      contactLabels.push(match ? `LinkedIn: ${match[1]}` : 'LinkedIn');
+      const linkedinUrl = p.linkedin.startsWith('http') ? p.linkedin : `https://${p.linkedin}`;
+      contactItems.push({ label: 'LinkedIn', url: linkedinUrl });
     }
     if (p.website) {
-      // Show clean domain instead of full URL
+      const websiteUrl = p.website.startsWith('http') ? p.website : `https://${p.website}`;
+      let label;
       try {
-        const url = new URL(p.website.startsWith('http') ? p.website : `https://${p.website}`);
-        contactLabels.push(url.hostname.replace(/^www\./, ''));
+        label = new URL(websiteUrl).hostname.replace(/^www\./, '');
       } catch {
-        contactLabels.push(p.website);
+        label = p.website;
       }
+      contactItems.push({ label, url: websiteUrl });
     }
 
-    if (contactLabels.length > 0) {
-      doc.fontSize(8.5)
-        .fillColor('#4b5563')
-        .font('Helvetica')
-        .text(contactLabels.join('    |    '), { align: 'center' });
+    if (contactItems.length > 0) {
+      const sep = '    |    ';
+      doc.fontSize(8.5).font('Helvetica');
+
+      // Calculate total width to center the line
+      let totalWidth = 0;
+      contactItems.forEach((item, idx) => {
+        totalWidth += doc.widthOfString(item.label);
+        if (idx < contactItems.length - 1) totalWidth += doc.widthOfString(sep);
+      });
+
+      let curX = (doc.page.width - totalWidth) / 2;
+      const curY = doc.y;
+
+      contactItems.forEach((item, idx) => {
+        const w = doc.widthOfString(item.label);
+        if (item.url) {
+          // Clickable link in blue
+          doc.fillColor('#2563eb')
+            .text(item.label, curX, curY, { width: w, lineBreak: false, link: item.url, underline: false });
+        } else {
+          doc.fillColor('#4b5563')
+            .text(item.label, curX, curY, { width: w, lineBreak: false });
+        }
+        curX += w;
+        if (idx < contactItems.length - 1) {
+          const sepW = doc.widthOfString(sep);
+          doc.fillColor('#4b5563')
+            .text(sep, curX, curY, { width: sepW, lineBreak: false });
+          curX += sepW;
+        }
+      });
+
+      // Move cursor below the contact line
+      doc.x = doc.page.margins.left;
+      doc.y = curY + doc.currentLineHeight() + 2;
     }
 
     doc.moveDown(0.5);
