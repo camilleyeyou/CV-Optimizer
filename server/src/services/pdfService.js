@@ -47,19 +47,31 @@ class PDFService {
 
     doc.moveDown(0.4);
 
-    // Contact info (centered, with icons represented by symbols)
-    const contactItems = [];
-    if (p.email) contactItems.push(`\u2709 ${p.email}`);
-    if (p.phone) contactItems.push(`\u260E ${p.phone}`);
-    if (p.location) contactItems.push(`\u25CB ${p.location}`);
-    if (p.linkedin) contactItems.push(p.linkedin);
-    if (p.website) contactItems.push(p.website);
+    // Contact info (centered, pipe-separated, with friendly labels)
+    const contactLabels = [];
+    if (p.email) contactLabels.push(p.email);
+    if (p.phone) contactLabels.push(p.phone);
+    if (p.location) contactLabels.push(p.location);
+    if (p.linkedin) {
+      // Show "LinkedIn" instead of full URL
+      const match = p.linkedin.match(/linkedin\.com\/in\/([^/]+)/);
+      contactLabels.push(match ? `LinkedIn: ${match[1]}` : 'LinkedIn');
+    }
+    if (p.website) {
+      // Show clean domain instead of full URL
+      try {
+        const url = new URL(p.website.startsWith('http') ? p.website : `https://${p.website}`);
+        contactLabels.push(url.hostname.replace(/^www\./, ''));
+      } catch {
+        contactLabels.push(p.website);
+      }
+    }
 
-    if (contactItems.length > 0) {
+    if (contactLabels.length > 0) {
       doc.fontSize(8.5)
         .fillColor('#4b5563')
         .font('Helvetica')
-        .text(contactItems.join('   '), { align: 'center' });
+        .text(contactLabels.join('    |    '), { align: 'center' });
     }
 
     doc.moveDown(0.5);
@@ -89,32 +101,39 @@ class PDFService {
       this._sectionTitle(doc, 'EXPERIENCE', colors);
 
       resume.work_experience.forEach((exp, i) => {
-        // Row: Position · Company          Date
         const dateStr = this._formatDateRange(exp.start_date, exp.end_date, exp.current);
+        const leftMargin = doc.page.margins.left;
+        const pageRight = doc.page.width - doc.page.margins.right;
+        const titleY = doc.y;
 
+        // Draw title on the left
         doc.fontSize(10.5)
           .fillColor('#111827')
-          .font('Helvetica-Bold')
-          .text(exp.position || '', { continued: !!exp.company });
-
+          .font('Helvetica-Bold');
+        // Render position bold, then company normal weight
         if (exp.company) {
-          doc.font('Helvetica')
+          doc.text(exp.position || '', leftMargin, titleY, { continued: true })
+            .font('Helvetica')
             .fillColor('#4b5563')
             .text(` \u00B7 ${exp.company}`, { continued: false });
+        } else {
+          doc.text(exp.position || '', leftMargin, titleY);
         }
 
-        // Date on same conceptual line (right-aligned)
+        // Draw date right-aligned on same line as title
         if (dateStr) {
           doc.fontSize(9)
             .fillColor('#6b7280')
-            .font('Helvetica')
-            .text(dateStr);
+            .font('Helvetica');
+          const dateWidth = doc.widthOfString(dateStr);
+          doc.text(dateStr, pageRight - dateWidth, titleY);
         }
 
         // Location
         if (exp.location) {
           doc.fontSize(9)
             .fillColor('#6b7280')
+            .font('Helvetica')
             .text(exp.location);
         }
 
@@ -143,25 +162,31 @@ class PDFService {
       this._sectionTitle(doc, 'EDUCATION', colors);
 
       resume.education.forEach((edu, i) => {
+        const eduY = doc.y;
+        const pageRight = doc.page.width - doc.page.margins.right;
+
+        // Degree + field on the left
         doc.fontSize(10.5)
           .fillColor('#111827')
           .font('Helvetica-Bold')
-          .text(edu.degree || '', { continued: !!edu.field_of_study });
+          .text(edu.degree || '', doc.page.margins.left, eduY, { continued: !!edu.field_of_study });
 
         if (edu.field_of_study) {
           doc.font('Helvetica')
             .text(` in ${edu.field_of_study}`);
         }
 
+        // Date right-aligned on same line
         const dateStr = this._formatDateRange(edu.start_date, edu.end_date);
         if (dateStr) {
           doc.fontSize(9)
             .fillColor('#6b7280')
-            .font('Helvetica')
-            .text(dateStr);
+            .font('Helvetica');
+          const dateWidth = doc.widthOfString(dateStr);
+          doc.text(dateStr, pageRight - dateWidth, eduY);
         }
 
-        const meta = [edu.institution, edu.gpa ? `GPA: ${edu.gpa}` : null].filter(Boolean).join(' \u2014 ');
+        const meta = [edu.institution, edu.gpa ? `GPA: ${edu.gpa}` : null].filter(Boolean).join(' - ');
         if (meta) {
           doc.fontSize(9.5)
             .fillColor('#6b7280')
@@ -176,14 +201,11 @@ class PDFService {
       doc.moveDown(0.7);
     }
 
-    // Skills (inline with bullet separators, matching preview)
+    // Skills (rendered as tag chips matching preview)
     const skills = resume.skills?.filter(Boolean);
     if (skills?.length > 0) {
       this._sectionTitle(doc, 'SKILLS', colors);
-      doc.fontSize(10)
-        .fillColor('#374151')
-        .font('Helvetica')
-        .text(skills.join('  \u2022  '), { lineGap: 2 });
+      this._renderSkillTags(doc, skills);
       doc.moveDown(0.7);
     }
 
@@ -333,6 +355,45 @@ class PDFService {
     return palettes[template] || palettes.modern;
   }
 
+  _renderSkillTags(doc, skills) {
+    const padX = 8;
+    const padY = 3;
+    const gap = 6;
+    const lineHeight = 20;
+    const leftMargin = doc.page.margins.left;
+    const maxX = doc.page.width - doc.page.margins.right;
+    let curX = leftMargin;
+    let curY = doc.y;
+
+    skills.forEach((skill) => {
+      doc.font('Helvetica').fontSize(9);
+      const textWidth = doc.widthOfString(skill);
+      const tagWidth = textWidth + padX * 2;
+
+      // Wrap to next line if tag doesn't fit
+      if (curX + tagWidth > maxX && curX > leftMargin) {
+        curX = leftMargin;
+        curY += lineHeight;
+      }
+
+      // Draw tag border
+      doc.roundedRect(curX, curY, tagWidth, lineHeight - 4, 3)
+        .strokeColor('#e5e7eb')
+        .lineWidth(0.75)
+        .fillAndStroke('#f3f4f6', '#e5e7eb');
+
+      // Draw tag text
+      doc.fillColor('#374151')
+        .text(skill, curX + padX, curY + padY, { lineBreak: false });
+
+      curX += tagWidth + gap;
+    });
+
+    // Move doc cursor below the last row of tags
+    doc.y = curY + lineHeight + 4;
+    doc.x = leftMargin;
+  }
+
   _sectionTitle(doc, title, colors) {
     doc.fontSize(11)
       .fillColor('#111827')
@@ -369,7 +430,7 @@ class PDFService {
     const s = this._formatDate(start);
     const e = current ? 'Present' : this._formatDate(end);
     if (!s && !e) return '';
-    return `${s} \u2014 ${e}`;
+    return `${s} - ${e}`;
   }
 }
 
