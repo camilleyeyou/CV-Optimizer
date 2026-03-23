@@ -9,6 +9,29 @@ const formatDate = (dateStr) => {
   return `${months[parseInt(month, 10) - 1]} ${year}`;
 };
 
+const friendlyUrl = (url) => {
+  try {
+    const parsed = new URL(url.startsWith('http') ? url : `https://${url}`);
+    return parsed.hostname.replace(/^www\./, '');
+  } catch {
+    return url;
+  }
+};
+
+const friendlyProjectUrl = (url) => {
+  try {
+    const parsed = new URL(url.startsWith('http') ? url : `https://${url}`);
+    if (parsed.hostname.includes('github.com')) {
+      return `GitHub: ${parsed.pathname.replace(/^\//, '').replace(/\/$/, '')}`;
+    }
+    return parsed.hostname.replace(/^www\./, '') + parsed.pathname.replace(/\/$/, '');
+  } catch {
+    return url;
+  }
+};
+
+const toHref = (url) => url.startsWith('http') ? url : `https://${url}`;
+
 const ResumePreview = () => {
   const { resumeData } = useResume();
   const p = resumeData?.personal_info || {};
@@ -31,11 +54,11 @@ const ResumePreview = () => {
 
         {hasContact && (
           <div className="preview-contact">
-            {p.email && <span className="contact-item"><Mail size={11} /> {p.email}</span>}
-            {p.phone && <span className="contact-item"><Phone size={11} /> {p.phone}</span>}
+            {p.email && <a className="contact-item contact-link" href={`mailto:${p.email}`}><Mail size={11} /> {p.email}</a>}
+            {p.phone && <a className="contact-item contact-link" href={`tel:${p.phone.replace(/\s/g, '')}`}><Phone size={11} /> {p.phone}</a>}
             {p.location && <span className="contact-item"><MapPin size={11} /> {p.location}</span>}
-            {p.linkedin && <span className="contact-item"><Linkedin size={11} /> {p.linkedin}</span>}
-            {p.website && <span className="contact-item"><Globe size={11} /> {p.website}</span>}
+            {p.linkedin && <a className="contact-item contact-link" href={toHref(p.linkedin)} target="_blank" rel="noopener noreferrer"><Linkedin size={11} /> LinkedIn</a>}
+            {p.website && <a className="contact-item contact-link" href={toHref(p.website)} target="_blank" rel="noopener noreferrer"><Globe size={11} /> {friendlyUrl(p.website)}</a>}
           </div>
         )}
       </div>
@@ -101,7 +124,7 @@ const ResumePreview = () => {
               </div>
               <p className="preview-entry-location">
                 {edu.institution}
-                {edu.gpa && <span> &middot; GPA: {edu.gpa}</span>}
+                {edu.gpa && <span> - GPA: {edu.gpa}</span>}
               </p>
             </div>
           ))}
@@ -128,8 +151,8 @@ const ResumePreview = () => {
             <div key={proj.id || i} className="preview-entry">
               <div className="preview-entry-header">
                 <strong className="preview-entry-title">{proj.name}</strong>
-                {proj.url && <span className="preview-entry-link">{proj.url}</span>}
               </div>
+              {proj.url && <a className="preview-entry-link" href={toHref(proj.url)} target="_blank" rel="noopener noreferrer">{friendlyProjectUrl(proj.url)}</a>}
               {proj.description && <p className="preview-text">{proj.description}</p>}
               {proj.technologies && (
                 <p className="preview-entry-tech">Tech: {proj.technologies}</p>

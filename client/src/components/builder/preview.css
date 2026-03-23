@@ -62,6 +62,23 @@
   color: #6b7280;
 }
 
+a.contact-link {
+  color: #4b5563;
+  text-decoration: none;
+}
+
+a.contact-link:hover {
+  color: #2563eb;
+}
+
+a.preview-entry-link {
+  text-decoration: none;
+}
+
+a.preview-entry-link:hover {
+  text-decoration: underline;
+}
+
 /* Sections */
 .preview-section {
   margin-bottom: 16px;
