@@ -129,6 +129,14 @@ create policy "Users can update own profile"
 -- Service role can manage all profiles (for server-side credit deduction)
 -- No policy needed — service role bypasses RLS
 
+-- Stripe webhook idempotency ledger (handled event IDs). Server-only.
+create table if not exists stripe_processed_events (
+  event_id text primary key,
+  type text,
+  processed_at timestamptz default now()
+);
+alter table stripe_processed_events enable row level security;
+
 -- Job Applications (tracker/kanban)
 create table if not exists applications (
   id uuid default uuid_generate_v4() primary key,

@@ -141,6 +141,21 @@ const webhook = async (req, res) => {
     return res.status(400).send(`Webhook Error: ${err.message}`);
   }
 
+  // Idempotency: Stripe delivers events at least once and retries. If we've
+  // already fully handled this event id, acknowledge and skip re-processing.
+  try {
+    const { data: seen } = await supabase
+      .from('stripe_processed_events')
+      .select('event_id')
+      .eq('event_id', event.id)
+      .single();
+    if (seen) {
+      return res.json({ received: true, duplicate: true });
+    }
+  } catch {
+    // Not found (or table unavailable) — proceed to handle the event.
+  }
+
   try {
     switch (event.type) {
       case 'checkout.session.completed':
@@ -156,6 +171,15 @@ const webhook = async (req, res) => {
       default:
         break;
     }
+
+    // Record only AFTER successful handling, so a failed handler (500 -> Stripe
+    // retry) is re-attempted rather than skipped. Ignore insert/conflict errors.
+    try {
+      await supabase.from('stripe_processed_events').insert({ event_id: event.id, type: event.type });
+    } catch {
+      // best-effort — the handlers above are themselves idempotent
+    }
+
     res.json({ received: true });
   } catch (err) {
     logger.error({ err, type: event.type }, 'Error handling Stripe webhook');
