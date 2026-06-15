@@ -140,19 +140,19 @@ const LandingPage = () => {
         </div>
       </section>
 
-      {/* Stats */}
+      {/* Stats — verifiable product facts only (no usage metrics we can't back) */}
       <section className="landing-stats">
         <div className="landing-stat">
-          <span className="landing-stat-value">10,000+</span>
-          <p className="landing-stat-label">Resumes built</p>
-        </div>
-        <div className="landing-stat">
-          <span className="landing-stat-value">95%</span>
-          <p className="landing-stat-label">ATS pass rate</p>
+          <span className="landing-stat-value">16</span>
+          <p className="landing-stat-label">Resume templates</p>
         </div>
         <div className="landing-stat">
           <span className="landing-stat-value">11</span>
-          <p className="landing-stat-label">AI tools</p>
+          <p className="landing-stat-label">AI-powered tools</p>
+        </div>
+        <div className="landing-stat">
+          <span className="landing-stat-value">Free</span>
+          <p className="landing-stat-label">to get started</p>
         </div>
       </section>
 
