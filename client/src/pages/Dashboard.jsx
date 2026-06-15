@@ -20,6 +20,7 @@ import toast from 'react-hot-toast';
 import api, { getCredits, startCheckout, openBillingPortal } from '../services/api';
 import Spotlight from '../components/onboarding/Spotlight';
 import { tours } from '../components/onboarding/tourSteps';
+import TemplateThumbnail from '../components/builder/TemplateThumbnail';
 import './Dashboard.css';
 
 const Dashboard = () => {
@@ -307,17 +308,9 @@ const Dashboard = () => {
                   className="resume-card"
                   onClick={() => handleEdit(resume.id)}
                 >
-                  {/* Preview */}
+                  {/* Preview — real, scaled-down render of the resume */}
                   <div className="resume-card-preview">
-                    <div className="preview-mock">
-                      <div className="preview-mock-header" />
-                      <div className="preview-mock-line w-60" />
-                      <div className="preview-mock-line w-40" />
-                      <div className="preview-mock-gap" />
-                      <div className="preview-mock-line w-80" />
-                      <div className="preview-mock-line w-70" />
-                      <div className="preview-mock-line w-90" />
-                    </div>
+                    <TemplateThumbnail templateId={resume.template} data={resume} height={180} />
                     <div className="resume-card-template">
                       {resume.template || 'modern'}
                     </div>

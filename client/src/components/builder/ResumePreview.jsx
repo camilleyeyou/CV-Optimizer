@@ -36,11 +36,14 @@ const toHref = (url) => (url.startsWith('http') ? url : `https://${url}`);
 // Sections that move into the colored sidebar for the "sidebar" archetype.
 const SIDEBAR_SECTIONS = ['skills', 'languages'];
 
-const ResumePreview = () => {
+// `data`/`templateId` props let this render arbitrary resume content (e.g. a
+// scaled thumbnail of a specific template), falling back to the live builder
+// context when used as the main editor preview.
+const ResumePreview = ({ data: dataProp, templateId } = {}) => {
   const { resumeData } = useResume();
-  const data = resumeData || {};
+  const data = dataProp || resumeData || {};
   const p = data.personal_info || {};
-  const tpl = getTemplate(data.template);
+  const tpl = getTemplate(templateId || data.template);
 
   const hasContact = p.email || p.phone || p.location || p.linkedin || p.website;
   const hasName = p.first_name || p.last_name;

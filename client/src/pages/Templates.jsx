@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { useResume } from '../context/ResumeContext';
 import { getCredits } from '../services/api';
 import { TEMPLATES } from '../config/templates';
+import TemplateThumbnail from '../components/builder/TemplateThumbnail';
+import { SAMPLE_RESUME } from '../components/builder/sampleResume';
 import { Check, ArrowRight, Lock, Crown } from 'lucide-react';
 import toast from 'react-hot-toast';
 import './TemplatesPage.css';
@@ -59,40 +61,9 @@ const Templates = () => {
                 className={`template-card ${selected === template.id ? 'is-selected' : ''} ${locked ? 'is-locked' : ''}`}
                 onClick={() => handleSelect(template)}
               >
-                {/* Mini preview */}
+                {/* Real, scaled-down preview of the template */}
                 <div className="template-preview" style={{ borderTopColor: template.accent }}>
-                  <div className={`template-mock mock-${template.archetype}`}>
-                    {template.archetype === 'sidebar' ? (
-                      <div className="mock-cols">
-                        <div className="mock-sidebar" style={{ backgroundColor: template.sidebarBg || template.accent }} />
-                        <div className="mock-main">
-                          <div className="mock-name" style={{ backgroundColor: template.accent }} />
-                          <div className="mock-line w-75" />
-                          <div className="mock-gap" />
-                          <div className="mock-section-title" style={{ backgroundColor: template.accent, opacity: 0.3 }} />
-                          <div className="mock-line w-90" />
-                          <div className="mock-line w-80" />
-                        </div>
-                      </div>
-                    ) : (
-                      <>
-                        {template.archetype === 'header-band' && (
-                          <div className="mock-band" style={{ backgroundColor: template.accent }} />
-                        )}
-                        <div className="mock-name" style={{ backgroundColor: template.accent }} />
-                        <div className="mock-line w-50" />
-                        <div className="mock-gap" />
-                        <div className="mock-section-title" style={{ backgroundColor: template.accent, opacity: 0.3 }} />
-                        <div className="mock-line w-90" />
-                        <div className="mock-line w-75" />
-                        <div className="mock-line w-85" />
-                        <div className="mock-gap" />
-                        <div className="mock-section-title" style={{ backgroundColor: template.accent, opacity: 0.3 }} />
-                        <div className="mock-line w-80" />
-                        <div className="mock-line w-60" />
-                      </>
-                    )}
-                  </div>
+                  <TemplateThumbnail templateId={template.id} data={SAMPLE_RESUME} height={230} />
 
                   {selected === template.id && !locked && (
                     <div className="template-check">
