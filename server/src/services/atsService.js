@@ -1,6 +1,21 @@
 const OpenAI = require('openai');
 const pdfParse = require('pdf-parse');
+const crypto = require('crypto');
+const { createClient } = require('@supabase/supabase-js');
 const { computeATSScore } = require('./atsScoring');
+
+// Lazy Supabase client — created on first use so importing this module never
+// throws when env vars are absent (e.g. unit tests that don't touch the cache).
+let _supabase = null;
+function getSupabase() {
+  if (!_supabase) {
+    _supabase = createClient(
+      process.env.SUPABASE_URL || '',
+      process.env.SUPABASE_SERVICE_ROLE_KEY || ''
+    );
+  }
+  return _supabase;
+}
 
 class ATSService {
   constructor() {
@@ -27,7 +42,15 @@ class ATSService {
    * score is always returned.
    */
   async analyzeATS(resumeText, jobTitle, jobDescription) {
-    const breakdown = computeATSScore({ resumeText, jobDescription: jobDescription || '' });
+    // LLM keyword extraction improves accuracy; matching/scoring stays in the
+    // engine so the score is still reproducible. Falls back to the engine's
+    // built-in extractor (providedKeywords = null) if extraction fails.
+    const providedKeywords = await this.extractKeywordsLLM(jobDescription);
+    const breakdown = computeATSScore({
+      resumeText,
+      jobDescription: jobDescription || '',
+      providedKeywords,
+    });
 
     let narrative;
     try {
@@ -37,6 +60,86 @@ class ATSService {
     }
 
     return this._assembleAnalysis(breakdown, narrative);
+  }
+
+  /**
+   * Extract screening keywords from a job description with the LLM
+   * (temperature 0, JSON mode), cached in Supabase keyed by a sha256 hash of
+   * the JD so the SAME job description always yields the SAME keyword list on
+   * subsequent calls (cache survives Vercel cold starts, unlike an in-memory
+   * Map). Returns null on any failure or when no JD is given, so the caller
+   * falls back to the engine's deterministic built-in extractor.
+   *
+   * @returns {Promise<string[]|null>}
+   */
+  async extractKeywordsLLM(jobDescription) {
+    const jd = String(jobDescription || '').trim();
+    if (!jd) return null;
+
+    const jdHash = crypto.createHash('sha256').update(jd).digest('hex');
+
+    // 1. Cache lookup (persisted — reproducible across cold starts).
+    try {
+      const { data } = await getSupabase()
+        .from('jd_keyword_cache')
+        .select('keywords')
+        .eq('jd_hash', jdHash)
+        .single();
+      if (data && Array.isArray(data.keywords) && data.keywords.length) {
+        return data.keywords;
+      }
+    } catch {
+      // Cache miss / table unavailable — fall through to extraction.
+    }
+
+    // 2. LLM extraction.
+    let rawKeywords;
+    try {
+      const response = await this.client.chat.completions.create({
+        model: this.model,
+        temperature: 0,
+        response_format: { type: 'json_object' },
+        messages: [
+          {
+            role: 'system',
+            content: 'Extract only the explicit skills and requirements a recruiter would screen for. Return JSON {"keywords":[...]}. No duplicates, no fluff.',
+          },
+          { role: 'user', content: jd.slice(0, 8000) },
+        ],
+        max_tokens: 500,
+      });
+      const content = response.choices?.[0]?.message?.content;
+      if (!content) return null;
+      const parsed = JSON.parse(content); // json_object guarantees valid JSON
+      rawKeywords = Array.isArray(parsed.keywords) ? parsed.keywords : null;
+    } catch {
+      return null; // fall back to the engine's built-in extractor
+    }
+    if (!rawKeywords || !rawKeywords.length) return null;
+
+    // Normalize: trim, lowercase, de-duplicate, cap. Deterministic shape.
+    const seen = new Set();
+    const keywords = [];
+    for (const k of rawKeywords) {
+      const s = String(k || '').trim().toLowerCase();
+      if (s && !seen.has(s)) {
+        seen.add(s);
+        keywords.push(s);
+      }
+    }
+    if (!keywords.length) return null;
+    const finalKeywords = keywords.slice(0, 30);
+
+    // 3. Persist for reproducibility on subsequent calls (non-fatal on error).
+    try {
+      await getSupabase()
+        .from('jd_keyword_cache')
+        .upsert({ jd_hash: jdHash, keywords: finalKeywords }, { onConflict: 'jd_hash' });
+    } catch {
+      // Caching is best-effort; scoring still works without it.
+    }
+
+    return finalKeywords;
   }
 
   /**

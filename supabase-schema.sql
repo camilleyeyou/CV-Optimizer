@@ -164,3 +164,13 @@ create policy "Users can view own scores"
   on resume_scores for select using (auth.uid() = user_id);
 create policy "Users can create own scores"
   on resume_scores for insert with check (auth.uid() = user_id);
+
+-- JD keyword cache (LLM-extracted keywords, keyed by sha256 of the JD).
+-- Server-only (service role); RLS on with no policies blocks client access.
+create table if not exists jd_keyword_cache (
+  jd_hash text primary key,
+  keywords jsonb not null default '[]'::jsonb,
+  created_at timestamptz default now()
+);
+
+alter table jd_keyword_cache enable row level security;
