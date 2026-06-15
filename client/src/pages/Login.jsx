@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { Helmet } from 'react-helmet-async';
 import { useAuth } from '../context/AuthContext';
+import { SITE_URL, OG_IMAGE } from '../config/site';
 import { Mail, Lock, ArrowRight } from 'lucide-react';
 import './Auth.css';
 
@@ -32,6 +34,23 @@ const Login = () => {
 
   return (
     <div className="auth-page">
+      <Helmet>
+        <title>Sign In — CV Optimizer</title>
+        <meta name="description" content="Sign in to CV Optimizer to build, score, and tailor your ATS-optimized resume." />
+        <link rel="canonical" href={`${SITE_URL}/login`} />
+        <meta property="og:type" content="website" />
+        <meta property="og:site_name" content="CV Optimizer" />
+        <meta property="og:title" content="Sign In — CV Optimizer" />
+        <meta property="og:description" content="Sign in to CV Optimizer to build, score, and tailor your ATS-optimized resume." />
+        <meta property="og:url" content={`${SITE_URL}/login`} />
+        <meta property="og:image" content={OG_IMAGE} />
+        <meta property="og:image:width" content="1200" />
+        <meta property="og:image:height" content="630" />
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content="Sign In — CV Optimizer" />
+        <meta name="twitter:description" content="Sign in to CV Optimizer to build, score, and tailor your ATS-optimized resume." />
+        <meta name="twitter:image" content={OG_IMAGE} />
+      </Helmet>
       <div className="auth-card">
         <div className="auth-header">
           <h1>Welcome back</h1>

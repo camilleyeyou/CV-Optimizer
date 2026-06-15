@@ -1,7 +1,9 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { Helmet } from 'react-helmet-async';
 import { useAuth } from '../context/AuthContext';
 import { verifyStudent } from '../services/api';
+import { SITE_URL, OG_IMAGE } from '../config/site';
 import { Mail, Lock, User, ArrowRight, GraduationCap } from 'lucide-react';
 import './Auth.css';
 
@@ -60,6 +62,23 @@ const Register = () => {
 
   return (
     <div className="auth-page">
+      <Helmet>
+        <title>Create Your Free Account — CV Optimizer</title>
+        <meta name="description" content="Create a free CV Optimizer account and build an ATS-optimized resume with AI — 5 free AI credits, 6 templates, and an ATS score checker." />
+        <link rel="canonical" href={`${SITE_URL}/register`} />
+        <meta property="og:type" content="website" />
+        <meta property="og:site_name" content="CV Optimizer" />
+        <meta property="og:title" content="Create Your Free Account — CV Optimizer" />
+        <meta property="og:description" content="Create a free CV Optimizer account and build an ATS-optimized resume with AI — free to start, no credit card required." />
+        <meta property="og:url" content={`${SITE_URL}/register`} />
+        <meta property="og:image" content={OG_IMAGE} />
+        <meta property="og:image:width" content="1200" />
+        <meta property="og:image:height" content="630" />
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content="Create Your Free Account — CV Optimizer" />
+        <meta name="twitter:description" content="Create a free CV Optimizer account and build an ATS-optimized resume with AI — free to start, no credit card required." />
+        <meta name="twitter:image" content={OG_IMAGE} />
+      </Helmet>
       <div className="auth-card">
         <div className="auth-header">
           <h1>Create your account</h1>

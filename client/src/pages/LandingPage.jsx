@@ -9,6 +9,7 @@ import {
 import toast from 'react-hot-toast';
 import api, { startCheckout } from '../services/api';
 import { useAuth } from '../context/AuthContext';
+import { SITE_URL, OG_IMAGE } from '../config/site';
 import './LandingPage.css';
 
 const FEATURES = [
@@ -119,8 +120,21 @@ const LandingPage = () => {
   return (
     <div className="landing">
       <Helmet>
-        <title>CV Optimizer - Build ATS-Optimized Resumes with AI</title>
-        <meta name="description" content="Build professional, ATS-optimized resumes with 11 AI tools. Score your resume, generate cover letters, track applications, and prepare for interviews." />
+        <title>CV Optimizer — Build ATS-Optimized Resumes with AI</title>
+        <meta name="description" content="Build professional, ATS-optimized resumes with 11 AI tools. Score your resume against ATS systems, generate tailored cover letters, track applications, and prepare for interviews." />
+        <link rel="canonical" href={`${SITE_URL}/`} />
+        <meta property="og:type" content="website" />
+        <meta property="og:site_name" content="CV Optimizer" />
+        <meta property="og:title" content="CV Optimizer — Build ATS-Optimized Resumes with AI" />
+        <meta property="og:description" content="Build professional, ATS-optimized resumes with 11 AI tools — ATS scoring, tailored cover letters, application tracking, and interview prep." />
+        <meta property="og:url" content={`${SITE_URL}/`} />
+        <meta property="og:image" content={OG_IMAGE} />
+        <meta property="og:image:width" content="1200" />
+        <meta property="og:image:height" content="630" />
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content="CV Optimizer — Build ATS-Optimized Resumes with AI" />
+        <meta name="twitter:description" content="Build professional, ATS-optimized resumes with 11 AI tools — ATS scoring, tailored cover letters, application tracking, and interview prep." />
+        <meta name="twitter:image" content={OG_IMAGE} />
       </Helmet>
 
       {/* Hero */}

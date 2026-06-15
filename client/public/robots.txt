@@ -1,3 +1,10 @@
 # https://www.robotstxt.org/robotstxt.html
 User-agent: *
-Disallow:
+Allow: /
+# Keep authenticated app areas out of the index
+Disallow: /dashboard
+Disallow: /builder
+Disallow: /tracker
+Disallow: /analytics
+
+Sitemap: https://cv-optimizer.vercel.app/sitemap.xml
