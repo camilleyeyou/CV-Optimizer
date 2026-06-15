@@ -145,6 +145,14 @@ body {
   background-image:
     radial-gradient(ellipse 70% 45% at 50% -8%, rgba(129, 140, 248, 0.1) 0%, transparent 60%);
   background-attachment: fixed;
+  /* Off-canvas mobile drawer is translated off-screen when closed; clip its
+     horizontal overflow so it never creates a phantom horizontal scrollbar.
+     `clip` (not `hidden`) preserves the sticky header. */
+  overflow-x: clip;
+}
+
+html {
+  overflow-x: clip;
 }
 
 h1, h2, h3, h4, h5, h6 {
