@@ -1,3 +1,4 @@
+import { lazy, Suspense } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { HelmetProvider } from 'react-helmet-async';
 import { Toaster } from 'react-hot-toast';
@@ -8,21 +9,33 @@ import Footer from './components/common/Footer';
 import ErrorBoundary from './components/common/ErrorBoundary';
 import PrivateRoute from './components/common/PrivateRoute';
 import PublicRoute from './components/common/PublicRoute';
+import Skeleton, { SkeletonCard } from './components/common/Skeleton';
+// LandingPage is the entry point — keep it eager. Everything else is
+// code-split so the initial bundle stays small.
 import LandingPage from './pages/LandingPage';
-import Dashboard from './pages/Dashboard';
-import Builder from './pages/Builder';
-import Templates from './pages/Templates';
-import Login from './pages/Login';
-import Register from './pages/Register';
-import ATSChecker from './pages/ATSChecker';
-import AICreator from './pages/AICreator';
-import CoverLetter from './pages/CoverLetter';
-import Tracker from './pages/Tracker';
-import InterviewPrep from './pages/InterviewPrep';
-import EmailGenerator from './pages/EmailGenerator';
-import Analytics from './pages/Analytics';
-import SharedResume from './pages/SharedResume';
 import './styles.css';
+
+const Dashboard = lazy(() => import('./pages/Dashboard'));
+const Builder = lazy(() => import('./pages/Builder'));
+const Templates = lazy(() => import('./pages/Templates'));
+const Login = lazy(() => import('./pages/Login'));
+const Register = lazy(() => import('./pages/Register'));
+const ATSChecker = lazy(() => import('./pages/ATSChecker'));
+const AICreator = lazy(() => import('./pages/AICreator'));
+const CoverLetter = lazy(() => import('./pages/CoverLetter'));
+const Tracker = lazy(() => import('./pages/Tracker'));
+const InterviewPrep = lazy(() => import('./pages/InterviewPrep'));
+const EmailGenerator = lazy(() => import('./pages/EmailGenerator'));
+const Analytics = lazy(() => import('./pages/Analytics'));
+const SharedResume = lazy(() => import('./pages/SharedResume'));
+
+const PageFallback = () => (
+  <div style={{ maxWidth: 960, margin: '0 auto', padding: '2rem 1rem' }}>
+    <Skeleton width="40%" height="2rem" />
+    <div style={{ height: '1rem' }} />
+    <SkeletonCard />
+  </div>
+);
 
 function App() {
   return (
@@ -34,6 +47,7 @@ function App() {
               <div className="app">
                 <Header />
                 <main className="main-content">
+                  <Suspense fallback={<PageFallback />}>
                   <Routes>
                     {/* Public */}
                     <Route path="/" element={<PublicRoute><LandingPage /></PublicRoute>} />
@@ -57,6 +71,7 @@ function App() {
                     {/* Fallback */}
                     <Route path="*" element={<Navigate to="/" replace />} />
                   </Routes>
+                  </Suspense>
                 </main>
                 <Footer />
               </div>
