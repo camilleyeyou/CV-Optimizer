@@ -57,19 +57,30 @@ const requireCredits = async (req, res, next) => {
       return next();
     }
 
-    // Atomically reset (if a new month) and deduct one credit. Doing this in a
-    // single DB function avoids a read-then-write race where concurrent
-    // requests could spend more than the monthly allowance.
-    const { data: remaining, error: rpcError } = await supabase.rpc('consume_ai_credit', {
-      p_user_id: req.user.id,
-      p_monthly: FREE_MONTHLY_CREDITS,
+    // Monthly reset for free users.
+    const resetAt = new Date(profile.credits_reset_at);
+    const now = new Date();
+    const monthsSinceReset =
+      (now.getFullYear() - resetAt.getFullYear()) * 12 + (now.getMonth() - resetAt.getMonth());
+    if (monthsSinceReset >= 1) {
+      await supabase
+        .from('user_profiles')
+        .update({ ai_credits: FREE_MONTHLY_CREDITS, credits_reset_at: now.toISOString() })
+        .eq('id', req.user.id);
+    }
+
+    // Atomically decrement one credit (only when > 0). The single DB function
+    // avoids a read-then-write race where concurrent requests could double-spend.
+    // Returns the new balance, or null when there were no credits left.
+    const { data: remaining, error: rpcError } = await supabase.rpc('deduct_credit', {
+      p_user: req.user.id,
     });
 
     if (rpcError) {
       return res.status(500).json({ error: 'Failed to check credits' });
     }
 
-    if (remaining === null || remaining < 0) {
+    if (remaining === null || remaining === undefined || remaining < 0) {
       return res.status(403).json({
         error: 'You have used all your free AI credits this month. Upgrade to Pro for unlimited access.',
         credits_remaining: 0,

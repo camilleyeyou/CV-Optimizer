@@ -95,6 +95,26 @@ create trigger on_auth_user_created
   for each row
   execute function create_user_profile();
 
+-- Atomic single-credit deduction (decrement only when > 0; NULL if none left).
+-- Prevents the read-then-write double-spend race under concurrent requests.
+create or replace function deduct_credit(p_user uuid)
+returns integer
+language plpgsql
+security definer
+as $$
+declare
+  v_new integer;
+begin
+  update user_profiles
+    set ai_credits = ai_credits - 1
+    where id = p_user and ai_credits > 0
+    returning ai_credits into v_new;
+  return v_new;
+end;
+$$;
+
+revoke all on function deduct_credit(uuid) from public;
+
 -- RLS for user_profiles
 alter table user_profiles enable row level security;
 
