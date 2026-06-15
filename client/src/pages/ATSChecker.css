@@ -33,7 +33,7 @@
 }
 
 .ats-dropzone {
-  border: 2px dashed rgba(148, 163, 184, 0.2);
+  border: 2px dashed rgba(255, 255, 255, 0.2);
   border-radius: var(--radius-xl);
   padding: 2.5rem 2rem;
   text-align: center;
@@ -205,8 +205,8 @@
   justify-content: space-between;
   gap: 1.5rem;
   padding: 1.5rem 2rem;
-  background: linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(139, 92, 246, 0.08));
-  border: 1px solid rgba(99, 102, 241, 0.2);
+  background: linear-gradient(135deg, rgba(129, 140, 248, 0.1), rgba(192, 132, 252, 0.08));
+  border: 1px solid rgba(129, 140, 248, 0.2);
   border-radius: var(--radius-xl);
 }
 
@@ -257,7 +257,7 @@
 }
 
 .section-score:hover {
-  border-color: rgba(148, 163, 184, 0.2);
+  border-color: rgba(255, 255, 255, 0.2);
 }
 
 .section-score-header {
@@ -296,7 +296,7 @@
 .section-score-bar {
   flex: 1;
   height: 5px;
-  background: rgba(148, 163, 184, 0.1);
+  background: rgba(255, 255, 255, 0.1);
   border-radius: var(--radius-full);
   overflow: hidden;
 }
@@ -308,7 +308,7 @@
 }
 
 .section-score.green .section-score-fill { background: linear-gradient(90deg, #16a34a, #22c55e); }
-.section-score.yellow .section-score-fill { background: linear-gradient(90deg, #d97706, #f59e0b); }
+.section-score.yellow .section-score-fill { background: linear-gradient(90deg, #c084fc, #f59e0b); }
 .section-score.red .section-score-fill { background: linear-gradient(90deg, #dc2626, #ef4444); }
 
 .section-score-value {
@@ -396,7 +396,7 @@
 }
 
 .improvement-item:hover {
-  border-color: rgba(148, 163, 184, 0.2);
+  border-color: rgba(255, 255, 255, 0.2);
 }
 
 .improvement-item.high svg { color: var(--error); }
@@ -421,7 +421,7 @@
 
 .priority-badge.high { background: rgba(239, 68, 68, 0.15); color: #fca5a5; }
 .priority-badge.medium { background: rgba(245, 158, 11, 0.15); color: #fcd34d; }
-.priority-badge.low { background: rgba(148, 163, 184, 0.1); color: var(--text-muted); }
+.priority-badge.low { background: rgba(255, 255, 255, 0.1); color: var(--text-muted); }
 
 /* Strengths */
 .strengths-list {

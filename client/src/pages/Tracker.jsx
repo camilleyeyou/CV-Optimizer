@@ -9,7 +9,7 @@ import toast from 'react-hot-toast';
 import './Tracker.css';
 
 const COLUMNS = [
-  { id: 'saved', label: 'Saved', color: '#6366f1' },
+  { id: 'saved', label: 'Saved', color: '#818cf8' },
   { id: 'applied', label: 'Applied', color: '#3b82f6' },
   { id: 'interview', label: 'Interview', color: '#f59e0b' },
   { id: 'offer', label: 'Offer', color: '#22c55e' },

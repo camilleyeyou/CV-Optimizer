@@ -22,10 +22,10 @@
 
 /* Spotlight glow ring */
 .tour-spotlight-ring {
-  stroke: rgba(99, 102, 241, 0.5);
+  stroke: rgba(129, 140, 248, 0.5);
   stroke-width: 2;
   fill: none;
-  filter: drop-shadow(0 0 12px rgba(99, 102, 241, 0.35));
+  filter: drop-shadow(0 0 12px rgba(129, 140, 248, 0.35));
 }
 
 /* Tooltip */
@@ -34,14 +34,14 @@
   z-index: 1001;
   width: 320px;
   max-width: calc(100vw - 2rem);
-  background: rgba(15, 23, 42, 0.96);
-  border: 1px solid rgba(99, 102, 241, 0.3);
+  background: rgba(10, 10, 12, 0.96);
+  border: 1px solid rgba(129, 140, 248, 0.3);
   border-radius: var(--radius-xl);
   padding: var(--space-5);
   box-shadow:
     0 20px 60px rgba(0, 0, 0, 0.5),
-    0 0 0 1px rgba(99, 102, 241, 0.1),
-    0 0 40px rgba(99, 102, 241, 0.08);
+    0 0 0 1px rgba(129, 140, 248, 0.1),
+    0 0 40px rgba(129, 140, 248, 0.08);
   backdrop-filter: blur(24px);
   -webkit-backdrop-filter: blur(24px);
   animation: tour-enter 0.25s ease;
@@ -89,7 +89,7 @@
 
 .tour-tooltip-close:hover {
   color: var(--text-primary);
-  background: rgba(148, 163, 184, 0.12);
+  background: rgba(255, 255, 255, 0.12);
 }
 
 /* Content */
@@ -120,7 +120,7 @@
   width: 6px;
   height: 6px;
   border-radius: var(--radius-full);
-  background: rgba(148, 163, 184, 0.2);
+  background: rgba(255, 255, 255, 0.2);
   transition: all var(--transition-fast);
 }
 
@@ -130,7 +130,7 @@
 }
 
 .tour-tooltip-dot.done {
-  background: rgba(99, 102, 241, 0.4);
+  background: rgba(129, 140, 248, 0.4);
 }
 
 /* Footer */

@@ -139,6 +139,11 @@ const LandingPage = () => {
 
       {/* Hero */}
       <section className="landing-hero">
+        <Link to="/register" className="landing-badge">
+          <span className="landing-badge-dot" />
+          11 AI tools for your job search
+          <ArrowRight size={13} />
+        </Link>
         <h1>Build ATS-Optimized Resumes with AI</h1>
         <p>
           11 AI-powered tools to build your resume, score it against ATS systems,
@@ -172,6 +177,7 @@ const LandingPage = () => {
 
       {/* Features */}
       <section className="landing-features">
+        <span className="landing-eyebrow">Features</span>
         <h2>Everything you need to land the job</h2>
         <p>From resume building to interview prep, all in one platform.</p>
         <div className="landing-features-grid">
@@ -190,6 +196,7 @@ const LandingPage = () => {
       {/* Free ATS Checker */}
       <section className="landing-ats" id="ats-checker">
         <div className="landing-ats-card">
+          <span className="landing-eyebrow">Try it free</span>
           <h2>Free ATS Score Checker</h2>
           <p>Paste your resume text and get an instant ATS compatibility score. No signup required.</p>
 
@@ -261,6 +268,7 @@ const LandingPage = () => {
 
       {/* Pricing */}
       <section className="landing-pricing">
+        <span className="landing-eyebrow">Pricing</span>
         <h2>Simple, transparent pricing</h2>
         <p>Start free. Upgrade when you need more power.</p>
         <div className="landing-pricing-grid">
@@ -302,7 +310,8 @@ const LandingPage = () => {
 
       {/* How it works */}
       <section className="landing-testimonials">
-        <h2>How it works</h2>
+        <span className="landing-eyebrow">How it works</span>
+        <h2>Three steps to your next role</h2>
         <div className="landing-testimonials-grid">
           {HOW_IT_WORKS.map((s) => (
             <div key={s.step} className="testimonial-card">

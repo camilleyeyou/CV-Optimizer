@@ -1,7 +1,7 @@
 /* Footer - Dark glassmorphic */
 .footer {
-  border-top: 1px solid rgba(148, 163, 184, 0.08);
-  background: rgba(11, 17, 32, 0.6);
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(8, 8, 10, 0.6);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   padding: var(--space-8) 0 var(--space-6);
@@ -24,7 +24,7 @@
   font-family: var(--font-heading);
   font-weight: 800;
   font-size: var(--text-base);
-  background: linear-gradient(135deg, #6366f1, #a78bfa, #d97706);
+  background: linear-gradient(135deg, #818cf8, #a78bfa, #c084fc);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -69,7 +69,7 @@
 
 .footer-bottom {
   padding-top: var(--space-4);
-  border-top: 1px solid rgba(148, 163, 184, 0.06);
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
 }
 
 .footer-bottom span {

@@ -48,7 +48,7 @@
 }
 
 .kanban-column {
-  background: rgba(15, 23, 42, 0.4);
+  background: rgba(10, 10, 12, 0.4);
   border: 1px solid var(--glass-border);
   border-radius: var(--radius-xl);
   padding: var(--space-3);
@@ -82,7 +82,7 @@
   font-size: 0.65rem;
   font-weight: 700;
   color: var(--text-muted);
-  background: rgba(148, 163, 184, 0.1);
+  background: rgba(255, 255, 255, 0.1);
   padding: 1px 6px;
   border-radius: var(--radius-full);
   margin-left: auto;
@@ -110,9 +110,9 @@
 }
 
 .kanban-card:hover {
-  box-shadow: 0 4px 20px rgba(99, 102, 241, 0.15);
+  box-shadow: 0 4px 20px rgba(129, 140, 248, 0.15);
   transform: translateY(-1px);
-  border-color: rgba(99, 102, 241, 0.25);
+  border-color: rgba(129, 140, 248, 0.25);
 }
 
 .kanban-card:active {
@@ -184,7 +184,7 @@
 }
 
 .kanban-card-action:hover {
-  background: rgba(148, 163, 184, 0.1);
+  background: rgba(255, 255, 255, 0.1);
   color: var(--text-primary);
 }
 
@@ -203,7 +203,7 @@
   font-weight: 500;
   color: var(--text-muted);
   background: none;
-  border: 1px dashed rgba(148, 163, 184, 0.2);
+  border: 1px dashed rgba(255, 255, 255, 0.2);
   border-radius: var(--radius-lg);
   cursor: pointer;
   transition: all var(--transition-fast);
@@ -231,7 +231,7 @@
 }
 
 .tracker-modal {
-  background: rgba(15, 23, 42, 0.95);
+  background: rgba(10, 10, 12, 0.95);
   border: 1px solid var(--glass-border);
   border-radius: var(--radius-xl);
   box-shadow: var(--shadow-xl);
@@ -246,7 +246,7 @@
   align-items: center;
   justify-content: space-between;
   padding: 1rem 1.25rem;
-  border-bottom: 1px solid rgba(148, 163, 184, 0.1);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .tracker-modal-header h3 {
@@ -282,7 +282,7 @@
   justify-content: flex-end;
   gap: 0.5rem;
   padding: 1rem 1.25rem;
-  border-top: 1px solid rgba(148, 163, 184, 0.1);
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 /* Mobile */
@@ -315,7 +315,7 @@
   }
 
   .kanban-column-header:active {
-    background: rgba(148, 163, 184, 0.08);
+    background: rgba(255, 255, 255, 0.08);
   }
 
   .kanban-cards {

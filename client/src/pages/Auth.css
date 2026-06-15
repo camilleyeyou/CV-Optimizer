@@ -29,7 +29,7 @@
   font-weight: 800;
   margin-bottom: 6px;
   letter-spacing: -0.02em;
-  background: linear-gradient(135deg, #a78bfa, #6366f1, #d97706);
+  background: linear-gradient(135deg, #a78bfa, #818cf8, #c084fc);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -116,7 +116,7 @@
   content: '';
   flex: 1;
   height: 1px;
-  background: rgba(148, 163, 184, 0.12);
+  background: rgba(255, 255, 255, 0.12);
 }
 
 .auth-divider span {
