@@ -60,7 +60,7 @@ class OpenAIService {
           content: `Write a professional summary for a ${position} with ${experience}+ years of experience.\n\nSkills: ${skills}\n\nRules:\n- 3-4 sentences, max 80 words\n- Third person, no "I"\n- Lead with strongest qualification\n- Include specific technologies/skills\n- End with value proposition`,
         },
       ],
-      max_tokens: 200,
+      max_completion_tokens: 200,
       temperature: 0.7,
     });
 
@@ -82,7 +82,7 @@ class OpenAIService {
           content: `Improve these bullet points for: ${experience.position || 'Role'} at ${experience.company || 'Company'}\n\nCurrent:\n${(Array.isArray(experience.description) ? experience.description : []).join('\n') || 'No description provided'}\n\nRules:\n- Return exactly 4 bullet points as a JSON array\n- Start each with a strong action verb\n- Add metrics/numbers where possible (%, $, team size)\n- Focus on impact and results, not duties\n- Keep each under 25 words`,
         },
       ],
-      max_tokens: 400,
+      max_completion_tokens: 400,
       temperature: 0.7,
     });
 
@@ -121,7 +121,7 @@ class OpenAIService {
           content: `Write a cover letter.\n\nCandidate: ${name}\nCurrent role: ${position}\nSkills: ${skills}\nExperience: ${this._calculateYears(resume)} years\n\nJob Description:\n${jobDescription}\n\nRules:\n- 3 paragraphs max\n- Under 250 words\n- Reference specific requirements from the job description\n- Highlight matching skills and experience\n- Professional but warm tone\n- Do not include addresses or date headers`,
         },
       ],
-      max_tokens: 500,
+      max_completion_tokens: 500,
       temperature: 0.7,
     });
 
@@ -147,7 +147,7 @@ class OpenAIService {
           content: `Suggest skills to add based on this job description.\n\nJob: ${jobDescription}\n\nCurrent skills: ${currentSkills}\n\nReturn JSON: {"technical": ["skill1", "skill2"], "soft": ["skill1", "skill2"]}\n- Only suggest skills NOT already listed\n- Max 5 technical, 3 soft\n- Be specific (e.g., "React" not "frontend")`,
         },
       ],
-      max_tokens: 300,
+      max_completion_tokens: 300,
       temperature: 0.5,
     });
 
@@ -212,7 +212,7 @@ Rules:
 - For skills, show added/removed skills in before/after`,
         },
       ],
-      max_tokens: 2000,
+      max_completion_tokens: 2000,
       temperature: 0.4,
     });
 
@@ -260,7 +260,7 @@ Rules:
 - Placeholders should show example answers relevant to the job`,
         },
       ],
-      max_tokens: 800,
+      max_completion_tokens: 800,
       temperature: 0.5,
     });
 
@@ -321,7 +321,7 @@ Rules:
 - Skills should include both what the candidate mentioned and relevant ones from the job`,
         },
       ],
-      max_tokens: 2000,
+      max_completion_tokens: 2000,
       temperature: 0.5,
     });
 
@@ -372,7 +372,7 @@ Return JSON with a "questions" array:
 Mix of types: 3 behavioral, 3 technical, 2 situational. Tailor to the specific job and candidate background.`,
         },
       ],
-      max_tokens: 1200,
+      max_completion_tokens: 1200,
       temperature: 0.6,
     });
 
@@ -412,7 +412,7 @@ Return JSON:
 }`,
         },
       ],
-      max_tokens: 600,
+      max_completion_tokens: 600,
       temperature: 0.4,
     });
 
@@ -487,7 +487,7 @@ Rules:
           content: `${prompt}\n\nReturn JSON:\n{"subject": "email subject line", "body": "full email body text"}`,
         },
       ],
-      max_tokens: 400,
+      max_completion_tokens: 400,
       temperature: 0.6,
     });
 
@@ -533,7 +533,7 @@ Return JSON:
 }`,
         },
       ],
-      max_tokens: 2000,
+      max_completion_tokens: 2000,
       temperature: 0.3,
     });
 

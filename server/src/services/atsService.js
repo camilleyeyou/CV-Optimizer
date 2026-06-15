@@ -108,7 +108,7 @@ class ATSService {
           },
           { role: 'user', content: jd.slice(0, 8000) },
         ],
-        max_tokens: 500,
+        max_completion_tokens: 500,
       });
       const content = response.choices?.[0]?.message?.content;
       if (!content) return null;
@@ -226,7 +226,7 @@ Resume:
 ${String(resumeText || '').slice(0, 6000)}`,
         },
       ],
-      max_tokens: 900,
+      max_completion_tokens: 900,
       temperature: 0.4,
     });
 
@@ -447,7 +447,7 @@ Rules:
         },
         { role: 'user', content: prompt },
       ],
-      max_tokens: 3000,
+      max_completion_tokens: 3000,
       temperature: 0.2,
     });
 
@@ -578,7 +578,7 @@ Extract and optimize ALL information from the original resume. Fill in every fie
           content: prompt,
         },
       ],
-      max_tokens: 3000,
+      max_completion_tokens: 3000,
       temperature: 0.4,
     });
 

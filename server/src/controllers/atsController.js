@@ -115,6 +115,7 @@ const optimizeResume = async (req, res) => {
 
       res.json(optimized);
     } catch (error) {
+      console.error('optimizeResume failed:', error?.status, error?.code, error?.message);
       res.status(500).json({ error: 'Failed to optimize resume. Please try again.' });
     }
   });
