@@ -22,10 +22,10 @@ const FEATURES = [
   { icon: Globe, title: 'Resume Translation', desc: 'Translate your resume into any language while keeping formatting.' },
 ];
 
-const TESTIMONIALS = [
-  { name: 'Sarah K.', role: 'Software Engineer', initial: 'S', text: 'I went from getting no callbacks to 5 interviews in two weeks. The ATS scoring tool showed me exactly what I was missing.' },
-  { name: 'Marcus D.', role: 'Marketing Manager', initial: 'M', text: 'The cover letter generator saved me hours. Each letter sounds unique and actually references the job description.' },
-  { name: 'Priya R.', role: 'Recent Graduate', initial: 'P', text: 'As a student, the free tier gave me everything I needed. The AI Creator built my first resume from scratch in minutes.' },
+const HOW_IT_WORKS = [
+  { step: '1', title: 'Build or import', desc: 'Start from scratch with AI, or import an existing resume or LinkedIn PDF in seconds.' },
+  { step: '2', title: 'Optimize for the job', desc: 'Score against ATS systems, tailor to a job description, and fill gaps with AI suggestions.' },
+  { step: '3', title: 'Export and apply', desc: 'Download a polished PDF or DOCX, generate a matching cover letter, and track every application.' },
 ];
 
 const PRICING = [
@@ -286,20 +286,15 @@ const LandingPage = () => {
         </div>
       </section>
 
-      {/* Testimonials */}
+      {/* How it works */}
       <section className="landing-testimonials">
-        <h2>What our users say</h2>
+        <h2>How it works</h2>
         <div className="landing-testimonials-grid">
-          {TESTIMONIALS.map((t) => (
-            <div key={t.name} className="testimonial-card">
-              <p className="testimonial-text">&ldquo;{t.text}&rdquo;</p>
-              <div className="testimonial-author">
-                <div className="testimonial-avatar">{t.initial}</div>
-                <div>
-                  <div className="testimonial-name">{t.name}</div>
-                  <div className="testimonial-role">{t.role}</div>
-                </div>
-              </div>
+          {HOW_IT_WORKS.map((s) => (
+            <div key={s.step} className="testimonial-card">
+              <div className="testimonial-avatar">{s.step}</div>
+              <div className="testimonial-name" style={{ marginTop: '0.75rem' }}>{s.title}</div>
+              <p className="testimonial-text" style={{ marginTop: '0.5rem' }}>{s.desc}</p>
             </div>
           ))}
         </div>
@@ -308,7 +303,7 @@ const LandingPage = () => {
       {/* Final CTA */}
       <section className="landing-cta">
         <h2>Ready to land your dream job?</h2>
-        <p>Join thousands of job seekers who optimized their resumes with AI.</p>
+        <p>Build an ATS-ready resume with AI — free to start, no credit card required.</p>
         <Link to="/register" className="btn btn-primary btn-lg">
           Create Your Free Account <ArrowRight size={16} />
         </Link>

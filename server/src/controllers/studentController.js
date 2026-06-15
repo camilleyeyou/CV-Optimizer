@@ -24,9 +24,33 @@ const verifyStudent = async (req, res) => {
   try {
     const email = req.user.email;
 
+    // Require a confirmed email so the .edu address is genuinely owned by the
+    // user (not just typed in). Supabase sets email_confirmed_at after the
+    // confirmation link is clicked.
+    // NOTE: This proves ownership, not active enrollment. For stronger proof of
+    // active student status, integrate a verifier such as SheerID before grant.
+    if (!req.user.email_confirmed_at && !req.user.confirmed_at) {
+      return res.status(403).json({
+        error: 'Please confirm your email address before verifying student status.',
+      });
+    }
+
     if (!isEducationalEmail(email)) {
       return res.status(400).json({
         error: 'Student verification requires an educational email (.edu, .ac.uk, etc.)',
+      });
+    }
+
+    // Block re-verification while an existing student grant is still active.
+    const { data: existing } = await supabase
+      .from('user_profiles')
+      .select('is_student, student_expires_at')
+      .eq('id', req.user.id)
+      .single();
+    if (existing?.is_student && existing.student_expires_at && new Date(existing.student_expires_at) > new Date()) {
+      return res.status(409).json({
+        error: 'Student access is already active on this account.',
+        expires_at: existing.student_expires_at,
       });
     }
 

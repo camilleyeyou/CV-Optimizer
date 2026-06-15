@@ -57,22 +57,19 @@ const requireCredits = async (req, res, next) => {
       return next();
     }
 
-    // Monthly reset for free users
-    const resetAt = new Date(profile.credits_reset_at);
-    const now = new Date();
-    const monthsSinceReset =
-      (now.getFullYear() - resetAt.getFullYear()) * 12 + (now.getMonth() - resetAt.getMonth());
+    // Atomically reset (if a new month) and deduct one credit. Doing this in a
+    // single DB function avoids a read-then-write race where concurrent
+    // requests could spend more than the monthly allowance.
+    const { data: remaining, error: rpcError } = await supabase.rpc('consume_ai_credit', {
+      p_user_id: req.user.id,
+      p_monthly: FREE_MONTHLY_CREDITS,
+    });
 
-    if (monthsSinceReset >= 1) {
-      // Reset credits
-      await supabase
-        .from('user_profiles')
-        .update({ ai_credits: FREE_MONTHLY_CREDITS, credits_reset_at: now.toISOString() })
-        .eq('id', req.user.id);
-      profile.ai_credits = FREE_MONTHLY_CREDITS;
+    if (rpcError) {
+      return res.status(500).json({ error: 'Failed to check credits' });
     }
 
-    if (profile.ai_credits <= 0) {
+    if (remaining === null || remaining < 0) {
       return res.status(403).json({
         error: 'You have used all your free AI credits this month. Upgrade to Pro for unlimited access.',
         credits_remaining: 0,
@@ -80,23 +77,15 @@ const requireCredits = async (req, res, next) => {
       });
     }
 
-    // Deduct 1 credit
-    const newCredits = profile.ai_credits - 1;
-    await supabase
-      .from('user_profiles')
-      .update({ ai_credits: newCredits })
-      .eq('id', req.user.id);
-
     // Attach info to request for response headers
     req.userPlan = profile.plan;
-    req.creditsRemaining = newCredits;
+    req.creditsRemaining = remaining;
 
     // Add credits info to response
-    res.on('finish', () => {});
     const originalJson = res.json.bind(res);
     res.json = (data) => {
       if (typeof data === 'object' && data !== null) {
-        data._credits = { remaining: newCredits, plan: profile.plan };
+        data._credits = { remaining, plan: profile.plan };
       }
       return originalJson(data);
     };
