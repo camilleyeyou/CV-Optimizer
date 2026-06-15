@@ -70,6 +70,7 @@ class OpenAIService {
   async enhanceExperience(experience) {
     const response = await this.client.chat.completions.create({
       model: this.model,
+      response_format: { type: 'json_object' },
       messages: [
         {
           role: 'system',
@@ -134,6 +135,7 @@ class OpenAIService {
 
     const response = await this.client.chat.completions.create({
       model: this.model,
+      response_format: { type: 'json_object' },
       messages: [
         {
           role: 'system',
@@ -162,6 +164,7 @@ class OpenAIService {
 
     const response = await this.client.chat.completions.create({
       model: this.premiumModel,
+      response_format: { type: 'json_object' },
       messages: [
         {
           role: 'system',
@@ -222,6 +225,7 @@ Rules:
   async generateQuestions(jobDescription) {
     const response = await this.client.chat.completions.create({
       model: this.model,
+      response_format: { type: 'json_object' },
       messages: [
         {
           role: 'system',
@@ -269,6 +273,7 @@ Rules:
   async generateResumeFromAnswers(jobDescription, answers, jobTitle) {
     const response = await this.client.chat.completions.create({
       model: this.premiumModel,
+      response_format: { type: 'json_object' },
       messages: [
         {
           role: 'system',
@@ -335,6 +340,7 @@ Rules:
 
     const response = await this.client.chat.completions.create({
       model: this.model,
+      response_format: { type: 'json_object' },
       messages: [
         {
           role: 'system',
@@ -351,15 +357,17 @@ Experience: ${experience}
 Job Description:
 ${jobDescription}
 
-Return JSON array:
-[
-  {
-    "id": "q1",
-    "question": "the interview question",
-    "type": "behavioral|technical|situational",
-    "tip": "brief tip on how to approach this question"
-  }
-]
+Return JSON with a "questions" array:
+{
+  "questions": [
+    {
+      "id": "q1",
+      "question": "the interview question",
+      "type": "behavioral|technical|situational",
+      "tip": "brief tip on how to approach this question"
+    }
+  ]
+}
 
 Mix of types: 3 behavioral, 3 technical, 2 situational. Tailor to the specific job and candidate background.`,
         },
@@ -369,12 +377,19 @@ Mix of types: 3 behavioral, 3 technical, 2 situational. Tailor to the specific j
     });
 
     const content = this._getResponse(response);
-    return this._safeJsonParse(content, []);
+    // json_object returns an object; accept {questions:[...]}, a bare array, or
+    // fall back to extracting the array from the raw text. Always return an array.
+    const parsed = this._safeJsonParse(content, null);
+    if (parsed && Array.isArray(parsed.questions)) return parsed.questions;
+    if (Array.isArray(parsed)) return parsed;
+    const arr = this._safeJsonArrayParse(content);
+    return Array.isArray(arr) ? arr : [];
   }
 
   async evaluateAnswer(question, answer, jobDescription) {
     const response = await this.client.chat.completions.create({
       model: this.model,
+      response_format: { type: 'json_object' },
       messages: [
         {
           role: 'system',
@@ -461,6 +476,7 @@ Rules:
 
     const response = await this.client.chat.completions.create({
       model: this.model,
+      response_format: { type: 'json_object' },
       messages: [
         {
           role: 'system',
@@ -484,6 +500,7 @@ Rules:
   async translateResume(resumeData, targetLanguage) {
     const response = await this.client.chat.completions.create({
       model: this.model,
+      response_format: { type: 'json_object' },
       messages: [
         {
           role: 'system',

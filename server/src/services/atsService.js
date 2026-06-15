@@ -439,6 +439,7 @@ Rules:
 
     const response = await this.client.chat.completions.create({
       model: this.model,
+      response_format: { type: 'json_object' },
       messages: [
         {
           role: 'system',
@@ -566,6 +567,7 @@ Extract and optimize ALL information from the original resume. Fill in every fie
 
     const response = await this.client.chat.completions.create({
       model: this.premiumModel,
+      response_format: { type: 'json_object' },
       messages: [
         {
           role: 'system',
