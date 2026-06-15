@@ -35,13 +35,17 @@ const ScoreRing = ({ score }) => {
 const SectionScore = ({ name, data }) => {
   const [expanded, setExpanded] = useState(false);
   const score = data?.score ?? 0;
+  const weightPct = data?.weight != null ? Math.round(data.weight * 100) : null;
   const color = score >= 80 ? 'green' : score >= 60 ? 'yellow' : 'red';
 
   return (
     <div className={`section-score ${color}`}>
       <button className="section-score-header" onClick={() => setExpanded(!expanded)}>
         <div className="section-score-left">
-          <span className="section-score-name">{name}</span>
+          <span className="section-score-name">
+            {name}
+            {weightPct != null && <span className="section-score-weight"> · {weightPct}% of score</span>}
+          </span>
           <div className="section-score-bar">
             <div className="section-score-fill" style={{ width: `${score}%` }} />
           </div>
@@ -309,17 +313,15 @@ const ATSChecker = () => {
               </button>
             </div>
 
-            {/* Section Breakdown */}
+            {/* Section Breakdown — the engine's true rubric categories */}
             {results.sections && (
               <div className="ats-sections">
                 <h3>Score Breakdown</h3>
                 <div className="sections-list">
-                  <SectionScore name="Keywords" data={results.sections.keywords} />
-                  <SectionScore name="Experience" data={results.sections.experience} />
-                  <SectionScore name="Skills" data={results.sections.skills} />
-                  <SectionScore name="Summary" data={results.sections.summary} />
-                  <SectionScore name="Education" data={results.sections.education} />
-                  <SectionScore name="Formatting" data={results.sections.formatting} />
+                  <SectionScore name="Keyword Match" data={results.sections.keywords} />
+                  <SectionScore name="Formatting & Parse-ability" data={results.sections.formatting} />
+                  <SectionScore name="Content Quality" data={results.sections.content} />
+                  <SectionScore name="Completeness" data={results.sections.completeness} />
                 </div>
               </div>
             )}

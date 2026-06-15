@@ -1,5 +1,6 @@
 const OpenAI = require('openai');
 const pdfParse = require('pdf-parse');
+const { computeATSScore } = require('./atsScoring');
 
 class ATSService {
   constructor() {
@@ -16,163 +17,223 @@ class ATSService {
     return data.text.trim();
   }
 
+  /**
+   * Analyze a resume for ATS compatibility.
+   *
+   * The SCORE is produced entirely by the deterministic engine
+   * (computeATSScore) — never by the model. The LLM only writes the
+   * human-readable narrative ABOUT the computed breakdown. If the narrative
+   * call fails or returns junk, we fall back to deterministic prose so the
+   * score is always returned.
+   */
   async analyzeATS(resumeText, jobTitle, jobDescription) {
-    const prompt = jobDescription
-      ? `Analyze this resume for ATS compatibility against the specific job posting.
+    const breakdown = computeATSScore({ resumeText, jobDescription: jobDescription || '' });
 
-Resume:
-${resumeText}
+    let narrative;
+    try {
+      narrative = await this._writeNarrative(resumeText, jobTitle, breakdown);
+    } catch {
+      narrative = this._fallbackNarrative(breakdown);
+    }
 
-Job Title: ${jobTitle}
-Job Description:
-${jobDescription}`
-      : `Analyze this resume for ATS compatibility for the role of: ${jobTitle}
+    return this._assembleAnalysis(breakdown, narrative);
+  }
 
-Resume:
-${resumeText}`;
+  /**
+   * Build the response for the frontend (ATSChecker.jsx). Every numeric score
+   * is taken from the engine breakdown; only the feedback prose comes from the
+   * narrative. Sections are the engine's four true rubric categories
+   * (keywords, formatting, content, completeness), each carrying its score,
+   * its rubric weight, and the narrative feedback.
+   */
+  _assembleAnalysis(breakdown, narrative) {
+    const c = breakdown.components;
+    const w = breakdown.weights;
+    const n = narrative || {};
+    return {
+      overall_score: breakdown.overall_score,
+      band: breakdown.band,
+      method: breakdown.method,
+      weights: breakdown.weights,
+      summary: n.summary || '',
+      sections: {
+        keywords: { score: c.keywords.score, weight: w.keywords, applicable: c.keywords.applicable, feedback: n.keywords || '', missing: c.keywords.missing },
+        formatting: { score: c.formatting.score, weight: w.formatting, feedback: n.formatting || '' },
+        content: { score: c.content.score, weight: w.content, feedback: n.content || '' },
+        completeness: { score: c.completeness.score, weight: w.completeness, feedback: n.completeness || '' },
+      },
+      keyword_match: breakdown.keyword_match,
+      strengths: Array.isArray(n.strengths) ? n.strengths : [],
+      improvements: Array.isArray(n.improvements) ? n.improvements : [],
+      components: breakdown.components,
+    };
+  }
+
+  /**
+   * Ask the model to EXPLAIN an already-computed ATS breakdown. It returns
+   * only human-readable strings — it is explicitly forbidden from inventing or
+   * changing scores, and the caller never reads any numbers it might emit.
+   */
+  async _writeNarrative(resumeText, jobTitle, breakdown) {
+    const c = breakdown.components;
+    const payload = {
+      overall_score: breakdown.overall_score,
+      band: breakdown.band,
+      weights: breakdown.weights,
+      keywords: { score: c.keywords.score, applicable: c.keywords.applicable, found: c.keywords.found, missing: c.keywords.missing },
+      formatting: { score: c.formatting.score, checks: c.formatting.checks },
+      content: { score: c.content.score, checks: c.content.checks },
+      completeness: { score: c.completeness.score, checks: c.completeness.checks },
+    };
 
     const response = await this.client.chat.completions.create({
       model: this.model,
+      response_format: { type: 'json_object' },
       messages: [
         {
           role: 'system',
-          content: `You are an expert ATS (Applicant Tracking System) analyst. Analyze resumes for ATS compatibility and provide detailed, actionable feedback.
+          content: `You are given a resume and its already-computed ATS breakdown. Explain the findings. Do NOT invent or change any scores.
 
-Always respond with valid JSON in this exact format:
+Respond with ONLY valid JSON in this exact shape:
 {
-  "overall_score": <0-100>,
-  "sections": {
-    "formatting": {"score": <0-100>, "feedback": "specific feedback"},
-    "keywords": {"score": <0-100>, "feedback": "specific feedback", "missing": ["keyword1", "keyword2"]},
-    "experience": {"score": <0-100>, "feedback": "specific feedback"},
-    "education": {"score": <0-100>, "feedback": "specific feedback"},
-    "skills": {"score": <0-100>, "feedback": "specific feedback"},
-    "summary": {"score": <0-100>, "feedback": "specific feedback"}
-  },
-  "strengths": ["strength1", "strength2", "strength3"],
-  "improvements": [
-    {"priority": "high|medium|low", "suggestion": "specific actionable suggestion"}
-  ],
-  "keyword_match": {
-    "found": ["keyword1", "keyword2"],
-    "missing": ["keyword1", "keyword2"]
-  },
+  "formatting": "1-2 sentences explaining the formatting/parse-ability result",
+  "keywords": "1-2 sentences on keyword match, referencing found/missing keywords",
+  "content": "1-2 sentences on writing quality (action verbs, quantified results)",
+  "completeness": "1-2 sentences on section completeness",
+  "strengths": ["short strength", "short strength", "short strength"],
+  "improvements": [{"priority": "high|medium|low", "suggestion": "specific actionable fix"}],
   "summary": "2-3 sentence overall assessment"
 }
 
-Scoring guidelines:
-- 90-100: Excellent ATS compatibility, likely to pass most systems
-- 70-89: Good, but needs minor improvements
-- 50-69: Fair, several issues that could cause rejection
-- Below 50: Poor, significant changes needed
-
-Be specific and actionable. Don't be generic.`,
+Rules:
+- Base every statement on the provided breakdown and resume.
+- Reference the found/missing keywords by name where useful.
+- Do NOT output any numeric score, percentage as a verdict, or alternative score. The scores are already final and are not yours to set.`,
         },
         {
           role: 'user',
-          content: prompt,
+          content: `Target role: ${jobTitle || 'Not specified'}
+
+Computed ATS breakdown (authoritative — explain it, do not change it):
+${JSON.stringify(payload)}
+
+Resume:
+${String(resumeText || '').slice(0, 6000)}`,
         },
       ],
-      max_tokens: 1200,
-      temperature: 0.3,
+      max_tokens: 900,
+      temperature: 0.4,
     });
 
-    const choice = response.choices?.[0];
-    if (!choice?.message?.content) {
-      throw new Error('Empty response from AI');
-    }
-
-    const content = choice.message.content.trim();
-    const jsonMatch = content.match(/\{[\s\S]*\}/);
-    if (!jsonMatch) {
-      throw new Error('Failed to parse ATS analysis');
-    }
-
-    try {
-      return JSON.parse(jsonMatch[0]);
-    } catch {
-      throw new Error('Failed to parse ATS analysis');
-    }
+    const content = response.choices?.[0]?.message?.content;
+    if (!content) throw new Error('Empty narrative response');
+    const parsed = JSON.parse(content); // json_object guarantees valid JSON
+    return {
+      formatting: typeof parsed.formatting === 'string' ? parsed.formatting : '',
+      keywords: typeof parsed.keywords === 'string' ? parsed.keywords : '',
+      content: typeof parsed.content === 'string' ? parsed.content : '',
+      completeness: typeof parsed.completeness === 'string' ? parsed.completeness : '',
+      strengths: Array.isArray(parsed.strengths) ? parsed.strengths.map(String) : [],
+      improvements: Array.isArray(parsed.improvements)
+        ? parsed.improvements
+            .filter((i) => i && typeof i.suggestion === 'string')
+            .map((i) => ({
+              priority: ['high', 'medium', 'low'].includes(i.priority) ? i.priority : 'medium',
+              suggestion: String(i.suggestion),
+            }))
+        : [],
+      summary: typeof parsed.summary === 'string' ? parsed.summary : '',
+    };
   }
+
+  /** Deterministic prose used if the narrative LLM call fails. */
+  _fallbackNarrative(breakdown) {
+    const c = breakdown.components;
+    const k = c.keywords;
+    const improvements = [];
+    if (k.applicable && k.missing.length) {
+      improvements.push({ priority: 'high', suggestion: `Incorporate missing keywords where truthful: ${k.missing.slice(0, 8).join(', ')}.` });
+    }
+    if (c.content.score < 70) {
+      improvements.push({ priority: 'medium', suggestion: 'Start bullet points with strong action verbs and add quantified results (%, $, counts).' });
+    }
+    if (c.completeness.score < 80) {
+      improvements.push({ priority: 'medium', suggestion: 'Complete missing sections — summary, work experience, education, and at least 5 skills.' });
+    }
+    if (c.formatting.score < 80) {
+      improvements.push({ priority: 'low', suggestion: 'Use standard section headings (Experience, Education, Skills) and clear, parseable dates.' });
+    }
+    const strengths = [];
+    if (c.formatting.score >= 80) strengths.push('Clean, ATS-parseable formatting.');
+    if (k.applicable && k.found.length) strengths.push(`Matches ${k.found.length} target keyword(s).`);
+    if (c.content.score >= 70) strengths.push('Strong, results-oriented bullet points.');
+
+    return {
+      formatting: `Formatting and parse-ability scored ${c.formatting.score}/100.`,
+      keywords: k.applicable
+        ? `Matched ${k.found.length} of ${k.found.length + k.missing.length} target keywords (${k.score}/100).`
+        : 'No job description was provided, so keyword matching was skipped.',
+      content: `Content quality scored ${c.content.score}/100 based on action verbs and quantified results.`,
+      completeness: `Section completeness scored ${c.completeness.score}/100.`,
+      strengths,
+      improvements,
+      summary: `Overall ATS score is ${breakdown.overall_score}/100 (${breakdown.band}). ${improvements.length ? 'Address the highlighted improvements to raise it.' : 'This resume is well optimized for ATS.'}`,
+    };
+  }
+
+  /** Deterministic quick tips from the breakdown (no model, fully reproducible). */
+  _quickTips(breakdown) {
+    const c = breakdown.components;
+    const tips = [];
+    if (c.keywords.applicable && c.keywords.missing.length) {
+      tips.push(`Add missing keywords: ${c.keywords.missing.slice(0, 4).join(', ')}.`);
+    }
+    if (c.content.score < 70) tips.push('Lead bullets with action verbs and add metrics.');
+    if (c.completeness.score < 80) tips.push('Fill gaps: summary, experience, education, 5+ skills.');
+    if (c.formatting.score < 80) tips.push('Use standard headings and parseable dates.');
+    if (!tips.length) tips.push('Strong resume — keep tailoring keywords per job.');
+    return tips.slice(0, 3);
+  }
+  /**
+   * Inline quick score (Builder widget). Score and keywords are deterministic
+   * (from the engine); tips are derived deterministically from the breakdown.
+   * No model call — fully reproducible. Shape kept as {score, tips,
+   * missing_keywords} for the existing widget.
+   */
   async quickScore(resumeData, jobTitle, jobDescription) {
     const resumeText = this._resumeDataToText(resumeData);
-
-    const prompt = jobDescription
-      ? `Score this resume for ATS compatibility against the job posting.\n\nResume:\n${resumeText}\n\nJob Title: ${jobTitle}\nJob Description:\n${jobDescription}`
-      : `Score this resume for ATS compatibility for the role: ${jobTitle}\n\nResume:\n${resumeText}`;
-
-    const response = await this.client.chat.completions.create({
-      model: this.model,
-      messages: [
-        {
-          role: 'system',
-          content: `You are an ATS scoring engine. Respond with ONLY valid JSON:
-{"score": <0-100>, "tips": ["tip1", "tip2", "tip3"], "missing_keywords": ["kw1", "kw2"]}
-- score: overall ATS compatibility score
-- tips: top 3 most impactful improvements (short, actionable)
-- missing_keywords: top 5 missing keywords from the job
-Be concise. Each tip under 15 words.`,
-        },
-        { role: 'user', content: prompt },
-      ],
-      max_tokens: 400,
-      temperature: 0.3,
+    const breakdown = computeATSScore({
+      resumeText,
+      structured: resumeData,
+      jobDescription: jobDescription || '',
     });
 
-    const choice = response.choices?.[0];
-    if (!choice?.message?.content) {
-      throw new Error('Empty response from AI');
-    }
-
-    const content = choice.message.content.trim();
-    const jsonMatch = content.match(/\{[\s\S]*\}/);
-    if (!jsonMatch) {
-      throw new Error('Failed to parse score');
-    }
-
-    try {
-      return JSON.parse(jsonMatch[0]);
-    } catch {
-      throw new Error('Failed to parse score');
-    }
+    return {
+      score: breakdown.overall_score,
+      tips: this._quickTips(breakdown),
+      missing_keywords: breakdown.keyword_match.missing.slice(0, 5),
+      method: breakdown.method,
+      weights: breakdown.weights,
+    };
   }
 
+  /**
+   * Public quick score (landing page, raw resume text, no JD). The role title
+   * is used as a lightweight keyword source. Deterministic — no model call.
+   * Shape kept as {score, missing_keywords}.
+   */
   async quickScoreFromText(resumeText, jobTitle) {
-    const prompt = `Score this resume for ATS compatibility for the role: ${jobTitle}\n\nResume:\n${resumeText}`;
-
-    const response = await this.client.chat.completions.create({
-      model: this.model,
-      messages: [
-        {
-          role: 'system',
-          content: `You are an ATS scoring engine. Respond with ONLY valid JSON:
-{"score": <0-100>, "missing_keywords": ["kw1", "kw2"]}
-- score: overall ATS compatibility score
-- missing_keywords: top 5 missing keywords for the job
-Be concise.`,
-        },
-        { role: 'user', content: prompt },
-      ],
-      max_tokens: 300,
-      temperature: 0.3,
+    const breakdown = computeATSScore({
+      resumeText,
+      jobDescription: jobTitle || '',
     });
 
-    const choice = response.choices?.[0];
-    if (!choice?.message?.content) {
-      throw new Error('Empty response from AI');
-    }
-
-    const content = choice.message.content.trim();
-    const jsonMatch = content.match(/\{[\s\S]*\}/);
-    if (!jsonMatch) {
-      throw new Error('Failed to parse score');
-    }
-
-    try {
-      return JSON.parse(jsonMatch[0]);
-    } catch {
-      throw new Error('Failed to parse score');
-    }
+    return {
+      score: breakdown.overall_score,
+      missing_keywords: breakdown.keyword_match.missing.slice(0, 5),
+      method: breakdown.method,
+      weights: breakdown.weights,
+    };
   }
 
   _resumeDataToText(data) {

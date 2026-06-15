@@ -284,8 +284,13 @@
   font-weight: 600;
   font-size: var(--text-xs);
   color: var(--text-primary);
-  width: 90px;
+  width: 170px;
   text-align: left;
+}
+
+.section-score-weight {
+  font-weight: 400;
+  color: var(--text-muted);
 }
 
 .section-score-bar {
