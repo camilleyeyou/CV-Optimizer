@@ -9,10 +9,18 @@ const {
   Packer,
   BorderStyle,
 } = require('docx');
+const { getTemplate } = require('../templateRegistry');
 
 class DocxService {
   async generate(resumeData, template) {
     const p = resumeData.personal_info || {};
+    const spec = getTemplate(template);
+    const theme = {
+      accent: (spec.accent || '#2563eb').replace('#', ''),
+      headingFont: spec.headingFamily === 'serif' ? 'Georgia' : 'Calibri',
+      bodyFont: spec.fontFamily === 'serif' ? 'Georgia' : 'Calibri',
+      sectionTitle: spec.sectionTitle || 'underline',
+    };
     const sections = [];
 
     // Header: Name
@@ -23,7 +31,7 @@ class DocxService {
           alignment: AlignmentType.CENTER,
           spacing: { after: 40 },
           children: [
-            new TextRun({ text: name, bold: true, size: 32, font: 'Calibri' }),
+            new TextRun({ text: name, bold: true, size: 32, font: theme.headingFont }),
           ],
         })
       );
@@ -36,7 +44,7 @@ class DocxService {
           alignment: AlignmentType.CENTER,
           spacing: { after: 80 },
           children: [
-            new TextRun({ text: p.job_title, size: 22, color: '555555', font: 'Calibri' }),
+            new TextRun({ text: p.job_title, size: 22, color: theme.accent, font: theme.headingFont }),
           ],
         })
       );
@@ -58,7 +66,7 @@ class DocxService {
 
     // Summary
     if (resumeData.summary) {
-      sections.push(this._sectionHeading('PROFESSIONAL SUMMARY'));
+      sections.push(this._sectionHeading('PROFESSIONAL SUMMARY', theme));
       sections.push(
         new Paragraph({
           spacing: { after: 200 },
@@ -71,7 +79,7 @@ class DocxService {
 
     // Experience
     if (resumeData.work_experience?.length > 0) {
-      sections.push(this._sectionHeading('EXPERIENCE'));
+      sections.push(this._sectionHeading('EXPERIENCE', theme));
       for (const exp of resumeData.work_experience) {
         // Position + Company line with dates on the right
         const dateLine = this._formatDateRange(exp.start_date, exp.end_date, exp.current);
@@ -117,7 +125,7 @@ class DocxService {
 
     // Education
     if (resumeData.education?.length > 0) {
-      sections.push(this._sectionHeading('EDUCATION'));
+      sections.push(this._sectionHeading('EDUCATION', theme));
       for (const edu of resumeData.education) {
         const dateLine = this._formatDateRange(edu.start_date, edu.end_date);
         const degreeLine = [edu.degree, edu.field_of_study].filter(Boolean).join(' in ');
@@ -148,7 +156,7 @@ class DocxService {
 
     // Skills
     if (resumeData.skills?.length > 0) {
-      sections.push(this._sectionHeading('SKILLS'));
+      sections.push(this._sectionHeading('SKILLS', theme));
       sections.push(
         new Paragraph({
           spacing: { after: 200 },
@@ -161,7 +169,7 @@ class DocxService {
 
     // Projects
     if (resumeData.projects?.length > 0) {
-      sections.push(this._sectionHeading('PROJECTS'));
+      sections.push(this._sectionHeading('PROJECTS', theme));
       for (const proj of resumeData.projects) {
         sections.push(
           new Paragraph({
@@ -187,7 +195,7 @@ class DocxService {
 
     // Certifications
     if (resumeData.certifications?.length > 0) {
-      sections.push(this._sectionHeading('CERTIFICATIONS'));
+      sections.push(this._sectionHeading('CERTIFICATIONS', theme));
       for (const cert of resumeData.certifications) {
         const parts = [cert.name, cert.issuer].filter(Boolean).join(' — ');
         sections.push(
@@ -205,7 +213,7 @@ class DocxService {
 
     // Languages
     if (resumeData.languages?.length > 0) {
-      sections.push(this._sectionHeading('LANGUAGES'));
+      sections.push(this._sectionHeading('LANGUAGES', theme));
       const langText = resumeData.languages
         .map((l) => `${l.name}${l.proficiency ? ` (${l.proficiency})` : ''}`)
         .join('  •  ');
@@ -323,22 +331,24 @@ class DocxService {
     return Packer.toBuffer(doc);
   }
 
-  _sectionHeading(title) {
-    return new Paragraph({
+  _sectionHeading(title, theme = {}) {
+    const accent = theme.accent || '333333';
+    const font = theme.headingFont || 'Calibri';
+    const style = theme.sectionTitle || 'underline';
+    // 'plain' draws no rule; underline/smallcaps use the accent, others a light grey.
+    const hasBorder = style !== 'plain';
+    const borderColor = style === 'underline' || style === 'smallcaps' ? accent : 'CCCCCC';
+    const textColor = style === 'underline' || style === 'smallcaps' || style === 'pill' ? accent : '333333';
+    const para = {
       spacing: { before: 240, after: 80 },
-      border: {
-        bottom: { style: BorderStyle.SINGLE, size: 1, color: 'CCCCCC' },
-      },
       children: [
-        new TextRun({
-          text: title,
-          bold: true,
-          size: 22,
-          font: 'Calibri',
-          color: '333333',
-        }),
+        new TextRun({ text: title, bold: true, size: 22, font, color: textColor }),
       ],
-    });
+    };
+    if (hasBorder) {
+      para.border = { bottom: { style: BorderStyle.SINGLE, size: 1, color: borderColor } };
+    }
+    return new Paragraph(para);
   }
 
   _formatDateRange(start, end, current) {

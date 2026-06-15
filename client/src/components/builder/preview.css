@@ -1,5 +1,14 @@
-/* Resume Preview - A4 document with refined typography */
+/* Resume Preview - A4 document themed entirely by CSS variables set in ResumePreview.jsx.
+   Layout differences live in .arch-* classes; accent/typography come from --tpl-* vars,
+   which mirror the values the server PDF renderer uses (template-registry.json). */
 .preview-page {
+  --tpl-accent: #2563eb;
+  --tpl-accent-2: #2563eb;
+  --tpl-sidebar-bg: #1d4ed8;
+  --tpl-sidebar-text: #ffffff;
+  --tpl-body-font: 'Georgia', 'Times New Roman', serif;
+  --tpl-heading-font: 'Inter', -apple-system, sans-serif;
+
   width: 210mm;
   min-height: 297mm;
   max-width: 100%;
@@ -7,10 +16,11 @@
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08), 0 1px 4px rgba(0, 0, 0, 0.04);
   border-radius: 4px;
   padding: 40px 48px;
-  font-family: 'Georgia', 'Times New Roman', serif;
+  font-family: var(--tpl-body-font);
   font-size: 10.5pt;
   line-height: 1.5;
   color: #1a1a1a;
+  overflow: hidden;
 }
 
 /* Header */
@@ -18,7 +28,7 @@
   text-align: center;
   margin-bottom: 20px;
   padding-bottom: 16px;
-  border-bottom: 2px solid #2563eb;
+  border-bottom: 2px solid var(--tpl-accent);
 }
 
 .preview-name {
@@ -27,7 +37,7 @@
   letter-spacing: 0.5px;
   color: #111827;
   margin-bottom: 4px;
-  font-family: 'Inter', -apple-system, sans-serif;
+  font-family: var(--tpl-heading-font);
 }
 
 .preview-name.preview-placeholder {
@@ -36,10 +46,10 @@
 
 .preview-job-title {
   font-size: 11pt;
-  color: #2563eb;
+  color: var(--tpl-accent);
   font-weight: 500;
   margin-bottom: 10px;
-  font-family: 'Inter', -apple-system, sans-serif;
+  font-family: var(--tpl-heading-font);
 }
 
 .preview-contact {
@@ -55,7 +65,7 @@
   gap: 4px;
   font-size: 8.5pt;
   color: #4b5563;
-  font-family: 'Inter', -apple-system, sans-serif;
+  font-family: var(--tpl-heading-font);
 }
 
 .contact-item svg {
@@ -68,7 +78,7 @@ a.contact-link {
 }
 
 a.contact-link:hover {
-  color: #2563eb;
+  color: var(--tpl-accent);
 }
 
 a.preview-entry-link {
@@ -93,21 +103,60 @@ a.preview-entry-link:hover {
   padding-bottom: 4px;
   border-bottom: 1px solid #e5e7eb;
   margin-bottom: 10px;
-  font-family: 'Inter', -apple-system, sans-serif;
+  font-family: var(--tpl-heading-font);
+}
+.preview-section-title span { display: inline; }
+
+/* ---- Section-title styles ------------------------------------------------ */
+.sectitle-underline .preview-section-title {
+  border-bottom: 2px solid var(--tpl-accent);
+  color: var(--tpl-accent);
+}
+.sectitle-rule .preview-section-title {
+  border-bottom: 1px solid #d1d5db;
+  color: #111827;
+}
+.sectitle-plain .preview-section-title {
+  border-bottom: none;
+  letter-spacing: 2px;
+  color: #111827;
+}
+.sectitle-smallcaps .preview-section-title {
+  border-bottom: 1px solid var(--tpl-accent);
+  text-transform: none;
+  font-variant: small-caps;
+  letter-spacing: 2px;
+  font-weight: 600;
+  color: var(--tpl-accent);
+}
+.sectitle-pill .preview-section-title {
+  border-bottom: none;
+}
+.sectitle-pill .preview-section-title span {
+  background: var(--tpl-accent);
+  color: #fff;
+  padding: 3px 12px;
+  border-radius: 12px;
+  font-size: 9.5pt;
+}
+.sectitle-bar .preview-section-title {
+  border-bottom: none;
+  padding-left: 10px;
+  border-left: 4px solid var(--tpl-accent);
+}
+.sectitle-bracket .preview-section-title {
+  border-bottom: 1px dashed #d1d5db;
+  color: #111827;
+}
+.sectitle-bracket .preview-section-title span::before {
+  content: '# ';
+  color: var(--tpl-accent);
 }
 
 /* Entries */
-.preview-entry {
-  margin-bottom: 12px;
-}
-
-.preview-entry:last-child {
-  margin-bottom: 0;
-}
-
-.preview-entry-compact {
-  margin-bottom: 4px;
-}
+.preview-entry { margin-bottom: 12px; }
+.preview-entry:last-child { margin-bottom: 0; }
+.preview-entry-compact { margin-bottom: 4px; }
 
 .preview-entry-header {
   display: flex;
@@ -131,7 +180,7 @@ a.preview-entry-link:hover {
   font-size: 9pt;
   color: #6b7280;
   white-space: nowrap;
-  font-family: 'Inter', -apple-system, sans-serif;
+  font-family: var(--tpl-heading-font);
 }
 
 .preview-entry-location {
@@ -142,7 +191,7 @@ a.preview-entry-link:hover {
 
 .preview-entry-link {
   font-size: 9pt;
-  color: #2563eb;
+  color: var(--tpl-accent);
 }
 
 .preview-entry-tech {
@@ -167,7 +216,6 @@ a.preview-entry-link:hover {
   padding: 0;
   margin: 6px 0 0 0;
 }
-
 .preview-bullets li {
   position: relative;
   padding-left: 14px;
@@ -176,12 +224,11 @@ a.preview-entry-link:hover {
   line-height: 1.5;
   margin-bottom: 3px;
 }
-
 .preview-bullets li::before {
   content: '\2022';
   position: absolute;
   left: 0;
-  color: #9ca3af;
+  color: var(--tpl-accent);
 }
 
 /* Skills */
@@ -190,7 +237,6 @@ a.preview-entry-link:hover {
   flex-wrap: wrap;
   gap: 6px;
 }
-
 .preview-skill {
   padding: 2px 10px;
   background-color: #f3f4f6;
@@ -198,7 +244,46 @@ a.preview-entry-link:hover {
   border-radius: 3px;
   font-size: 9pt;
   color: #374151;
-  font-family: 'Inter', -apple-system, sans-serif;
+  font-family: var(--tpl-heading-font);
+}
+/* Inline skills: comma-flow rather than chips */
+.skills-inline .preview-skills { gap: 0; }
+.skills-inline .preview-skill {
+  background: none;
+  border: none;
+  padding: 0;
+}
+.skills-inline .preview-skill:not(:last-child)::after {
+  content: '\00b7';
+  margin: 0 6px;
+  color: #9ca3af;
+}
+/* Skill rating bars (infographic) */
+.skills-bars .preview-skills { display: block; }
+.skills-bars .preview-skill {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: none;
+  border: none;
+  padding: 2px 0;
+  width: 48%;
+  float: left;
+  margin-right: 2%;
+}
+.preview-skill-bar {
+  display: inline-block;
+  width: 90px;
+  height: 5px;
+  background: #e5e7eb;
+  border-radius: 3px;
+  margin-left: 8px;
+  overflow: hidden;
+}
+.preview-skill-bar span {
+  display: block;
+  height: 100%;
+  background: var(--tpl-accent);
 }
 
 /* Languages */
@@ -207,16 +292,8 @@ a.preview-entry-link:hover {
   flex-wrap: wrap;
   gap: 16px;
 }
-
-.preview-language {
-  font-size: 10pt;
-  color: #374151;
-}
-
-.lang-level {
-  color: #6b7280;
-  font-size: 9pt;
-}
+.preview-language { font-size: 10pt; color: #374151; }
+.lang-level { color: #6b7280; font-size: 9pt; }
 
 /* Empty state */
 .preview-empty {
@@ -226,13 +303,104 @@ a.preview-entry-link:hover {
   min-height: 300px;
   text-align: center;
 }
-
 .preview-empty p {
   color: #9ca3af;
   font-size: 10pt;
   font-style: italic;
-  font-family: 'Inter', -apple-system, sans-serif;
+  font-family: var(--tpl-heading-font);
 }
+
+/* ===== Archetype layouts ================================================== */
+
+/* Classic left & formal left: left-aligned header */
+.arch-classic-left .preview-header,
+.arch-formal-left .preview-header,
+.arch-compact .preview-header {
+  text-align: left;
+}
+.arch-classic-left .preview-contact,
+.arch-formal-left .preview-contact,
+.arch-compact .preview-contact {
+  justify-content: flex-start;
+}
+
+/* Formal-left: serif, larger refined name, thin rule */
+.arch-formal-left .preview-name { font-size: 24pt; letter-spacing: 0; }
+.arch-formal-left .preview-header { border-bottom-width: 1px; }
+
+/* Header band: full-bleed colored header */
+.arch-header-band .preview-header {
+  text-align: center;
+  margin: -40px -48px 22px;
+  padding: 30px 48px 24px;
+  background: linear-gradient(135deg, var(--tpl-accent), var(--tpl-accent-2));
+  border-bottom: none;
+}
+.arch-header-band .preview-name { color: var(--tpl-sidebar-text); }
+.arch-header-band .preview-job-title { color: var(--tpl-sidebar-text); opacity: 0.92; }
+.arch-header-band .preview-contact .contact-item,
+.arch-header-band a.contact-link { color: var(--tpl-sidebar-text); opacity: 0.92; }
+.arch-header-band .preview-contact svg { color: var(--tpl-sidebar-text); }
+
+/* Compact: denser type & spacing, two-column skills */
+.arch-compact { font-size: 9.5pt; padding: 30px 40px; }
+.arch-compact .preview-section { margin-bottom: 11px; }
+.arch-compact .preview-entry { margin-bottom: 8px; }
+.arch-compact .preview-name { font-size: 19pt; }
+.arch-compact .preview-skills { gap: 4px; }
+.arch-compact .preview-bullets li { margin-bottom: 2px; }
+
+/* Infographic clearfix for floated skill bars */
+.skills-bars .preview-skills::after { content: ''; display: block; clear: both; }
+
+/* ===== Sidebar archetype ================================================== */
+.arch-sidebar.preview-page { padding: 0; }
+.preview-sidebar-layout {
+  display: flex;
+  align-items: stretch;
+  min-height: 297mm;
+}
+.preview-sidebar {
+  width: 34%;
+  background: var(--tpl-sidebar-bg);
+  color: var(--tpl-sidebar-text);
+  padding: 34px 22px;
+  box-sizing: border-box;
+}
+.preview-main {
+  flex: 1;
+  padding: 36px 32px;
+  box-sizing: border-box;
+  min-width: 0;
+}
+.preview-sidebar-name { margin-bottom: 18px; }
+.preview-sidebar .preview-name {
+  color: var(--tpl-sidebar-text);
+  font-size: 18pt;
+}
+.preview-sidebar .preview-job-title {
+  color: var(--tpl-sidebar-text);
+  opacity: 0.9;
+}
+.preview-sidebar .preview-contact {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 7px;
+  margin-bottom: 18px;
+}
+.preview-sidebar .contact-item,
+.preview-sidebar a.contact-link { color: var(--tpl-sidebar-text); opacity: 0.92; }
+.preview-sidebar .preview-contact svg { color: var(--tpl-sidebar-text); }
+.preview-sidebar .preview-section-title {
+  color: var(--tpl-sidebar-text);
+  border-color: rgba(255, 255, 255, 0.35);
+}
+.preview-sidebar .preview-skill {
+  color: var(--tpl-sidebar-text);
+}
+.preview-sidebar .preview-skill:not(:last-child)::after { color: rgba(255, 255, 255, 0.5); }
+.preview-sidebar .preview-language { color: var(--tpl-sidebar-text); }
+.preview-sidebar .lang-level { color: var(--tpl-sidebar-text); opacity: 0.7; }
 
 /* Print */
 @media print {
@@ -241,4 +409,5 @@ a.preview-entry-link:hover {
     padding: 0;
     margin: 0;
   }
+  .arch-header-band .preview-header { margin-top: 0; }
 }
