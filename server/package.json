@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.99.1",
+    "@upstash/redis": "^1.38.0",
     "cors": "^2.8.5",
     "docx": "^9.6.1",
     "dotenv": "^16.3.1",
@@ -22,6 +23,7 @@
     "pdf-parse": "^1.1.1",
     "pdfkit": "^0.13.0",
     "pino": "^10.3.1",
+    "rate-limit-redis": "^5.0.0",
     "stripe": "^18.5.0",
     "uuid": "^11.1.0"
   },

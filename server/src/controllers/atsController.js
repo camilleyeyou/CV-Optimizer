@@ -171,6 +171,11 @@ const quickScore = async (req, res) => {
   }
 };
 
+// Sane upper bounds for the unauthenticated endpoint — reject (not truncate)
+// oversized inputs before any scoring work happens.
+const PUBLIC_MAX_RESUME_CHARS = 15000;
+const PUBLIC_MAX_JOB_TITLE_CHARS = 200;
+
 const publicQuickScore = async (req, res) => {
   try {
     const { resumeText, jobTitle } = req.body;
@@ -178,12 +183,18 @@ const publicQuickScore = async (req, res) => {
     if (!resumeText || typeof resumeText !== 'string' || resumeText.trim().length < 50) {
       return res.status(400).json({ error: 'Resume text is required (at least 50 characters).' });
     }
+    if (resumeText.length > PUBLIC_MAX_RESUME_CHARS) {
+      return res.status(400).json({ error: `Resume text is too long (max ${PUBLIC_MAX_RESUME_CHARS} characters).` });
+    }
     if (!jobTitle || typeof jobTitle !== 'string' || jobTitle.trim().length < 2) {
       return res.status(400).json({ error: 'Job title is required.' });
     }
+    if (jobTitle.length > PUBLIC_MAX_JOB_TITLE_CHARS) {
+      return res.status(400).json({ error: `Job title is too long (max ${PUBLIC_MAX_JOB_TITLE_CHARS} characters).` });
+    }
 
-    const truncatedText = resumeText.slice(0, MAX_RESUME_TEXT_LENGTH);
-    const result = await atsService.quickScoreFromText(truncatedText, jobTitle.trim());
+    // All validation + rate-limit checks have passed before we do any work.
+    const result = await atsService.quickScoreFromText(resumeText, jobTitle.trim());
     res.json(result);
   } catch (error) {
     res.status(500).json({ error: 'Failed to score resume.' });
