@@ -1,4 +1,5 @@
 const OpenAI = require('openai');
+const MODELS = require('../config/models');
 
 class OpenAIService {
   constructor() {
@@ -7,7 +8,8 @@ class OpenAIService {
       timeout: 30000, // 30s timeout
       maxRetries: 2,
     });
-    this.model = 'gpt-4o-mini';
+    this.model = MODELS.DEFAULT;
+    this.premiumModel = MODELS.PREMIUM;
   }
 
   _safeJsonParse(content, fallback) {
@@ -159,7 +161,7 @@ class OpenAIService {
     }));
 
     const response = await this.client.chat.completions.create({
-      model: this.model,
+      model: this.premiumModel,
       messages: [
         {
           role: 'system',
@@ -266,7 +268,7 @@ Rules:
 
   async generateResumeFromAnswers(jobDescription, answers, jobTitle) {
     const response = await this.client.chat.completions.create({
-      model: this.model,
+      model: this.premiumModel,
       messages: [
         {
           role: 'system',

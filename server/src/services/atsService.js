@@ -3,6 +3,7 @@ const pdfParse = require('pdf-parse');
 const crypto = require('crypto');
 const { createClient } = require('@supabase/supabase-js');
 const { computeATSScore } = require('./atsScoring');
+const MODELS = require('../config/models');
 
 // Lazy Supabase client — created on first use so importing this module never
 // throws when env vars are absent (e.g. unit tests that don't touch the cache).
@@ -24,7 +25,8 @@ class ATSService {
       timeout: 30000,
       maxRetries: 2,
     });
-    this.model = 'gpt-4o-mini';
+    this.model = MODELS.DEFAULT;
+    this.premiumModel = MODELS.PREMIUM;
   }
 
   async extractTextFromPDF(buffer) {
@@ -563,7 +565,7 @@ Respond with ONLY valid JSON in this exact format:
 Extract and optimize ALL information from the original resume. Fill in every field you can from the source text.`;
 
     const response = await this.client.chat.completions.create({
-      model: this.model,
+      model: this.premiumModel,
       messages: [
         {
           role: 'system',
