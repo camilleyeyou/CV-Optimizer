@@ -1,12 +1,14 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import {
   FileText, Target, PenTool, Briefcase, MessageSquare,
   Mail, Layout, Globe, Check, ArrowRight, Loader, Sparkles,
   GraduationCap,
 } from 'lucide-react';
-import api from '../services/api';
+import toast from 'react-hot-toast';
+import api, { startCheckout } from '../services/api';
+import { useAuth } from '../context/AuthContext';
 import './LandingPage.css';
 
 const FEATURES = [
@@ -43,8 +45,8 @@ const PRICING = [
     period: '/mo',
     desc: 'For active job seekers',
     features: ['Unlimited AI credits', 'All 16 templates', 'Cover letter export (PDF/DOCX)', 'Resume sharing links', 'Priority support'],
-    cta: 'Coming Soon',
-    ctaLink: null,
+    cta: 'Upgrade to Pro',
+    plan: 'pro',
     popular: true,
   },
   {
@@ -53,8 +55,8 @@ const PRICING = [
     period: '/mo',
     desc: 'For power users and teams',
     features: ['Everything in Pro', 'Resume translation', 'Advanced analytics', 'Custom branding', 'API access'],
-    cta: 'Coming Soon',
-    ctaLink: null,
+    cta: 'Get Premium',
+    plan: 'premium',
     popular: false,
   },
 ];
@@ -65,6 +67,26 @@ const LandingPage = () => {
   const [atsResult, setAtsResult] = useState(null);
   const [atsLoading, setAtsLoading] = useState(false);
   const [atsError, setAtsError] = useState('');
+  const [checkoutPlan, setCheckoutPlan] = useState(null);
+  const { isAuthenticated } = useAuth();
+  const navigate = useNavigate();
+
+  const handleUpgrade = async (plan) => {
+    if (!isAuthenticated) {
+      // Send to sign-up; they can upgrade from the app once registered.
+      navigate(`/register?plan=${plan}`);
+      return;
+    }
+    setCheckoutPlan(plan);
+    try {
+      const { url } = await startCheckout(plan);
+      if (url) window.location.href = url;
+      else throw new Error('No checkout URL');
+    } catch (err) {
+      toast.error(err.response?.data?.error || 'Could not start checkout. Please try again.');
+      setCheckoutPlan(null);
+    }
+  };
 
   const handleAtsCheck = async () => {
     if (!atsText.trim() || !atsJobTitle.trim()) {
@@ -246,8 +268,12 @@ const LandingPage = () => {
                   {plan.cta} <ArrowRight size={14} />
                 </Link>
               ) : (
-                <button className="btn btn-secondary btn-lg" disabled>
-                  {plan.cta}
+                <button
+                  className={`btn btn-lg ${plan.popular ? 'btn-primary' : 'btn-secondary'}`}
+                  onClick={() => handleUpgrade(plan.plan)}
+                  disabled={checkoutPlan === plan.plan}
+                >
+                  {checkoutPlan === plan.plan ? <span className="spinner" /> : <>{plan.cta} <ArrowRight size={14} /></>}
                 </button>
               )}
             </div>

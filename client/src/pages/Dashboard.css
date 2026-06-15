@@ -292,3 +292,30 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* Plan / billing banner */
+.plan-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3, 1rem);
+  flex-wrap: wrap;
+  padding: var(--space-3, 1rem) var(--space-4, 1.25rem);
+  margin-bottom: var(--space-5, 1.5rem);
+  border-radius: var(--radius-lg, 12px);
+  border: 1px solid rgba(148, 163, 184, 0.25);
+  background: linear-gradient(135deg, rgba(37, 99, 235, 0.12), rgba(124, 58, 237, 0.12));
+}
+.plan-banner-paid {
+  background: linear-gradient(135deg, rgba(5, 150, 105, 0.12), rgba(37, 99, 235, 0.12));
+}
+.plan-banner-info {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2, 0.5rem);
+  font-size: 0.92rem;
+  color: var(--text-secondary, #cbd5e1);
+}
+.plan-banner-info svg { color: var(--warning, #f59e0b); flex-shrink: 0; }
+.plan-banner-paid .plan-banner-info svg { color: var(--success, #10b981); }
+.plan-banner-info strong { color: var(--text-primary, #f8fafc); }

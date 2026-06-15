@@ -30,6 +30,15 @@ app.use(cors({
   origin: clientUrl || true, // true = reflect request origin (safe when behind auth)
   credentials: true,
 }));
+
+// Stripe webhook MUST receive the raw body for signature verification, so it is
+// mounted before the JSON parser (and before the rate limiter and auth).
+app.post(
+  '/api/billing/webhook',
+  express.raw({ type: 'application/json' }),
+  require('./controllers/billingController').webhook
+);
+
 app.use(express.json({ limit: '2mb' }));
 app.use(express.urlencoded({ extended: false, limit: '2mb' }));
 
@@ -74,6 +83,7 @@ app.use('/api/pdf', require('./routes/pdf'));
 app.use('/api/ats', require('./routes/ats'));
 app.use('/api/share', require('./routes/share'));
 app.use('/api/student', require('./routes/student'));
+app.use('/api/billing', require('./routes/billing'));
 
 // 404
 app.use((req, res) => {

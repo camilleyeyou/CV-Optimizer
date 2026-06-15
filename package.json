@@ -37,6 +37,7 @@
     "openai": "^6.29.0",
     "pdf-parse": "^2.4.5",
     "pdfkit": "^0.18.0",
+    "stripe": "^18.5.0",
     "uuid": "^13.0.0"
   },
   "devDependencies": {

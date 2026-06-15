@@ -88,6 +88,12 @@ export const verifyStudent = () => api.post('/api/student/verify').then((r) => r
 // Credits
 export const getCredits = () => api.get('/api/credits').then((r) => r.data);
 
+// Billing (Stripe)
+export const startCheckout = (plan) =>
+  api.post('/api/billing/checkout', { plan }).then((r) => r.data);
+export const openBillingPortal = () =>
+  api.post('/api/billing/portal').then((r) => r.data);
+
 // Health check
 export const healthCheck = () => api.get('/api/health').then((r) => r.data);
 

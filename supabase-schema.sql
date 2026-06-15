@@ -74,8 +74,12 @@ create table if not exists user_profiles (
   plan text default 'free' check (plan in ('free', 'pro', 'premium')),
   ai_credits integer default 5,
   credits_reset_at timestamptz default now(),
+  stripe_customer_id text,
+  stripe_subscription_id text,
   created_at timestamptz default now()
 );
+
+create index if not exists idx_user_profiles_stripe_customer on user_profiles(stripe_customer_id);
 
 -- Auto-create profile on signup via trigger
 create or replace function create_user_profile()

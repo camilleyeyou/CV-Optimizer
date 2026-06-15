@@ -12,10 +12,12 @@ import {
   AlertTriangle,
   Upload,
   Loader,
+  Crown,
+  Settings,
 } from 'lucide-react';
 import { useState, useEffect, useRef, useCallback } from 'react';
 import toast from 'react-hot-toast';
-import api from '../services/api';
+import api, { getCredits, startCheckout, openBillingPortal } from '../services/api';
 import Spotlight from '../components/onboarding/Spotlight';
 import { tours } from '../components/onboarding/tourSteps';
 import './Dashboard.css';
@@ -28,11 +30,56 @@ const Dashboard = () => {
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [importing, setImporting] = useState(false);
   const [importSource, setImportSource] = useState('resume');
+  const [billing, setBilling] = useState(null); // { plan, credits, max_credits }
+  const [billingBusy, setBillingBusy] = useState(false);
   const menuRef = useRef(null);
   const importInputRef = useRef(null);
 
   const displayName =
     user?.user_metadata?.first_name || user?.email?.split('@')[0] || 'there';
+
+  const refreshBilling = useCallback(() => {
+    getCredits().then(setBilling).catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    refreshBilling();
+    // Surface the result of a Stripe Checkout redirect.
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('upgrade') === 'success') {
+      toast.success('Welcome to Pro! Your plan is now active.');
+      // Plan sync happens via webhook; poll briefly so the banner updates.
+      setTimeout(refreshBilling, 1500);
+      setTimeout(refreshBilling, 4000);
+      window.history.replaceState({}, '', '/dashboard');
+    }
+  }, [refreshBilling]);
+
+  const handleUpgrade = async (plan = 'pro') => {
+    setBillingBusy(true);
+    try {
+      const { url } = await startCheckout(plan);
+      if (url) window.location.href = url;
+      else throw new Error('No checkout URL');
+    } catch (err) {
+      toast.error(err.response?.data?.error || 'Could not start checkout. Please try again.');
+      setBillingBusy(false);
+    }
+  };
+
+  const handleManageBilling = async () => {
+    setBillingBusy(true);
+    try {
+      const { url } = await openBillingPortal();
+      if (url) window.location.href = url;
+      else throw new Error('No portal URL');
+    } catch (err) {
+      toast.error(err.response?.data?.error || 'Could not open billing portal.');
+      setBillingBusy(false);
+    }
+  };
+
+  const isPaid = billing?.plan === 'pro' || billing?.plan === 'premium';
 
   // Close card menu on click outside or Escape
   const closeMenu = useCallback(() => setMenuOpen(null), []);
@@ -199,6 +246,31 @@ const Dashboard = () => {
             </button>
           </div>
         </div>
+
+        {/* Plan / billing banner */}
+        {billing && (
+          <div className={`plan-banner ${isPaid ? 'plan-banner-paid' : ''}`}>
+            <div className="plan-banner-info">
+              <Crown size={18} aria-hidden="true" />
+              {isPaid ? (
+                <span>You're on <strong>{billing.plan === 'premium' ? 'Premium' : 'Pro'}</strong> — unlimited AI credits and all 16 templates.</span>
+              ) : (
+                <span>
+                  <strong>Free plan</strong> · {billing.credits ?? 0} of {billing.max_credits ?? 5} AI credits left this month. Upgrade for unlimited AI and all 16 templates.
+                </span>
+              )}
+            </div>
+            {isPaid ? (
+              <button className="btn btn-secondary" onClick={handleManageBilling} disabled={billingBusy}>
+                {billingBusy ? <span className="spinner" /> : <><Settings size={14} aria-hidden="true" /> Manage subscription</>}
+              </button>
+            ) : (
+              <button className="btn btn-primary" onClick={() => handleUpgrade('pro')} disabled={billingBusy}>
+                {billingBusy ? <span className="spinner" /> : <><Crown size={14} aria-hidden="true" /> Upgrade to Pro</>}
+              </button>
+            )}
+          </div>
+        )}
 
         {/* Content */}
         {loading ? (
