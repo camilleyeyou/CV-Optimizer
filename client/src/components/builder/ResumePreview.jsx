@@ -33,6 +33,17 @@ const friendlyProjectUrl = (url) => {
 
 const toHref = (url) => (url.startsWith('http') ? url : `https://${url}`);
 
+// Real saved resumes don't always store list fields as arrays (e.g. a bullet
+// description may be a plain string). Normalize defensively so the preview
+// never crashes on unexpected shapes.
+const asArray = (v) => (Array.isArray(v) ? v : []);
+const asBullets = (v) =>
+  Array.isArray(v)
+    ? v.filter(Boolean)
+    : typeof v === 'string'
+      ? v.split('\n').map((s) => s.trim()).filter(Boolean)
+      : [];
+
 // Sections that move into the colored sidebar for the "sidebar" archetype.
 const SIDEBAR_SECTIONS = ['skills', 'languages'];
 
@@ -47,7 +58,8 @@ const ResumePreview = ({ data: dataProp, templateId } = {}) => {
 
   const hasContact = p.email || p.phone || p.location || p.linkedin || p.website;
   const hasName = p.first_name || p.last_name;
-  const skills = (data.skills || []).filter(Boolean);
+  const skills = asArray(data.skills).filter(Boolean);
+  const experience = asArray(data.work_experience);
 
   // CSS variables let one stylesheet theme every template by accent/font.
   const styleVars = {
@@ -96,10 +108,10 @@ const ResumePreview = ({ data: dataProp, templateId } = {}) => {
         ) : null;
 
       case 'experience':
-        return data.work_experience?.length > 0 ? (
+        return experience.length > 0 ? (
           <div className="preview-section" key="experience">
             <SectionTitle>Experience</SectionTitle>
-            {data.work_experience.map((exp, i) => (
+            {experience.map((exp, i) => (
               <div key={exp.id || i} className="preview-entry">
                 <div className="preview-entry-header">
                   <div>
@@ -113,9 +125,9 @@ const ResumePreview = ({ data: dataProp, templateId } = {}) => {
                   </span>
                 </div>
                 {exp.location && <p className="preview-entry-location">{exp.location}</p>}
-                {exp.description?.filter(Boolean).length > 0 && (
+                {asBullets(exp.description).length > 0 && (
                   <ul className="preview-bullets">
-                    {exp.description.filter(Boolean).map((bullet, bi) => <li key={bi}>{bullet}</li>)}
+                    {asBullets(exp.description).map((bullet, bi) => <li key={bi}>{bullet}</li>)}
                   </ul>
                 )}
               </div>
@@ -124,10 +136,10 @@ const ResumePreview = ({ data: dataProp, templateId } = {}) => {
         ) : null;
 
       case 'education':
-        return data.education?.length > 0 ? (
+        return asArray(data.education).length > 0 ? (
           <div className="preview-section" key="education">
             <SectionTitle>Education</SectionTitle>
-            {data.education.map((edu, i) => (
+            {asArray(data.education).map((edu, i) => (
               <div key={edu.id || i} className="preview-entry">
                 <div className="preview-entry-header">
                   <div>
@@ -167,10 +179,10 @@ const ResumePreview = ({ data: dataProp, templateId } = {}) => {
         ) : null;
 
       case 'projects':
-        return data.projects?.length > 0 ? (
+        return asArray(data.projects).length > 0 ? (
           <div className="preview-section" key="projects">
             <SectionTitle>Projects</SectionTitle>
-            {data.projects.map((proj, i) => (
+            {asArray(data.projects).map((proj, i) => (
               <div key={proj.id || i} className="preview-entry">
                 <div className="preview-entry-header">
                   <strong className="preview-entry-title">{proj.name}</strong>
@@ -184,10 +196,10 @@ const ResumePreview = ({ data: dataProp, templateId } = {}) => {
         ) : null;
 
       case 'certifications':
-        return data.certifications?.length > 0 ? (
+        return asArray(data.certifications).length > 0 ? (
           <div className="preview-section" key="certifications">
             <SectionTitle>Certifications</SectionTitle>
-            {data.certifications.map((cert, i) => (
+            {asArray(data.certifications).map((cert, i) => (
               <div key={cert.id || i} className="preview-entry preview-entry-compact">
                 <strong className="preview-entry-title">{cert.name}</strong>
                 <span className="preview-entry-subtitle">
@@ -200,11 +212,11 @@ const ResumePreview = ({ data: dataProp, templateId } = {}) => {
         ) : null;
 
       case 'languages':
-        return data.languages?.length > 0 ? (
+        return asArray(data.languages).length > 0 ? (
           <div className="preview-section" key="languages">
             <SectionTitle>Languages</SectionTitle>
             <div className="preview-languages">
-              {data.languages.map((lang, i) => (
+              {asArray(data.languages).map((lang, i) => (
                 <span key={i} className="preview-language">
                   {lang.name} <span className="lang-level">({lang.proficiency})</span>
                 </span>
@@ -230,7 +242,7 @@ const ResumePreview = ({ data: dataProp, templateId } = {}) => {
     </div>
   );
 
-  const isEmpty = !hasName && !data.summary && !data.work_experience?.length;
+  const isEmpty = !hasName && !data.summary && !experience.length;
   const emptyState = (
     <div className="preview-empty">
       <p>Start filling in your information on the left to see your resume take shape here.</p>
