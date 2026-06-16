@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, Link } from 'react-router-dom';
 import { useResume } from '../context/ResumeContext';
 import ResumeForm from '../components/builder/ResumeForm';
 import ResumePreview from '../components/builder/ResumePreview';
@@ -20,16 +20,26 @@ const Builder = () => {
   const [mobileView, setMobileView] = useState('edit'); // 'edit' | 'preview'
   const [tailorOpen, setTailorOpen] = useState(false);
   const [translateOpen, setTranslateOpen] = useState(false);
+  const [loadError, setLoadError] = useState(false);
 
   useEffect(() => {
+    let cancelled = false;
     const init = async () => {
-      if (id && id !== resumeData?.id) {
-        await loadResume(id);
-      } else if (!id && !resumeData?.id) {
-        await createResume('modern');
+      setLoadError(false);
+      try {
+        if (id && id !== resumeData?.id) {
+          await loadResume(id);
+        } else if (!id && !resumeData?.id) {
+          await createResume('modern');
+        }
+      } catch {
+        // Don't fall through to a blank/stale editor on a failed load — that
+        // could autosave over the wrong resume. Show an error state instead.
+        if (!cancelled) setLoadError(true);
       }
     };
     init();
+    return () => { cancelled = true; };
   }, [id, loadResume, createResume, resumeData?.id]);
 
   const [exporting, setExporting] = useState(null); // null | 'pdf' | 'docx'
@@ -69,6 +79,19 @@ const Builder = () => {
       <div className="builder-loading">
         <div className="spinner spinner-lg" />
         <span>Loading resume...</span>
+      </div>
+    );
+  }
+
+  if (loadError) {
+    return (
+      <div className="builder-loading">
+        <FileText size={40} aria-hidden="true" />
+        <h2 style={{ marginTop: 'var(--space-2)' }}>Couldn&apos;t load this resume</h2>
+        <p style={{ maxWidth: 360, textAlign: 'center' }}>
+          It may have been deleted, or you don&apos;t have access. Your other resumes are safe.
+        </p>
+        <Link to="/dashboard" className="btn btn-primary">Back to Dashboard</Link>
       </div>
     );
   }

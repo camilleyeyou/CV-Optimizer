@@ -48,6 +48,7 @@ const InterviewPrep = () => {
 
   const handleEvaluate = async () => {
     const q = questions[currentQ];
+    if (!q) return;
     const answer = answers[q.id];
     if (!answer?.trim()) {
       toast.error('Write an answer first');
@@ -130,8 +131,9 @@ const InterviewPrep = () => {
         </div>
       )}
 
-      {/* Practice Step */}
-      {step === STEP.PRACTICE && questions.length > 0 && (
+      {/* Practice Step — guard on the current item so a drifted index or a
+          short/malformed questions array can't crash the page. */}
+      {step === STEP.PRACTICE && questions[currentQ] && (
         <div className="interview-practice">
           <div className="interview-progress-bar">
             <div className="interview-progress-fill" style={{ width: `${((currentQ + 1) / questions.length) * 100}%` }} />

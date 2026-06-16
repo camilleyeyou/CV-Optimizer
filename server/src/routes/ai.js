@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const { requireAuth } = require('../middleware/auth');
 const { requireCredits } = require('../middleware/credits');
+const { requirePlan } = require('../middleware/requirePlan');
 const aiController = require('../controllers/aiController');
 const {
   validateSummary,
@@ -29,6 +30,7 @@ router.post('/generate-resume', validateGenerateResume, requireCredits, aiContro
 router.post('/interview-questions', validateInterviewQuestions, requireCredits, aiController.generateInterviewQuestions);
 router.post('/evaluate-answer', validateEvaluateAnswer, requireCredits, aiController.evaluateAnswer);
 router.post('/generate-email', validateGenerateEmail, requireCredits, aiController.generateEmail);
-router.post('/translate-resume', validateTranslateResume, requireCredits, aiController.translateResume);
+// Resume translation is a Premium feature.
+router.post('/translate-resume', requirePlan(['premium']), validateTranslateResume, requireCredits, aiController.translateResume);
 
 module.exports = router;

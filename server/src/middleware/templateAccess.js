@@ -1,5 +1,6 @@
 const { createClient } = require('@supabase/supabase-js');
 const { getTemplate } = require('../templateRegistry');
+const { effectivePlan } = require('./effectivePlan');
 
 const supabase = createClient(
   process.env.SUPABASE_URL || '',
@@ -24,18 +25,11 @@ const enforceTemplateAccess = async (req, res, next) => {
   try {
     const { data: profile } = await supabase
       .from('user_profiles')
-      .select('plan, is_student, student_expires_at')
+      .select('plan, is_student, student_expires_at, stripe_subscription_id')
       .eq('id', req.user.id)
       .single();
 
-    let plan = profile?.plan || 'free';
-    if (
-      profile?.is_student &&
-      profile.student_expires_at &&
-      new Date(profile.student_expires_at) < new Date()
-    ) {
-      plan = 'free';
-    }
+    const plan = effectivePlan(profile);
 
     if (PREMIUM_PLANS.includes(plan)) return next();
 

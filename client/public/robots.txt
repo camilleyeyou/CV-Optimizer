@@ -4,7 +4,13 @@ Allow: /
 # Keep authenticated app areas out of the index
 Disallow: /dashboard
 Disallow: /builder
+Disallow: /templates
+Disallow: /ats-checker
+Disallow: /ai-creator
+Disallow: /cover-letter
+Disallow: /emails
 Disallow: /tracker
+Disallow: /interview-prep
 Disallow: /analytics
 
 Sitemap: https://cv-optimizer.vercel.app/sitemap.xml

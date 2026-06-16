@@ -41,12 +41,22 @@ const verifyStudent = async (req, res) => {
       });
     }
 
-    // Block re-verification while an existing student grant is still active.
     const { data: existing } = await supabase
       .from('user_profiles')
-      .select('is_student, student_expires_at')
+      .select('is_student, student_expires_at, plan, stripe_subscription_id')
       .eq('id', req.user.id)
       .single();
+
+    // Never overwrite a paying subscription with a student grant — doing so
+    // would downgrade Premium->pro and silently drop them to free at expiry
+    // while Stripe keeps charging them.
+    if (existing?.stripe_subscription_id) {
+      return res.status(409).json({
+        error: 'You already have an active paid subscription. The student program is for free accounts only.',
+      });
+    }
+
+    // Block re-verification while an existing student grant is still active.
     if (existing?.is_student && existing.student_expires_at && new Date(existing.student_expires_at) > new Date()) {
       return res.status(409).json({
         error: 'Student access is already active on this account.',

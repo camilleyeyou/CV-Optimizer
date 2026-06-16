@@ -1,5 +1,5 @@
 import { lazy, Suspense } from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { HelmetProvider } from 'react-helmet-async';
 import { Toaster } from 'react-hot-toast';
 import { AuthProvider } from './context/AuthContext';
@@ -28,6 +28,7 @@ const InterviewPrep = lazy(() => import('./pages/InterviewPrep'));
 const EmailGenerator = lazy(() => import('./pages/EmailGenerator'));
 const Analytics = lazy(() => import('./pages/Analytics'));
 const SharedResume = lazy(() => import('./pages/SharedResume'));
+const NotFound = lazy(() => import('./pages/NotFound'));
 
 const PageFallback = () => (
   <div style={{ maxWidth: 960, margin: '0 auto', padding: '2rem 1rem' }}>
@@ -68,8 +69,8 @@ function App() {
                     <Route path="/emails" element={<PrivateRoute><EmailGenerator /></PrivateRoute>} />
                     <Route path="/analytics" element={<PrivateRoute><Analytics /></PrivateRoute>} />
 
-                    {/* Fallback */}
-                    <Route path="*" element={<Navigate to="/" replace />} />
+                    {/* Fallback — friendly 404 (noindex) instead of a silent redirect */}
+                    <Route path="*" element={<NotFound />} />
                   </Routes>
                   </Suspense>
                 </main>

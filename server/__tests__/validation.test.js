@@ -29,6 +29,11 @@ jest.mock('../src/middleware/credits', () => ({
   },
 }));
 
+// Bypass plan-gating here — these tests exercise input validation, not the paywall.
+jest.mock('../src/middleware/requirePlan', () => ({
+  requirePlan: () => (req, res, next) => next(),
+}));
+
 // Mock OpenAI service to avoid real API calls
 jest.mock('../src/services/openaiService', () => ({
   generateSummary: jest.fn().mockResolvedValue('A professional summary.'),

@@ -157,9 +157,11 @@ const TranslateModal = ({ open, onClose }) => {
                   {result.work_experience.map((exp, i) => (
                     <div key={i} className="translate-preview-exp">
                       <strong>{exp.position}</strong>
-                      {exp.description?.slice(0, 2).map((d, j) => (
-                        <p key={j}>- {d}</p>
-                      ))}
+                      {(Array.isArray(exp.description) ? exp.description : [])
+                        .slice(0, 2)
+                        .map((d, j) => (
+                          <p key={j}>- {d}</p>
+                        ))}
                     </div>
                   ))}
                 </div>

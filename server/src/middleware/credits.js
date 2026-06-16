@@ -42,12 +42,22 @@ const requireCredits = async (req, res, next) => {
     if (profile.is_student && profile.student_expires_at) {
       const expiresAt = new Date(profile.student_expires_at);
       if (expiresAt < new Date()) {
-        await supabase
-          .from('user_profiles')
-          .update({ plan: 'free', is_student: false, ai_credits: FREE_MONTHLY_CREDITS })
-          .eq('id', req.user.id);
-        profile.plan = 'free';
-        profile.ai_credits = FREE_MONTHLY_CREDITS;
+        if (profile.stripe_subscription_id) {
+          // Student promo lapsed but the user is now a paying subscriber —
+          // only clear the student flag; never touch their paid plan/credits.
+          await supabase
+            .from('user_profiles')
+            .update({ is_student: false })
+            .eq('id', req.user.id);
+          profile.is_student = false;
+        } else {
+          await supabase
+            .from('user_profiles')
+            .update({ plan: 'free', is_student: false, ai_credits: FREE_MONTHLY_CREDITS })
+            .eq('id', req.user.id);
+          profile.plan = 'free';
+          profile.ai_credits = FREE_MONTHLY_CREDITS;
+        }
       }
     }
 
