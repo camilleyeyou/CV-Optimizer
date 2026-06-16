@@ -28,6 +28,10 @@ const InterviewPrep = lazy(() => import('./pages/InterviewPrep'));
 const EmailGenerator = lazy(() => import('./pages/EmailGenerator'));
 const Analytics = lazy(() => import('./pages/Analytics'));
 const SharedResume = lazy(() => import('./pages/SharedResume'));
+const Account = lazy(() => import('./pages/Account'));
+const Privacy = lazy(() => import('./pages/legal/Privacy'));
+const Terms = lazy(() => import('./pages/legal/Terms'));
+const Refund = lazy(() => import('./pages/legal/Refund'));
 const NotFound = lazy(() => import('./pages/NotFound'));
 
 const PageFallback = () => (
@@ -55,6 +59,9 @@ function App() {
                     <Route path="/login" element={<Login />} />
                     <Route path="/register" element={<Register />} />
                     <Route path="/share/:token" element={<SharedResume />} />
+                    <Route path="/privacy" element={<Privacy />} />
+                    <Route path="/terms" element={<Terms />} />
+                    <Route path="/refund" element={<Refund />} />
 
                     {/* Protected */}
                     <Route path="/dashboard" element={<PrivateRoute><Dashboard /></PrivateRoute>} />
@@ -68,6 +75,7 @@ function App() {
                     <Route path="/interview-prep" element={<PrivateRoute><InterviewPrep /></PrivateRoute>} />
                     <Route path="/emails" element={<PrivateRoute><EmailGenerator /></PrivateRoute>} />
                     <Route path="/analytics" element={<PrivateRoute><Analytics /></PrivateRoute>} />
+                    <Route path="/account" element={<PrivateRoute><Account /></PrivateRoute>} />
 
                     {/* Fallback — friendly 404 (noindex) instead of a silent redirect */}
                     <Route path="*" element={<NotFound />} />

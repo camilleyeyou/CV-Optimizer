@@ -69,6 +69,11 @@ async function getSubscription(subscriptionId) {
   return getClient().subscriptions.retrieve(subscriptionId);
 }
 
+/** Immediately cancel a subscription (used on account deletion). */
+async function cancelSubscription(subscriptionId) {
+  return getClient().subscriptions.cancel(subscriptionId);
+}
+
 module.exports = {
   getClient,
   priceForPlan,
@@ -77,4 +82,5 @@ module.exports = {
   createPortalSession,
   constructEvent,
   getSubscription,
+  cancelSubscription,
 };

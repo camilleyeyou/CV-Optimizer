@@ -187,6 +187,12 @@ const Register = () => {
               <>Create account <ArrowRight size={16} /></>
             )}
           </button>
+
+          <p className="auth-consent">
+            By creating an account, you agree to our{' '}
+            <Link to="/terms">Terms of Service</Link> and{' '}
+            <Link to="/privacy">Privacy Policy</Link>.
+          </p>
         </form>
 
         {formData.email && /\.(edu|ac\.[a-z]{2})$/i.test(formData.email.split('@')[1] || '') && (

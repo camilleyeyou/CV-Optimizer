@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { getCredits } from '../../services/api';
-import { FileText, Menu, X, LogOut, User, ChevronDown, LayoutDashboard, FileSearch, Sparkles, PenTool, Layout, Mail, Zap, Briefcase, MessageSquare, BarChart3 } from 'lucide-react';
+import { FileText, Menu, X, LogOut, User, ChevronDown, LayoutDashboard, FileSearch, Sparkles, PenTool, Layout, Mail, Zap, Briefcase, MessageSquare, BarChart3, Settings } from 'lucide-react';
 import './Header.css';
 
 const Header = () => {
@@ -150,6 +150,9 @@ const Header = () => {
                     </button>
                     <button className="dropdown-item" role="menuitem" onClick={() => { navigate('/analytics'); closeDropdown(); }}>
                       <BarChart3 size={14} aria-hidden="true" /> Analytics
+                    </button>
+                    <button className="dropdown-item" role="menuitem" onClick={() => { navigate('/account'); closeDropdown(); }}>
+                      <Settings size={14} aria-hidden="true" /> Account &amp; Data
                     </button>
                     <button className="dropdown-item dropdown-item-danger" role="menuitem" onClick={handleSignOut}>
                       <LogOut size={14} aria-hidden="true" /> Sign out

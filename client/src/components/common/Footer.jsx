@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import { FileText } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
+import { LEGAL } from '../../config/legal';
 import './Footer.css';
 
 const Footer = () => {
@@ -35,6 +36,13 @@ const Footer = () => {
               <a href="/#ats-checker">ATS Checker</a>
             </>
           )}
+        </div>
+
+        <div className="footer-links footer-legal">
+          <Link to="/privacy">Privacy</Link>
+          <Link to="/terms">Terms</Link>
+          <Link to="/refund">Refunds</Link>
+          <a href={`mailto:${LEGAL.supportEmail}`}>Contact</a>
         </div>
 
         <div className="footer-bottom">

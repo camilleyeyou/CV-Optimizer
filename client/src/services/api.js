@@ -94,6 +94,12 @@ export const startCheckout = (plan) =>
 export const openBillingPortal = () =>
   api.post('/api/billing/portal').then((r) => r.data);
 
+// Account (data rights)
+export const exportMyData = () =>
+  api.get('/api/account/export', { responseType: 'blob' }).then((r) => r.data);
+export const deleteMyAccount = () =>
+  api.post('/api/account/delete', { confirmText: 'DELETE' }).then((r) => r.data);
+
 // Health check
 export const healthCheck = () => api.get('/api/health').then((r) => r.data);
 
