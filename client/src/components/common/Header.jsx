@@ -179,31 +179,36 @@ const Header = () => {
         </div>
       </header>
 
-      {/* Mobile drawer — rendered OUTSIDE header to avoid backdrop-filter containing block */}
+      {/* Mobile drawer — rendered OUTSIDE header to avoid backdrop-filter containing block.
+          Wrapped in a clipping container so the off-canvas (closed) drawer can never
+          create horizontal scroll — even position:fixed children are clipped because the
+          wrapper is a transformed containing block. */}
       {showNav && (
         <>
-          <div className={`mobile-drawer ${mobileOpen ? 'is-open' : ''}`} aria-label="Mobile navigation">
-            <nav className="mobile-drawer-nav">
-              {navLinks.map(({ to, label, icon: Icon }) => (
-                <Link key={to} to={to} className={`mobile-nav-link ${isActive(to) ? 'active' : ''}`}>
-                  <Icon size={18} aria-hidden="true" />
-                  {label}
-                </Link>
-              ))}
-            </nav>
+          <div className="mobile-drawer-clip">
+            <div className={`mobile-drawer ${mobileOpen ? 'is-open' : ''}`} aria-label="Mobile navigation">
+              <nav className="mobile-drawer-nav">
+                {navLinks.map(({ to, label, icon: Icon }) => (
+                  <Link key={to} to={to} className={`mobile-nav-link ${isActive(to) ? 'active' : ''}`}>
+                    <Icon size={18} aria-hidden="true" />
+                    {label}
+                  </Link>
+                ))}
+              </nav>
 
-            <div className="mobile-drawer-footer">
-              <div className="mobile-user-info">
-                <span className="user-avatar">{initial}</span>
-                <div>
-                  <span className="mobile-user-name">{displayName}</span>
-                  <span className="mobile-user-email">{user?.email}</span>
+              <div className="mobile-drawer-footer">
+                <div className="mobile-user-info">
+                  <span className="user-avatar">{initial}</span>
+                  <div>
+                    <span className="mobile-user-name">{displayName}</span>
+                    <span className="mobile-user-email">{user?.email}</span>
+                  </div>
                 </div>
+                <button className="mobile-nav-link mobile-signout" onClick={handleSignOut}>
+                  <LogOut size={18} aria-hidden="true" />
+                  Sign out
+                </button>
               </div>
-              <button className="mobile-nav-link mobile-signout" onClick={handleSignOut}>
-                <LogOut size={18} aria-hidden="true" />
-                Sign out
-              </button>
             </div>
           </div>
 

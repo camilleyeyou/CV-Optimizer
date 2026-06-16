@@ -288,7 +288,16 @@
 @media (max-width: 640px) {
   .dashboard-header {
     flex-direction: column;
+    align-items: stretch;
     gap: 1rem;
+  }
+
+  /* Stack the action buttons full-width instead of forcing a 3-wide row
+     (which overflowed and clipped the "New Resume" button). */
+  .dashboard-header-actions {
+    flex-direction: column;
+    width: 100%;
+    gap: 0.5rem;
   }
 
   .dashboard-header .btn {

@@ -248,6 +248,26 @@
 /* ============================
    Mobile Drawer
    ============================ */
+/* Full-viewport clipping context for the off-canvas drawer. The `transform`
+   makes this the containing block for the drawer's `position: fixed`, so
+   `overflow: hidden` actually clips it when it's slid off-screen — preventing
+   horizontal scroll on mobile (esp. iOS Safari, where root overflow-x does not
+   reliably clip fixed elements). `pointer-events: none` lets touches reach the
+   page and overlay; the drawer itself re-enables them. */
+.mobile-drawer-clip {
+  display: none;
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  transform: translateZ(0);
+  z-index: 200;
+}
+
+.mobile-drawer-clip .mobile-drawer {
+  pointer-events: auto;
+}
+
 .mobile-drawer {
   position: fixed;
   top: var(--header-height);
@@ -397,6 +417,10 @@
 
   .header-user {
     display: none;
+  }
+
+  .mobile-drawer-clip {
+    display: block;
   }
 
   .mobile-drawer {
