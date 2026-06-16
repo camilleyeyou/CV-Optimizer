@@ -402,11 +402,10 @@
 /* ============================
    Responsive Breakpoints
    ============================ */
-@media (max-width: 768px) {
-  .header-inner {
-    padding: 0 var(--space-4);
-  }
-
+/* The full desktop nav (logo + 9 links + user menu) only fits at ~1200px+.
+   Below that it overflowed and the right links + user menu were clipped, so
+   collapse to the hamburger drawer for the whole tablet/small-laptop range. */
+@media (max-width: 1199px) {
   .header-mobile-toggle {
     display: flex;
   }
@@ -425,6 +424,12 @@
 
   .mobile-drawer {
     display: flex;
+  }
+}
+
+@media (max-width: 768px) {
+  .header-inner {
+    padding: 0 var(--space-4);
   }
 }
 

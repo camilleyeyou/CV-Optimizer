@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 
 const STORAGE_PREFIX = 'cv-opt-tour-';
 
@@ -6,8 +6,6 @@ const useTour = (tour) => {
   const [currentStep, setCurrentStep] = useState(null);
   const [targetRect, setTargetRect] = useState(null);
   const [isActive, setIsActive] = useState(false);
-  const originalStylesRef = useRef(null);
-  const prevTargetRef = useRef(null);
 
   const steps = tour?.steps || [];
   const storageKey = `${STORAGE_PREFIX}${tour?.id}-done`;
@@ -29,17 +27,12 @@ const useTour = (tour) => {
     }
   }, [storageKey]);
 
-  // Restore previous target's z-index
-  const restoreTarget = useCallback(() => {
-    if (prevTargetRef.current && originalStylesRef.current) {
-      const el = prevTargetRef.current;
-      el.style.position = originalStylesRef.current.position;
-      el.style.zIndex = originalStylesRef.current.zIndex;
-      el.style.pointerEvents = originalStylesRef.current.pointerEvents;
-      prevTargetRef.current = null;
-      originalStylesRef.current = null;
-    }
-  }, []);
+  // No-op kept for call-site compatibility. We intentionally do NOT mutate the
+  // target element's styles anymore — the SVG mask reveals it through the
+  // overlay's cutout, so it doesn't need elevating, and elevating it failed
+  // anyway whenever the target sat inside an ancestor stacking context
+  // (e.g. the header's backdrop-filter), leaving it stuck behind the overlay.
+  const restoreTarget = useCallback(() => {}, []);
 
   // Find next valid step (skip steps whose target doesn't exist or minWidth not met)
   const findValidStep = useCallback((startIdx, direction = 1) => {
@@ -68,24 +61,6 @@ const useTour = (tour) => {
       setTargetRect(null);
       return;
     }
-
-    // Restore previous target
-    restoreTarget();
-
-    // Save original styles and elevate
-    originalStylesRef.current = {
-      position: el.style.position,
-      zIndex: el.style.zIndex,
-      pointerEvents: el.style.pointerEvents,
-    };
-    prevTargetRef.current = el;
-
-    const computed = window.getComputedStyle(el);
-    if (computed.position === 'static') {
-      el.style.position = 'relative';
-    }
-    el.style.zIndex = '1001';
-    el.style.pointerEvents = 'auto';
 
     // Scroll into view if needed
     const rect = el.getBoundingClientRect();

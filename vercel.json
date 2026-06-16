@@ -3,7 +3,8 @@
   "outputDirectory": "client/build",
   "installCommand": "npm install && cd server && npm install && cd ../client && npm install",
   "rewrites": [
-    { "source": "/api/(.*)", "destination": "/api" }
+    { "source": "/api/(.*)", "destination": "/api" },
+    { "source": "/((?!api/).*)", "destination": "/index.html" }
   ],
   "functions": {
     "api/index.js": {
