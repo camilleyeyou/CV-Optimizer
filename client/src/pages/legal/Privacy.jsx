@@ -116,7 +116,7 @@ const Privacy = () => (
     <h2>11. Contact</h2>
     <p>
       {LEGAL.companyName}<br />
-      {LEGAL.contactAddress}<br />
+      {LEGAL.contactAddress && <>{LEGAL.contactAddress}<br /></>}
       <a href={`mailto:${LEGAL.supportEmail}`}>{LEGAL.supportEmail}</a>
     </p>
   </LegalLayout>

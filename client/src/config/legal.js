@@ -9,21 +9,23 @@
 import { SITE_URL } from './site';
 
 export const LEGAL = {
-  // Your legal/business name (e.g. "CV Optimizer LLC" or your sole-trader name).
+  // Your legal/business name. Using the product name while operating as an
+  // individual is fine; switch to a registered entity name if you form one.
   companyName: 'CV Optimizer',
 
   // The product/brand name shown to users.
   productName: 'CV Optimizer',
 
   // Support / privacy / legal contact inbox.
-  supportEmail: 'support@example.com',
+  supportEmail: 'ghislainyeyou@gmail.com',
 
-  // Mailing address (required by some app stores / payment processors / GDPR).
-  contactAddress: '[Your business mailing address]',
+  // Mailing address (optional — leave '' to omit it from the policies; add one
+  // if a payment processor or app store requires it).
+  contactAddress: '',
 
-  // Governing law / jurisdiction for the Terms (e.g. "the State of Delaware, USA"
-  // or "England and Wales").
-  governingLaw: '[your jurisdiction]',
+  // Governing law / jurisdiction for the Terms. Soft default for now — you can
+  // narrow this to a specific US state (e.g. "the State of Delaware, USA").
+  governingLaw: 'the United States',
 
   // Last-updated date shown on each policy. Update when you change the policies.
   effectiveDate: 'June 16, 2026',
