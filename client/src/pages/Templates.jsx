@@ -5,13 +5,12 @@ import { getCredits } from '../services/api';
 import { TEMPLATES } from '../config/templates';
 import TemplateThumbnail from '../components/builder/TemplateThumbnail';
 import { SAMPLE_RESUME } from '../components/builder/sampleResume';
-import { Check, ArrowRight, Lock, Crown } from 'lucide-react';
+import { ArrowRight, Lock, Crown } from 'lucide-react';
 import toast from 'react-hot-toast';
 import './TemplatesPage.css';
 
 const Templates = () => {
-  const [selected, setSelected] = useState('modern');
-  const [creating, setCreating] = useState(false);
+  const [creatingId, setCreatingId] = useState(null);
   const [plan, setPlan] = useState('free');
   const { createResume } = useResume();
   const navigate = useNavigate();
@@ -22,25 +21,25 @@ const Templates = () => {
 
   const isPremiumUser = plan === 'pro' || plan === 'premium';
 
-  const handleSelect = (template) => {
+  // A single click on a template starts building with it — no separate
+  // confirm button to miss.
+  const handleUse = async (template) => {
+    if (creatingId) return;
     if (template.premium && !isPremiumUser) {
       toast.error('Upgrade to Pro to unlock premium templates');
       return;
     }
-    setSelected(template.id);
-  };
-
-  const handleCreate = async () => {
-    setCreating(true);
+    setCreatingId(template.id);
     try {
-      const resume = await createResume(selected);
+      const resume = await createResume(template.id);
       if (resume?.id) {
         navigate(`/builder/${resume.id}`);
+      } else {
+        setCreatingId(null);
       }
     } catch (err) {
       toast.error('Failed to create resume. Please try again.');
-    } finally {
-      setCreating(false);
+      setCreatingId(null);
     }
   };
 
@@ -55,19 +54,28 @@ const Templates = () => {
         <div className="templates-grid animate-stagger">
           {TEMPLATES.map((template) => {
             const locked = template.premium && !isPremiumUser;
+            const isCreating = creatingId === template.id;
             return (
               <button
                 key={template.id}
-                className={`template-card ${selected === template.id ? 'is-selected' : ''} ${locked ? 'is-locked' : ''}`}
-                onClick={() => handleSelect(template)}
+                className={`template-card ${locked ? 'is-locked' : ''} ${isCreating ? 'is-creating' : ''}`}
+                onClick={() => handleUse(template)}
+                disabled={!!creatingId}
+                aria-label={locked ? `${template.name} (Pro)` : `Use the ${template.name} template`}
               >
                 {/* Real, scaled-down preview of the template */}
                 <div className="template-preview" style={{ borderTopColor: template.accent }}>
                   <TemplateThumbnail templateId={template.id} data={SAMPLE_RESUME} height={230} />
 
-                  {selected === template.id && !locked && (
-                    <div className="template-check">
-                      <Check size={16} />
+                  {!locked && (
+                    <div className="template-use-overlay">
+                      {isCreating ? (
+                        <span className="spinner" />
+                      ) : (
+                        <span className="template-use-pill">
+                          Use this template <ArrowRight size={15} />
+                        </span>
+                      )}
                     </div>
                   )}
 
@@ -92,20 +100,9 @@ const Templates = () => {
         </div>
 
         <div className="templates-action">
-          <button
-            className="btn btn-primary btn-lg"
-            onClick={handleCreate}
-            disabled={creating}
-          >
-            {creating ? (
-              <span className="spinner" />
-            ) : (
-              <>
-                Use this template
-                <ArrowRight size={16} />
-              </>
-            )}
-          </button>
+          <p className="templates-hint">
+            Click any template to start building — you can switch anytime.
+          </p>
         </div>
       </div>
     </div>

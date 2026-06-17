@@ -4,26 +4,30 @@ export const tours = {
     steps: [
       {
         target: '[data-tour="dashboard-welcome"]',
-        title: 'Welcome to CV Optimizer!',
-        content: 'This is your home base. All your resumes live here — let\'s take a quick tour.',
+        title: 'Welcome to CV Optimizer 👋',
+        content:
+          "Whatever your field — nursing, teaching, sales, trades, design, engineering — we'll help you build a resume that gets noticed. Here's a quick 30-second tour.",
         placement: 'bottom',
       },
       {
         target: '[data-tour="dashboard-create"]',
-        title: 'Create a Resume',
-        content: 'Start from scratch by picking a template. We have free and premium designs.',
+        title: 'Create your resume',
+        content:
+          'Pick a professional template and fill in your details — we guide you step by step. No design or writing skills needed.',
         placement: 'bottom',
       },
       {
         target: '[data-tour="dashboard-import"]',
-        title: 'Import Existing Resume',
-        content: 'Already have a resume? Upload a PDF and we\'ll auto-fill everything for you.',
+        title: 'Already have a resume?',
+        content:
+          "Upload your existing PDF and we'll fill everything in automatically. Then you just polish it.",
         placement: 'bottom',
       },
       {
         target: '[data-tour="dashboard-nav"]',
-        title: 'Explore More Tools',
-        content: 'Check your ATS score, create with AI, track applications, prep for interviews, and more — all from the nav bar.',
+        title: 'Your full toolkit',
+        content:
+          'Check your resume score, write cover letters and emails, track your job applications, and practice for interviews — all from this menu.',
         placement: 'bottom',
       },
     ],
@@ -33,39 +37,45 @@ export const tours = {
     steps: [
       {
         target: '[data-tour="builder-form"]',
-        title: 'Resume Editor',
-        content: 'Fill in your details section by section. Everything saves automatically as you type.',
+        title: 'Your editor',
+        content:
+          'Add your details section by section. Everything saves automatically — there\'s no save button to worry about.',
         placement: 'right',
       },
       {
         target: '[data-tour="builder-preview"]',
-        title: 'Live Preview',
-        content: 'Watch your resume update in real time. This is exactly how your PDF will look.',
+        title: 'Live preview',
+        content:
+          'Your resume updates as you type. What you see here is exactly what your download will look like.',
         placement: 'left',
         minWidth: 769,
       },
       {
         target: '[data-tour="builder-ats"]',
-        title: 'ATS Score Checker',
-        content: 'Paste a job description to instantly see how well your resume matches — and what keywords you\'re missing.',
+        title: 'Beat the resume screeners',
+        content:
+          "Most employers use software (called an “ATS”) to filter resumes before a person ever reads them. Paste a job post here to see your match score and the keywords to add.",
         placement: 'right',
       },
       {
         target: '[data-tour="builder-tailor"]',
-        title: 'AI Tailor',
-        content: 'Let AI rewrite your resume to perfectly match any job posting. Review changes before applying.',
+        title: 'Tailor it to any job',
+        content:
+          'Let AI rewrite your resume to match a specific job posting. You review every change before it’s applied.',
         placement: 'bottom',
       },
       {
         target: '[data-tour="builder-translate"]',
-        title: 'Translate',
-        content: 'Instantly translate your resume into 23+ languages while keeping names and companies intact.',
+        title: 'Work in any language',
+        content:
+          'Translate your whole resume into 20+ languages in one click, keeping names and companies intact.',
         placement: 'bottom',
       },
       {
         target: '[data-tour="builder-export"]',
-        title: 'Export Your Resume',
-        content: 'Download as a polished PDF or DOCX when you\'re ready. That\'s it — you\'re all set!',
+        title: 'Download & apply',
+        content:
+          "When you're happy, download a polished PDF or Word file — ready to send to employers. That's it!",
         placement: 'bottom-end',
       },
     ],

@@ -140,10 +140,10 @@ const AICreator = () => {
               rows={12}
               value={jobDescription}
               onChange={(e) => setJobDescription(e.target.value)}
-              placeholder="Paste the full job description here...
+              placeholder="Paste the full job description here — any role, any industry.
 
 Example:
-We are looking for a Senior Software Engineer to join our team. You will be responsible for designing and building scalable microservices, mentoring junior developers, and collaborating with product managers to deliver features that serve millions of users..."
+We're hiring a Customer Success Manager to onboard new clients, build lasting relationships, and drive product adoption. You'll partner with sales and support, run training sessions, and help customers reach their goals..."
             />
             <div className="ai-step-actions">
               <button

@@ -229,7 +229,7 @@ const ATSChecker = () => {
                 className="form-input"
                 value={jobTitle}
                 onChange={(e) => setJobTitle(e.target.value)}
-                placeholder="e.g. Senior Software Engineer"
+                placeholder="e.g. Registered Nurse, Project Manager"
               />
             </div>
 

@@ -550,19 +550,44 @@ Respond with ONLY valid JSON in this exact format:
   "education": [
     {
       "degree": "Degree Name",
-      "school": "School Name",
+      "field_of_study": "Field of study if stated",
+      "institution": "School / University name",
       "location": "City, State",
       "start_date": "YYYY",
       "end_date": "YYYY",
-      "description": ""
+      "gpa": "GPA if stated, else empty string"
     }
   ],
   "skills": ["skill1", "skill2", "skill3"],
-  "projects": [],
-  "certifications": [],
-  "languages": []
+  "projects": [
+    {
+      "name": "Project name",
+      "description": "What it does / your role",
+      "url": "Project or GitHub URL exactly as in the resume, else empty string",
+      "technologies": "Tech or tools used, else empty string"
+    }
+  ],
+  "certifications": [
+    {
+      "name": "Certification name",
+      "issuer": "Issuing organization",
+      "date": "YYYY-MM if stated, else empty string"
+    }
+  ],
+  "languages": [
+    {
+      "name": "Language",
+      "proficiency": "e.g. Native, Fluent, Professional, Conversational"
+    }
+  ]
 }
 
+CRITICAL — PRESERVE ALL DATA:
+- Extract and include EVERY project, certification, and language found in the original resume. Never drop these sections if they exist.
+- Copy project and personal URLs (GitHub, portfolio, LinkedIn, project links) EXACTLY as written — do not omit, shorten, or invent them.
+- Keep all certifications (with issuer and date) and all languages (with proficiency).
+- Use the original institution/school name for education.
+- If a section genuinely has no data in the original, return it as an empty array.
 Extract and optimize ALL information from the original resume. Fill in every field you can from the source text.`;
 
     const response = await this.client.chat.completions.create({

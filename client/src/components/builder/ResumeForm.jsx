@@ -303,7 +303,7 @@ const ResumeForm = () => {
                   </div>
                   <div className="form-group">
                     <label className="form-label">Job Title</label>
-                    <input className="form-input" value={resumeData.personal_info?.job_title || ''} onChange={(e) => updatePersonal('job_title', e.target.value)} placeholder="Software Engineer" />
+                    <input className="form-input" value={resumeData.personal_info?.job_title || ''} onChange={(e) => updatePersonal('job_title', e.target.value)} placeholder="Marketing Manager" />
                   </div>
                   <div className="form-row">
                     <div className="form-group">
@@ -346,7 +346,7 @@ const ResumeForm = () => {
                         {aiLoading.summary ? <><Loader size={12} className="spin" /> Generating...</> : <><Sparkles size={12} /> AI Write</>}
                       </button>
                     </div>
-                    <textarea className="form-textarea" rows={4} value={resumeData.summary || ''} onChange={(e) => updateSummary(e.target.value)} placeholder="Experienced software engineer with 5+ years building scalable web applications..." />
+                    <textarea className="form-textarea" rows={4} value={resumeData.summary || ''} onChange={(e) => updateSummary(e.target.value)} placeholder="Results-driven professional with 5+ years of experience delivering measurable results and leading teams..." />
                     <span className="form-hint">{(resumeData.summary || '').length}/500 characters</span>
                   </div>
                 </div>
@@ -364,7 +364,7 @@ const ResumeForm = () => {
                       <div className="form-row">
                         <div className="form-group">
                           <label className="form-label">Position</label>
-                          <input className="form-input" value={exp.position || ''} onChange={(e) => updateExperience(i, 'position', e.target.value)} placeholder="Software Engineer" />
+                          <input className="form-input" value={exp.position || ''} onChange={(e) => updateExperience(i, 'position', e.target.value)} placeholder="Marketing Manager" />
                         </div>
                         <div className="form-group">
                           <label className="form-label">Company</label>
@@ -403,7 +403,7 @@ const ResumeForm = () => {
                         {(exp.description || []).map((bullet, bi) => (
                           <div key={bi} className="bullet-row">
                             <span className="bullet-dot" />
-                            <input className="form-input" value={bullet} onChange={(e) => updateBullet(i, bi, e.target.value)} placeholder="Led a team of 5 engineers to deliver..." />
+                            <input className="form-input" value={bullet} onChange={(e) => updateBullet(i, bi, e.target.value)} placeholder="Led a team of 5 to deliver a 20% increase in..." />
                             <button className="btn btn-ghost btn-icon btn-sm" onClick={() => removeBullet(i, bi)}><Trash2 size={12} /></button>
                           </div>
                         ))}
@@ -427,17 +427,17 @@ const ResumeForm = () => {
                       <div className="form-row">
                         <div className="form-group">
                           <label className="form-label">Institution</label>
-                          <input className="form-input" value={edu.institution || ''} onChange={(e) => updateEducation(i, 'institution', e.target.value)} placeholder="MIT" />
+                          <input className="form-input" value={edu.institution || ''} onChange={(e) => updateEducation(i, 'institution', e.target.value)} placeholder="University of Michigan" />
                         </div>
                         <div className="form-group">
                           <label className="form-label">Degree</label>
-                          <input className="form-input" value={edu.degree || ''} onChange={(e) => updateEducation(i, 'degree', e.target.value)} placeholder="B.S. Computer Science" />
+                          <input className="form-input" value={edu.degree || ''} onChange={(e) => updateEducation(i, 'degree', e.target.value)} placeholder="B.A. Business Administration" />
                         </div>
                       </div>
                       <div className="form-row">
                         <div className="form-group">
                           <label className="form-label">Field of Study</label>
-                          <input className="form-input" value={edu.field_of_study || ''} onChange={(e) => updateEducation(i, 'field_of_study', e.target.value)} placeholder="Computer Science" />
+                          <input className="form-input" value={edu.field_of_study || ''} onChange={(e) => updateEducation(i, 'field_of_study', e.target.value)} placeholder="Business Administration" />
                         </div>
                         <div className="form-group">
                           <label className="form-label">GPA</label>
@@ -466,7 +466,7 @@ const ResumeForm = () => {
                   <div className="skills-grid">
                     {(resumeData.skills || []).map((skill, i) => (
                       <div key={i} className="skill-tag-input">
-                        <input className="form-input" value={skill} onChange={(e) => updateSkill(i, e.target.value)} placeholder="React, Python, etc." />
+                        <input className="form-input" value={skill} onChange={(e) => updateSkill(i, e.target.value)} placeholder="Communication, Leadership, etc." />
                         <button className="btn btn-ghost btn-icon btn-sm" onClick={() => removeSkill(i)}><Trash2 size={12} /></button>
                       </div>
                     ))}
@@ -499,12 +499,12 @@ const ResumeForm = () => {
                       </div>
                       <div className="form-group">
                         <label className="form-label">Description</label>
-                        <textarea className="form-textarea" rows={2} value={proj.description || ''} onChange={(e) => updateProject(i, 'description', e.target.value)} placeholder="Built a full-stack application that..." />
+                        <textarea className="form-textarea" rows={2} value={proj.description || ''} onChange={(e) => updateProject(i, 'description', e.target.value)} placeholder="Led an initiative that delivered..." />
                       </div>
                       <div className="form-row">
                         <div className="form-group">
                           <label className="form-label">Technologies</label>
-                          <input className="form-input" value={proj.technologies || ''} onChange={(e) => updateProject(i, 'technologies', e.target.value)} placeholder="React, Node.js, PostgreSQL" />
+                          <input className="form-input" value={proj.technologies || ''} onChange={(e) => updateProject(i, 'technologies', e.target.value)} placeholder="Tools, methods, or skills used" />
                         </div>
                         <div className="form-group">
                           <label className="form-label">URL</label>
@@ -529,11 +529,11 @@ const ResumeForm = () => {
                       <div className="form-row">
                         <div className="form-group">
                           <label className="form-label">Name</label>
-                          <input className="form-input" value={cert.name || ''} onChange={(e) => updateCertification(i, 'name', e.target.value)} placeholder="AWS Solutions Architect" />
+                          <input className="form-input" value={cert.name || ''} onChange={(e) => updateCertification(i, 'name', e.target.value)} placeholder="Project Management Professional (PMP)" />
                         </div>
                         <div className="form-group">
                           <label className="form-label">Issuer</label>
-                          <input className="form-input" value={cert.issuer || ''} onChange={(e) => updateCertification(i, 'issuer', e.target.value)} placeholder="Amazon Web Services" />
+                          <input className="form-input" value={cert.issuer || ''} onChange={(e) => updateCertification(i, 'issuer', e.target.value)} placeholder="Issuing organization" />
                         </div>
                       </div>
                       <div className="form-row">

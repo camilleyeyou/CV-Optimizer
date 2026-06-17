@@ -208,7 +208,7 @@ const LandingPage = () => {
                 className="form-input"
                 value={atsJobTitle}
                 onChange={(e) => setAtsJobTitle(e.target.value)}
-                placeholder="e.g. Software Engineer"
+                placeholder="e.g. Marketing Manager"
               />
             </div>
             <div className="form-group" style={{ marginBottom: 0 }}>
