@@ -260,7 +260,10 @@ Rules:
 - Placeholders should show example answers relevant to the job`,
         },
       ],
-      max_completion_tokens: 800,
+      // Needs headroom: 6-8 questions with placeholders is a large JSON object.
+      // Too small a budget truncates the response into invalid JSON (a 500 in
+      // production where the model is more verbose than a terse local one).
+      max_completion_tokens: 2500,
       temperature: 0.5,
     });
 
@@ -372,7 +375,9 @@ Return JSON with a "questions" array:
 Mix of types: 3 behavioral, 3 technical, 2 situational. Tailor to the specific job and candidate background.`,
         },
       ],
-      max_completion_tokens: 1200,
+      // 8 questions with tips is a large JSON array — headroom prevents
+      // truncation that would otherwise yield an empty question set.
+      max_completion_tokens: 2500,
       temperature: 0.6,
     });
 
