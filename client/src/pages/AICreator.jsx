@@ -36,7 +36,8 @@ const AICreator = () => {
       setQuestions(data.questions || []);
       setStep('questions');
     } catch (err) {
-      toast.error('Failed to analyze job description. Please try again.');
+      const msg = err.response?.data?.error || 'Failed to analyze job description. Please try again.';
+      toast.error(msg);
     } finally {
       setLoading(false);
     }
