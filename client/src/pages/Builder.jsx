@@ -57,16 +57,34 @@ const Builder = () => {
         ? await generateDOCX(resumeData, template)
         : await generatePDF(resumeData, template);
       const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
       const firstName = resumeData.personal_info?.first_name || 'Resume';
       const lastName = resumeData.personal_info?.last_name || '';
-      a.download = `${firstName}${lastName ? '_' + lastName : ''}_Resume.${format}`;
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      window.URL.revokeObjectURL(url);
-      toast.success(`${format.toUpperCase()} downloaded`);
+      const filename = `${firstName}${lastName ? '_' + lastName : ''}_Resume.${format}`;
+
+      // iOS Safari ignores the anchor `download` attribute for blob URLs, so a
+      // normal "download" silently does nothing. Open the file instead so the
+      // user can save/share it through the native viewer.
+      const isIOS =
+        /iP(hone|ad|od)/.test(navigator.userAgent) ||
+        (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+
+      if (isIOS) {
+        const win = window.open(url, '_blank');
+        if (!win) window.location.href = url; // popup blocked — last resort
+        toast.success(`${format.toUpperCase()} ready — tap share to save`);
+      } else {
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        toast.success(`${format.toUpperCase()} downloaded`);
+      }
+
+      // Revoke after a delay — revoking immediately can abort the transfer on
+      // some mobile browsers that read the blob asynchronously.
+      setTimeout(() => window.URL.revokeObjectURL(url), 10000);
     } catch (err) {
       toast.error(err.serverError || `Failed to export ${format.toUpperCase()}. Please try again.`);
     } finally {

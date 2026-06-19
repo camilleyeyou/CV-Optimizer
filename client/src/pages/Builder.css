@@ -3,6 +3,7 @@
   display: flex;
   flex-direction: column;
   height: calc(100vh - var(--header-height));
+  height: calc(100dvh - var(--header-height));
   overflow: hidden;
 }
 
@@ -243,74 +244,76 @@
   font-weight: 600;
 }
 
-/* Floating preview toggle (mobile) */
-.builder-preview-fab {
-  display: none;
-  position: fixed;
-  bottom: var(--space-6);
-  right: var(--space-6);
-  z-index: 50;
-  width: 48px;
-  height: 48px;
-  border-radius: var(--radius-full);
-  background: linear-gradient(135deg, #818cf8, #c084fc);
-  color: white;
-  box-shadow: 0 4px 20px rgba(129, 140, 248, 0.4);
-  align-items: center;
-  justify-content: center;
-  border: none;
-  cursor: pointer;
-  transition: transform var(--transition-fast);
-}
-
-.builder-preview-fab:active {
-  transform: scale(0.95);
-}
-
-/* Mobile */
+/* Mobile — the split pane collapses to a single column that the page scrolls
+   naturally. Edit/Preview are toggled by hiding the inactive panel (mobile-hidden),
+   so neither is ever positioned off-screen. */
 @media (max-width: 768px) {
-  .builder-layout {
-    grid-template-columns: 1fr;
-    position: relative;
+  /* Let the page grow and scroll instead of trapping content in a fixed-height,
+     overflow:hidden box (which previously clipped the toolbar's export buttons). */
+  .builder {
+    height: auto;
+    min-height: calc(100dvh - var(--header-height));
+    overflow: visible;
   }
 
-  .builder-layout .builder-preview-panel {
-    position: fixed;
-    inset: var(--header-height) 0 0 0;
-    z-index: 40;
-    background: rgba(8, 8, 10, 0.98);
-    transform: translateY(100%);
-    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    border-left: none;
+  /* Toolbar stacks: title row, then a full-width Edit/Preview toggle, then the
+     action buttons wrapping into a 2-up grid so PDF/DOCX are always reachable. */
+  .builder-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--space-2);
+    padding: var(--space-3) var(--space-4);
+    position: sticky;
+    top: var(--header-height);
+    z-index: 30;
   }
 
-  .builder-layout .builder-preview-panel.mobile-visible {
-    transform: translateY(0);
+  .toolbar-left {
+    justify-content: space-between;
   }
 
-  .mobile-hidden {
-    display: none;
+  .toolbar-actions {
+    width: 100%;
+    flex-wrap: wrap;
+    gap: var(--space-2);
   }
 
   .toolbar-mobile-toggle {
     display: flex;
-    gap: var(--space-1);
+    flex: 1 1 100%;
+    gap: var(--space-2);
+  }
+
+  .toolbar-mobile-toggle .btn {
+    flex: 1;
+  }
+
+  /* Action buttons (Tailor / Translate / DOCX / PDF) share two columns. */
+  .toolbar-actions > .btn {
+    flex: 1 1 calc(50% - var(--space-2));
   }
 
   .desktop-only {
     display: none;
   }
 
+  /* Single-column flow; both panels are normal blocks and the page scrolls. */
+  .builder-layout {
+    display: block;
+    overflow: visible;
+  }
+
   .builder-form-panel,
   .builder-preview-panel {
+    overflow: visible;
     padding: var(--space-4);
   }
 
-  .builder-toolbar {
-    padding: var(--space-3) var(--space-4);
+  .builder-preview-panel {
+    border-left: none;
   }
 
-  .builder-preview-fab {
-    display: flex;
+  .mobile-hidden {
+    display: none;
   }
 }

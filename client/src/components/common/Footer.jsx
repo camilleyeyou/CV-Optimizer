@@ -1,4 +1,4 @@
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { FileText } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { LEGAL } from '../../config/legal';
@@ -6,6 +6,11 @@ import './Footer.css';
 
 const Footer = () => {
   const { isAuthenticated } = useAuth();
+  const location = useLocation();
+
+  // The Builder is a full-height editor workspace; a marketing footer below it
+  // just creates an awkward dead zone (and used to sit mid-screen on mobile).
+  if (location.pathname.startsWith('/builder')) return null;
 
   return (
     <footer className="footer">

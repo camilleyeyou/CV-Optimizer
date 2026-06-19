@@ -133,6 +133,9 @@ html {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
+  /* Stop iOS from inflating text in landscape and from zooming the layout. */
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
 }
 
 body {
@@ -199,6 +202,17 @@ button:disabled {
 input, textarea, select {
   font-family: inherit;
   font-size: inherit;
+}
+
+/* Mobile: iOS zooms the page whenever a focused field's font-size is < 16px.
+   Force at least 16px on touch-sized screens so tapping into any field never
+   triggers that jarring auto-zoom. */
+@media (max-width: 768px) {
+  input:not([type="checkbox"]):not([type="radio"]),
+  textarea,
+  select {
+    font-size: 16px;
+  }
 }
 
 img {
