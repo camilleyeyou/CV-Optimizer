@@ -20,12 +20,15 @@ const Templates = () => {
   }, []);
 
   const isPremiumUser = plan === 'pro' || plan === 'premium';
+  // Paywall is opt-in and stays off until billing is live (mirrors the server's
+  // TEMPLATE_PAYWALL_ENABLED). When off, every template is selectable.
+  const paywallEnabled = import.meta.env.VITE_TEMPLATE_PAYWALL_ENABLED === 'true';
 
   // A single click on a template starts building with it — no separate
   // confirm button to miss.
   const handleUse = async (template) => {
     if (creatingId) return;
-    if (template.premium && !isPremiumUser) {
+    if (paywallEnabled && template.premium && !isPremiumUser) {
       toast.error('Upgrade to Pro to unlock premium templates');
       return;
     }
@@ -53,7 +56,7 @@ const Templates = () => {
 
         <div className="templates-grid animate-stagger">
           {TEMPLATES.map((template) => {
-            const locked = template.premium && !isPremiumUser;
+            const locked = paywallEnabled && template.premium && !isPremiumUser;
             const isCreating = creatingId === template.id;
             return (
               <button

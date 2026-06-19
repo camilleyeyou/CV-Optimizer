@@ -43,13 +43,30 @@ export const suggestSkills = (resumeData, jobDescription) =>
 export const tailorResume = (resumeData, jobDescription) =>
   api.post('/api/ai/tailor', { resumeData, jobDescription }).then((r) => r.data);
 
+// When a request uses responseType 'blob', an error response body also arrives
+// as a Blob — so err.response.data.error is unreadable. Decode it and attach a
+// human-readable message so callers can show the real reason (e.g. a 403).
+const blobRequest = (promise) =>
+  promise.then((r) => r.data).catch(async (err) => {
+    const data = err.response?.data;
+    if (data instanceof Blob) {
+      try {
+        const json = JSON.parse(await data.text());
+        if (json?.error) err.serverError = json.error;
+      } catch {
+        // non-JSON body — leave the generic error
+      }
+    }
+    throw err;
+  });
+
 // PDF generation
 export const generatePDF = (resumeData, template) =>
-  api.post('/api/pdf/generate', { resumeData, template }, { responseType: 'blob' }).then((r) => r.data);
+  blobRequest(api.post('/api/pdf/generate', { resumeData, template }, { responseType: 'blob' }));
 
 // DOCX generation
 export const generateDOCX = (resumeData, template) =>
-  api.post('/api/pdf/generate-docx', { resumeData, template }, { responseType: 'blob' }).then((r) => r.data);
+  blobRequest(api.post('/api/pdf/generate-docx', { resumeData, template }, { responseType: 'blob' }));
 
 // ATS quick score
 export const quickATSScore = (resumeData, jobTitle, jobDescription) =>

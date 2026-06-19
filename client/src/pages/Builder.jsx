@@ -68,7 +68,7 @@ const Builder = () => {
       window.URL.revokeObjectURL(url);
       toast.success(`${format.toUpperCase()} downloaded`);
     } catch (err) {
-      toast.error(`Failed to export ${format.toUpperCase()}. Please try again.`);
+      toast.error(err.serverError || `Failed to export ${format.toUpperCase()}. Please try again.`);
     } finally {
       setExporting(null);
     }
