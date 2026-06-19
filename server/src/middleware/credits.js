@@ -42,9 +42,11 @@ const requireCredits = async (req, res, next) => {
     if (profile.is_student && profile.student_expires_at) {
       const expiresAt = new Date(profile.student_expires_at);
       if (expiresAt < new Date()) {
-        if (profile.stripe_subscription_id) {
-          // Student promo lapsed but the user is now a paying subscriber —
-          // only clear the student flag; never touch their paid plan/credits.
+        if (profile.stripe_subscription_id || profile.plan === 'premium') {
+          // Student promo lapsed but the user has a real paid plan (Stripe sub,
+          // or an explicit 'premium' the student program never grants — e.g. a
+          // manual DB upgrade). Only clear the student flag; never touch their
+          // paid plan/credits.
           await supabase
             .from('user_profiles')
             .update({ is_student: false })
