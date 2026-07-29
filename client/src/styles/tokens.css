@@ -1,0 +1,313 @@
+/* ============================================================================
+   CV Optimizer — Design Tokens
+   ----------------------------------------------------------------------------
+   Single source of truth. Every colour, size, radius, shadow and timing in the
+   app resolves to a variable declared here. Components must never hard-code a
+   hex value; if a value is missing, add it here first.
+
+   Palette is validated against WCAG AA — every text tone clears 4.5:1 on every
+   surface it is permitted to sit on, and every focus/border tone clears 3:1.
+
+   Note: the résumé preview and the exported templates deliberately do NOT
+   inherit this file. They render dark ink on white paper because they are
+   product *output*, not app chrome. See preview.css and the --tpl-* variables.
+   ========================================================================= */
+
+/* --- Typefaces (self-hosted; no third-party CDN on the critical path) ----- */
+
+@font-face {
+  font-family: 'Satoshi';
+  src: url('/fonts/Satoshi-Variable.woff2') format('woff2-variations');
+  font-weight: 300 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'InterVar';
+  src: url('/fonts/Inter-latin.woff2') format('woff2-variations');
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA,
+    U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193,
+    U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+@font-face {
+  font-family: 'InterVar';
+  src: url('/fonts/Inter-latin-ext.woff2') format('woff2-variations');
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF,
+    U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020,
+    U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+
+:root {
+  /* ==========================================================================
+     1. COLOUR — RAW RAMPS
+     Raw ramps are the vocabulary. Semantic tokens (section 2) are the grammar.
+     Components consume semantic tokens, never raw ramps.
+     ====================================================================== */
+
+  /* Neutral — near-black through white, with a faint cool cast so the UI reads
+     as engineered rather than sepia. */
+  --n-0:   #ffffff;
+  --n-25:  #f5f6f8;
+  --n-50:  #e8eaef;
+  --n-100: #d3d7df;
+  --n-200: #b6bcc8;
+  --n-300: #8b92a1;
+  --n-400: #5c6373;
+  --n-500: #3f4550;
+  --n-600: #2c3038;
+  --n-700: #1f2229;
+  --n-800: #1a1c22;
+  --n-850: #131519;
+  --n-900: #0d0e13;
+  --n-950: #0a0b0f;
+  --n-1000:#08090c;
+
+  /* Accent — indigo-violet. One colour, used sparingly, earns its attention. */
+  --a-200: #d3d8ff;
+  --a-300: #a5b0ff;
+  --a-400: #818cf8;
+  --a-500: #5b5bd6;
+  --a-600: #4a48c0;
+  --a-700: #3a37a0;
+
+  /* Semantics */
+  --ok-300:   #4ade80;
+  --ok-500:   #16a34a;
+  --warn-300: #fbbf24;
+  --warn-500: #d97706;
+  --err-300:  #fb7185;
+  --err-500:  #e11d48;
+  --info-300: #7dd3fc;
+  --info-500: #0284c7;
+
+  /* ==========================================================================
+     2. COLOUR — SEMANTIC
+     ====================================================================== */
+
+  /* Surfaces, in ascending elevation. Each step is a real colour, not an alpha
+     wash, so nested surfaces never mud together. */
+  --surface-canvas:  var(--n-1000);  /* page background            */
+  --surface-inset:   var(--n-950);   /* wells, inputs, code blocks */
+  --surface-base:    var(--n-900);   /* page-level panels          */
+  --surface-raised:  var(--n-850);   /* cards                      */
+  --surface-overlay: var(--n-800);   /* modals, popovers, dropdown */
+  --surface-hover:   rgba(255, 255, 255, 0.04);
+  --surface-active:  rgba(255, 255, 255, 0.07);
+
+  /* Text */
+  --text-primary:   var(--n-25);   /* headings, key values     */
+  --text-secondary: var(--n-200);  /* body copy                */
+  --text-tertiary:  var(--n-300);  /* captions, helper text    */
+  --text-disabled:  var(--n-400);  /* disabled only, never body */
+  --text-inverse:   var(--n-950);  /* on light/solid fills     */
+  --text-accent:    var(--a-300);
+
+  /* Borders — hairlines. `strong` is the 3:1 tier for interactive outlines. */
+  --border-subtle: rgba(255, 255, 255, 0.06);
+  --border-default: rgba(255, 255, 255, 0.10);
+  --border-strong: rgba(255, 255, 255, 0.18);
+  --border-accent: var(--a-400);
+
+  /* Semantic foreground / tint / edge triplets */
+  --success-fg: var(--ok-300);
+  --success-bg: rgba(74, 222, 128, 0.10);
+  --success-border: rgba(74, 222, 128, 0.28);
+
+  --warning-fg: var(--warn-300);
+  --warning-bg: rgba(251, 191, 36, 0.10);
+  --warning-border: rgba(251, 191, 36, 0.28);
+
+  --error-fg: var(--err-300);
+  --error-bg: rgba(251, 113, 133, 0.10);
+  --error-border: rgba(251, 113, 133, 0.28);
+
+  --info-fg: var(--info-300);
+  --info-bg: rgba(125, 211, 252, 0.10);
+  --info-border: rgba(125, 211, 252, 0.28);
+
+  --accent-fg: var(--a-300);
+  --accent-bg: rgba(129, 140, 248, 0.10);
+  --accent-border: rgba(129, 140, 248, 0.30);
+  --accent-solid: var(--a-500);
+  --accent-solid-hover: var(--a-400);
+
+  /* Brand gradient — reserved for hero/marketing accents, never body text */
+  --gradient-brand: linear-gradient(135deg, var(--a-400) 0%, #c084fc 100%);
+  --gradient-surface: linear-gradient(180deg, rgba(255, 255, 255, 0.03) 0%, rgba(255, 255, 255, 0) 100%);
+
+  /* ==========================================================================
+     3. TYPOGRAPHY
+     ====================================================================== */
+
+  --font-display: 'Satoshi', 'InterVar', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-sans: 'InterVar', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  --font-mono: ui-monospace, 'SF Mono', SFMono-Regular, 'Cascadia Mono', Menlo, Consolas, monospace;
+
+  /* Scale — 16px base. Display sizes are fluid so the landing page holds up
+     from a 360px phone to a widescreen without breakpoint-juggling. */
+  --text-2xs:  0.75rem;    /* 12 */
+  --text-xs:   0.8125rem;  /* 13 */
+  --text-sm:   0.875rem;   /* 14 */
+  --text-base: 1rem;       /* 16 */
+  --text-md:   1.0625rem;  /* 17 */
+  --text-lg:   1.1875rem;  /* 19 */
+  --text-xl:   1.375rem;   /* 22 */
+  --text-2xl:  1.625rem;   /* 26 */
+  --text-3xl:  2rem;       /* 32 */
+
+  --display-sm: clamp(1.75rem, 1.35rem + 1.7vw, 2.25rem);
+  --display-md: clamp(2.125rem, 1.55rem + 2.5vw, 3rem);
+  --display-lg: clamp(2.5rem, 1.6rem + 3.9vw, 3.875rem);
+  --display-xl: clamp(2.875rem, 1.6rem + 5.4vw, 4.75rem);
+
+  /* Weights — Satoshi carries 500–900; Inter carries 400–700 */
+  --weight-normal: 400;
+  --weight-medium: 500;
+  --weight-semibold: 600;
+  --weight-bold: 700;
+  --weight-black: 900;
+
+  /* Tracking — display type gets progressively tighter as it grows */
+  --tracking-display: -0.035em;
+  --tracking-heading: -0.021em;
+  --tracking-tight: -0.011em;
+  --tracking-normal: 0;
+  --tracking-wide: 0.02em;
+  --tracking-caps: 0.08em;
+
+  /* Leading */
+  --leading-none: 1;
+  --leading-display: 1.06;
+  --leading-heading: 1.2;
+  --leading-snug: 1.4;
+  --leading-body: 1.65;
+  --leading-relaxed: 1.75;
+
+  /* Measure — keeps prose inside a readable 65–75ch */
+  --measure: 68ch;
+  --measure-narrow: 52ch;
+
+  /* ==========================================================================
+     4. SPACING — 4px base
+     ====================================================================== */
+
+  --space-0:  0;
+  --space-1:  0.25rem;  /*  4 */
+  --space-2:  0.5rem;   /*  8 */
+  --space-3:  0.75rem;  /* 12 */
+  --space-4:  1rem;     /* 16 */
+  --space-5:  1.25rem;  /* 20 */
+  --space-6:  1.5rem;   /* 24 */
+  --space-7:  1.75rem;  /* 28 */
+  --space-8:  2rem;     /* 32 */
+  --space-10: 2.5rem;   /* 40 */
+  --space-12: 3rem;     /* 48 */
+  --space-14: 3.5rem;   /* 56 */
+  --space-16: 4rem;     /* 64 */
+  --space-20: 5rem;     /* 80 */
+  --space-24: 6rem;     /* 96 */
+  --space-32: 8rem;     /* 128 */
+
+  /* Vertical rhythm for marketing sections */
+  --section-y: clamp(4rem, 2.5rem + 6vw, 7.5rem);
+
+  /* ==========================================================================
+     5. RADIUS
+     ====================================================================== */
+
+  --radius-xs:   4px;
+  --radius-sm:   6px;
+  --radius-md:   8px;
+  --radius-lg:   10px;
+  --radius-xl:   14px;
+  --radius-2xl:  18px;
+  --radius-3xl:  24px;
+  --radius-full: 9999px;
+
+  /* ==========================================================================
+     6. ELEVATION
+     On a dark canvas a drop shadow alone reads as dirt. Every raised surface
+     pairs a shadow with a 1px inset top highlight — that hairline is what makes
+     the surface look lit from above rather than pasted on.
+     ====================================================================== */
+
+  --highlight-top: inset 0 1px 0 0 rgba(255, 255, 255, 0.055);
+
+  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.45), 0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.45), 0 2px 4px rgba(0, 0, 0, 0.3);
+  --shadow-lg: 0 12px 32px rgba(0, 0, 0, 0.5), 0 4px 8px rgba(0, 0, 0, 0.3);
+  --shadow-xl: 0 24px 60px rgba(0, 0, 0, 0.6), 0 8px 16px rgba(0, 0, 0, 0.35);
+
+  --shadow-card: var(--highlight-top), var(--shadow-sm);
+  --shadow-card-hover: var(--highlight-top), var(--shadow-md);
+  --shadow-overlay: var(--highlight-top), var(--shadow-xl);
+
+  /* Accent glow — hero product visual and primary CTA only */
+  --glow-accent: 0 0 0 1px rgba(129, 140, 248, 0.2), 0 8px 32px rgba(91, 91, 214, 0.28);
+
+  /* ==========================================================================
+     7. FOCUS
+     One ring, everywhere. 2px accent + 2px canvas offset so it stays legible
+     against both the page and any card it sits on.
+     ====================================================================== */
+
+  --focus-ring-width: 2px;
+  --focus-ring-color: var(--a-300);
+  --focus-ring: 0 0 0 2px var(--surface-canvas), 0 0 0 4px var(--focus-ring-color);
+  --focus-ring-inset: 0 0 0 2px var(--focus-ring-color);
+
+  /* ==========================================================================
+     8. MOTION
+     Fast and functional. State changes only — nothing decorative blocks content.
+     ====================================================================== */
+
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  --ease-standard: cubic-bezier(0.2, 0, 0, 1);
+
+  --duration-instant: 100ms;
+  --duration-fast: 150ms;
+  --duration-base: 200ms;
+  --duration-slow: 250ms;
+
+  --transition-colors: color var(--duration-fast) var(--ease-standard),
+    background-color var(--duration-fast) var(--ease-standard),
+    border-color var(--duration-fast) var(--ease-standard),
+    box-shadow var(--duration-fast) var(--ease-standard);
+  --transition-transform: transform var(--duration-base) var(--ease-out);
+  --transition-all: all var(--duration-fast) var(--ease-standard);
+
+  /* ==========================================================================
+     9. LAYOUT
+     ====================================================================== */
+
+  --header-height: 60px;
+  --container-max: 1200px;
+  --container-wide: 1400px;
+  --container-prose: 720px;
+  --gutter: clamp(1rem, 0.5rem + 2vw, 2rem);
+
+  /* ==========================================================================
+     10. Z-INDEX — a fixed scale; never invent a new value inline
+     ====================================================================== */
+
+  --z-base: 0;
+  --z-raised: 10;
+  --z-sticky: 20;
+  --z-header: 30;
+  --z-drawer: 40;
+  --z-overlay: 50;
+  --z-modal: 60;
+  --z-popover: 70;
+  --z-toast: 80;
+  --z-tooltip: 90;
+}

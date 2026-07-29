@@ -34,6 +34,9 @@ const Privacy = lazy(() => import('./pages/legal/Privacy'));
 const Terms = lazy(() => import('./pages/legal/Terms'));
 const Refund = lazy(() => import('./pages/legal/Refund'));
 const NotFound = lazy(() => import('./pages/NotFound'));
+// Internal design-system reference. Lazy, unlinked from any nav, and noindex —
+// it costs nothing on the main bundle but stays reachable on deploy previews.
+const UiShowcase = lazy(() => import('./pages/dev/UiShowcase'));
 
 const PageFallback = () => (
   <div style={{ maxWidth: 960, margin: '0 auto', padding: '2rem 1rem' }}>
@@ -82,6 +85,9 @@ function App() {
                     <Route path="/analytics" element={<PrivateRoute><Analytics /></PrivateRoute>} />
                     <Route path="/account" element={<PrivateRoute><Account /></PrivateRoute>} />
 
+                    {/* Internal — design system reference, not in any nav */}
+                    <Route path="/dev/ui" element={<UiShowcase />} />
+
                     {/* Fallback — friendly 404 (noindex) instead of a silent redirect */}
                     <Route path="*" element={<NotFound />} />
                   </Routes>
@@ -91,13 +97,25 @@ function App() {
               </div>
               <Toaster
                 position="bottom-right"
+                gutter={10}
                 toastOptions={{
-                  duration: 3000,
+                  duration: 3500,
+                  // Pulled from the token layer so toasts stay in step with the
+                  // rest of the system rather than drifting on their own.
                   style: {
-                    fontSize: '14px',
-                    borderRadius: '8px',
-                    padding: '12px 16px',
+                    background: 'var(--surface-overlay)',
+                    color: 'var(--text-primary)',
+                    border: '1px solid var(--border-default)',
+                    borderRadius: 'var(--radius-lg)',
+                    boxShadow: 'var(--shadow-overlay)',
+                    fontSize: 'var(--text-sm)',
+                    fontWeight: 'var(--weight-medium)',
+                    letterSpacing: 'var(--tracking-tight)',
+                    padding: 'var(--space-3) var(--space-4)',
+                    maxWidth: '400px',
                   },
+                  success: { iconTheme: { primary: 'var(--success-fg)', secondary: 'var(--surface-overlay)' } },
+                  error: { iconTheme: { primary: 'var(--error-fg)', secondary: 'var(--surface-overlay)' } },
                 }}
               />
             </ErrorBoundary>

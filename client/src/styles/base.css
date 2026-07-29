@@ -1,0 +1,206 @@
+/* ============================================================================
+   CV Optimizer — Base Layer
+   Reset and unstyled-element defaults. Consumes tokens.css; owns no values.
+   ========================================================================= */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  /* Stop iOS inflating text in landscape and zooming the layout */
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+  /* `clip`, not `hidden` — preserves position:sticky on the header */
+  overflow-x: clip;
+  scroll-behavior: smooth;
+  /* Anchor links must not slide under the fixed header */
+  scroll-padding-top: calc(var(--header-height) + var(--space-4));
+}
+
+body {
+  font-family: var(--font-sans);
+  font-size: var(--text-base);
+  font-weight: var(--weight-normal);
+  line-height: var(--leading-body);
+  letter-spacing: var(--tracking-tight);
+  color: var(--text-secondary);
+  background-color: var(--surface-canvas);
+  overflow-x: clip;
+  font-feature-settings: 'cv11', 'ss01';
+  font-variant-ligatures: contextual common-ligatures;
+}
+
+/* --- Headings ------------------------------------------------------------ */
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-display);
+  color: var(--text-primary);
+  font-weight: var(--weight-bold);
+  line-height: var(--leading-heading);
+  letter-spacing: var(--tracking-heading);
+  text-wrap: balance;
+}
+
+h1 { font-size: var(--display-sm); letter-spacing: var(--tracking-display); line-height: var(--leading-display); }
+h2 { font-size: var(--text-3xl); }
+h3 { font-size: var(--text-xl); }
+h4 { font-size: var(--text-lg); }
+h5 { font-size: var(--text-md); }
+h6 { font-size: var(--text-sm); }
+
+p {
+  color: var(--text-secondary);
+  text-wrap: pretty;
+}
+
+/* Stacked prose gets rhythm; a lone trailing paragraph does not add dead space */
+p + p { margin-top: var(--space-4); }
+
+strong, b { font-weight: var(--weight-semibold); color: var(--text-primary); }
+
+small { font-size: var(--text-sm); }
+
+/* --- Links --------------------------------------------------------------- */
+
+a {
+  color: var(--text-accent);
+  text-decoration: none;
+  transition: var(--transition-colors);
+}
+
+a:hover { color: var(--a-200); }
+
+/* Inline links inside prose keep an underline — colour alone is not a
+   sufficient affordance (WCAG 1.4.1). */
+p > a:not([class]),
+li > a:not([class]) {
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+  text-decoration-thickness: 1px;
+  text-decoration-color: var(--accent-border);
+}
+
+p > a:not([class]):hover,
+li > a:not([class]):hover {
+  text-decoration-color: currentColor;
+}
+
+/* --- Form elements ------------------------------------------------------- */
+
+button {
+  cursor: pointer;
+  font-family: inherit;
+  font-size: inherit;
+  letter-spacing: inherit;
+  border: none;
+  background: none;
+  color: inherit;
+}
+
+button:disabled {
+  cursor: not-allowed;
+}
+
+input, textarea, select {
+  font-family: inherit;
+  font-size: inherit;
+  letter-spacing: inherit;
+  color-scheme: dark;
+}
+
+/* iOS zooms whenever a focused field is under 16px. */
+@media (max-width: 768px) {
+  input:not([type='checkbox']):not([type='radio']),
+  textarea,
+  select {
+    font-size: 16px;
+  }
+}
+
+input[type='date']::-webkit-calendar-picker-indicator,
+input[type='datetime-local']::-webkit-calendar-picker-indicator {
+  filter: invert(0.75);
+  cursor: pointer;
+}
+
+::placeholder { color: var(--text-disabled); opacity: 1; }
+
+::selection {
+  background: var(--accent-solid);
+  color: var(--n-0);
+}
+
+/* --- Media --------------------------------------------------------------- */
+
+img, svg, video, canvas {
+  max-width: 100%;
+  display: block;
+}
+
+svg { flex-shrink: 0; }
+
+/* --- Focus --------------------------------------------------------------- */
+
+/* One ring for everything. Mouse users never see it; keyboard users always do. */
+:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+  border-radius: var(--radius-sm);
+}
+
+/* --- Scrollbars ---------------------------------------------------------- */
+
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: transparent; }
+
+::-webkit-scrollbar-thumb {
+  background-color: var(--n-600);
+  border-radius: var(--radius-full);
+  border: 3px solid transparent;
+  background-clip: content-box;
+}
+
+::-webkit-scrollbar-thumb:hover { background-color: var(--n-500); }
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--n-600) transparent;
+}
+
+/* --- App shell ----------------------------------------------------------- */
+
+.app {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  min-height: 100dvh;
+}
+
+.main-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+/* --- Reduced motion ------------------------------------------------------ */
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
