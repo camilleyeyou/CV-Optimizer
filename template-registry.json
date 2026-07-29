@@ -1,5 +1,5 @@
 {
-  "_comment": "Single source of truth for resume templates. Consumed by the client preview (client/src/config/templates.js) AND the server PDF/DOCX renderers (server/src/templateRegistry.js). Each template maps to a layout 'archetype' that both renderers implement identically. Do not duplicate this data elsewhere.",
+  "_comment": "Single source of truth for resume templates AND the shared layout contract. page/fonts/layout/typography/spacing define the geometry that the server PDF renderer (server/src/templateRegistry.js) and the client preview (client/src/config/templates.js) must both obey, so the on-screen preview wraps lines and paginates identically to the exported PDF. All distances are PostScript points. fonts.metrics.<family>.lineHeightRatio is (ascender + lineGap - descender)/1000, i.e. exactly the line advance PDFKit computes, and is what the preview uses as CSS line-height. maxPages is the page budget each template must stay within for the dense stress fixture in server/__tests__/fixtures/stressResume.js. Do not hardcode any of these values in either renderer.",
   "archetypes": {
     "classic-centered": "Centered name/title header, single column, full-width section rules.",
     "classic-left": "Left-aligned header, single column, skills-forward.",
@@ -7,11 +7,346 @@
     "header-band": "Full-width colored header band with reversed-out name, single column below.",
     "sidebar": "Two-column layout with a colored sidebar carrying contact, skills and languages.",
     "compact": "Dense single column with smaller type and two-column skills to fit more content.",
-    "infographic": "Single column with visual skill-rating bars and accent blocks."
+    "infographic": "Single column with two-column accent skill chips and accent blocks."
+  },
+  "page": {
+    "size": "A4",
+    "width": 595.28,
+    "height": 841.89
+  },
+  "fonts": {
+    "sourceDir": "server/src/fonts",
+    "webPath": "/fonts",
+    "families": {
+      "sans": {
+        "regular": "NotoSans-Regular.ttf",
+        "bold": "NotoSans-Bold.ttf",
+        "italic": "NotoSans-Italic.ttf",
+        "boldItalic": "NotoSans-BoldItalic.ttf"
+      },
+      "serif": {
+        "regular": "NotoSerif-Regular.ttf",
+        "bold": "NotoSerif-Bold.ttf",
+        "italic": "NotoSerif-Italic.ttf",
+        "boldItalic": "NotoSerif-BoldItalic.ttf"
+      },
+      "hebrew": {
+        "regular": "NotoSansHebrew-Regular.ttf",
+        "bold": "NotoSansHebrew-Bold.ttf"
+      },
+      "arabic": {
+        "regular": "NotoSansArabic-Regular.ttf",
+        "bold": "NotoSansArabic-Bold.ttf"
+      },
+      "cjk": {
+        "regular": "NotoSansTC-Regular.otf",
+        "bold": "NotoSansTC-Bold.otf"
+      }
+    },
+    "metrics": {
+      "sans": {
+        "ascender": 1069,
+        "descender": -293,
+        "lineGap": 0,
+        "lineHeightRatio": 1.362
+      },
+      "serif": {
+        "ascender": 1069,
+        "descender": -293,
+        "lineGap": 0,
+        "lineHeightRatio": 1.362
+      },
+      "hebrew": {
+        "ascender": 1068,
+        "descender": -292,
+        "lineGap": 0,
+        "lineHeightRatio": 1.36
+      },
+      "arabic": {
+        "ascender": 1374,
+        "descender": -738,
+        "lineGap": 0,
+        "lineHeightRatio": 2.112
+      },
+      "cjk": {
+        "ascender": 1160,
+        "descender": -288,
+        "lineGap": 0,
+        "lineHeightRatio": 1.448
+      }
+    },
+    "webFormat": "woff2",
+    "_note": "families list the canonical TTF/OTF files the PDF renderer embeds (PDFKit cannot subset woff2). The preview loads the same faces from webPath with the extension swapped to webFormat - a lossless re-encoding, so metrics are byte-identical and line wrapping matches."
+  },
+  "layout": {
+    "default": {
+      "margins": {
+        "top": 40,
+        "bottom": 40,
+        "left": 48,
+        "right": 48
+      }
+    },
+    "compact": {
+      "margins": {
+        "top": 32,
+        "bottom": 32,
+        "left": 40,
+        "right": 40
+      }
+    },
+    "sidebar": {
+      "margins": {
+        "top": 40,
+        "bottom": 40,
+        "left": 224,
+        "right": 40
+      },
+      "sidebarWidth": 200,
+      "sidebarPad": 22,
+      "sidebarTop": 34,
+      "sidebarBottomInset": 4
+    },
+    "headerBand": {
+      "sidePad": 48,
+      "topPad": 30,
+      "bottomPad": 22,
+      "contactHeight": 16
+    }
+  },
+  "typography": {
+    "name": {
+      "size": 22,
+      "family": "heading",
+      "weight": "bold",
+      "color": "name"
+    },
+    "nameCompact": {
+      "size": 19,
+      "family": "heading",
+      "weight": "bold",
+      "color": "name"
+    },
+    "jobTitle": {
+      "size": 11,
+      "family": "heading",
+      "color": "accent"
+    },
+    "contact": {
+      "size": 8.5,
+      "family": "heading",
+      "color": "muted"
+    },
+    "sectionTitle": {
+      "size": 11,
+      "family": "heading",
+      "weight": "bold",
+      "color": "name",
+      "letterSpacing": 1
+    },
+    "sectionTitlePill": {
+      "size": 9.5,
+      "family": "heading",
+      "weight": "bold",
+      "color": "#ffffff"
+    },
+    "sectionTitleSmallcaps": {
+      "size": 11,
+      "family": "heading",
+      "weight": "bold",
+      "color": "accent",
+      "letterSpacing": 2
+    },
+    "summary": {
+      "size": 10,
+      "family": "body",
+      "color": "text",
+      "lineGap": 2
+    },
+    "summaryCompact": {
+      "size": 9.5,
+      "family": "body",
+      "color": "text",
+      "lineGap": 2
+    },
+    "entryTitle": {
+      "size": 10.5,
+      "family": "heading",
+      "weight": "bold",
+      "color": "name"
+    },
+    "entryDate": {
+      "size": 9,
+      "family": "heading",
+      "color": "muted"
+    },
+    "entryLocation": {
+      "size": 9,
+      "family": "body",
+      "style": "italic",
+      "color": "muted"
+    },
+    "bullet": {
+      "size": 10,
+      "family": "body",
+      "color": "text",
+      "lineGap": 1,
+      "indent": 14
+    },
+    "bulletCompact": {
+      "size": 9.5,
+      "family": "body",
+      "color": "text",
+      "lineGap": 1,
+      "indent": 14
+    },
+    "educationMeta": {
+      "size": 9.5,
+      "family": "body",
+      "color": "muted"
+    },
+    "skillsInline": {
+      "size": 10,
+      "family": "body",
+      "color": "text",
+      "lineGap": 2
+    },
+    "skillTag": {
+      "size": 9,
+      "family": "heading",
+      "color": "text"
+    },
+    "skillChip": {
+      "size": 9,
+      "family": "body",
+      "color": "text"
+    },
+    "projectName": {
+      "size": 10.5,
+      "family": "heading",
+      "weight": "bold",
+      "color": "name"
+    },
+    "projectUrl": {
+      "size": 9,
+      "family": "heading",
+      "color": "accent"
+    },
+    "projectDescription": {
+      "size": 10,
+      "family": "body",
+      "color": "text",
+      "lineGap": 1
+    },
+    "projectTech": {
+      "size": 9,
+      "family": "body",
+      "style": "italic",
+      "color": "muted"
+    },
+    "certName": {
+      "size": 10,
+      "family": "heading",
+      "weight": "bold",
+      "color": "name"
+    },
+    "certIssuer": {
+      "size": 10,
+      "family": "body",
+      "color": "text"
+    },
+    "certDate": {
+      "size": 9,
+      "family": "body",
+      "color": "muted"
+    },
+    "languages": {
+      "size": 10,
+      "family": "body",
+      "color": "text"
+    },
+    "sidebarName": {
+      "size": 17,
+      "family": "heading",
+      "weight": "bold",
+      "color": "sidebarText"
+    },
+    "sidebarJobTitle": {
+      "size": 10,
+      "family": "heading",
+      "color": "sidebarText"
+    },
+    "sidebarContact": {
+      "size": 8.5,
+      "family": "heading",
+      "color": "sidebarText"
+    },
+    "sidebarSectionTitle": {
+      "size": 10,
+      "family": "heading",
+      "weight": "bold",
+      "color": "sidebarText",
+      "letterSpacing": 1
+    },
+    "sidebarItem": {
+      "size": 9,
+      "family": "body",
+      "color": "sidebarText"
+    }
+  },
+  "spacing": {
+    "headerTitleGap": 5.99,
+    "headerRuleGap": 5.79,
+    "headerBottomGap": 6.95,
+    "headerRuleWidth": 2,
+    "sectionTitleGap": 5.99,
+    "sectionTitleGapPlain": 4.49,
+    "sectionTitleBarGap": 5.24,
+    "sectionTitlePillHeight": 15,
+    "sectionTitlePillPadX": 8,
+    "sectionTitlePillGap": 4,
+    "sectionTitleBarWidth": 3.5,
+    "sectionTitleBarTextGap": 9,
+    "sectionTitleRuleGap": 2,
+    "sectionGap": 9.53,
+    "sectionGapCompact": 6.81,
+    "entryGap": 6.81,
+    "entryGapCompact": 4.77,
+    "entryInnerGap": 2.45,
+    "educationEntryGap": 5.18,
+    "projectEntryGap": 4.9,
+    "languagesGap": 6.81,
+    "entryDatePad": 10,
+    "contactGap": 14,
+    "contactIconGap": 3,
+    "contactIconSize": 8,
+    "contactLinePad": 2,
+    "tagPadX": 8,
+    "tagGap": 6,
+    "tagLineHeight": 18,
+    "tagHeight": 14,
+    "tagRadius": 3,
+    "chipRowHeight": 17,
+    "chipHeight": 13,
+    "chipPadX": 7,
+    "chipColumnGap": 16,
+    "chipAccentWidth": 2.5,
+    "chipRadius": 3,
+    "chipTint": 0.12,
+    "sidebarItemGap": 2,
+    "sidebarSectionGap": 10,
+    "sidebarTitleGap": 6,
+    "sidebarContactGap": 3,
+    "sidebarNameGap": 12,
+    "keepWithNextTitle": 34,
+    "keepWithNextEntry": 30,
+    "keepWithNextProject": 30,
+    "keepWithNextCert": 24
   },
   "templates": [
     {
       "id": "modern",
+      "maxPages": 4,
       "name": "Modern",
       "description": "Clean centered layout with a blue accent. Great for tech and creative roles.",
       "premium": false,
@@ -24,6 +359,7 @@
     },
     {
       "id": "professional",
+      "maxPages": 4,
       "name": "Professional",
       "description": "Traditional serif layout with full-width rules. Works for any industry.",
       "premium": false,
@@ -36,6 +372,7 @@
     },
     {
       "id": "minimal",
+      "maxPages": 4,
       "name": "Minimal",
       "description": "Left-aligned, lots of whitespace, no heavy rules. Lets your content talk.",
       "premium": false,
@@ -48,6 +385,7 @@
     },
     {
       "id": "creative",
+      "maxPages": 4,
       "name": "Creative",
       "description": "Centered layout with bold colored section pills. For designers and marketers.",
       "premium": false,
@@ -60,6 +398,7 @@
     },
     {
       "id": "technical",
+      "maxPages": 4,
       "name": "Technical",
       "description": "Left header, skills and projects pulled to the top. Built for engineers.",
       "premium": false,
@@ -69,10 +408,19 @@
       "headingFamily": "sans",
       "sectionTitle": "bracket",
       "skillsStyle": "tags",
-      "sectionOrder": ["summary", "skills", "experience", "projects", "education", "certifications", "languages"]
+      "sectionOrder": [
+        "summary",
+        "skills",
+        "experience",
+        "projects",
+        "education",
+        "certifications",
+        "languages"
+      ]
     },
     {
       "id": "executive",
+      "maxPages": 4,
       "name": "Executive",
       "description": "Polished centered layout with small-caps headings. Ideal for senior leadership.",
       "premium": false,
@@ -85,6 +433,7 @@
     },
     {
       "id": "elegant",
+      "maxPages": 4,
       "name": "Elegant",
       "description": "Refined serif typography with generous spacing. Perfect for consulting.",
       "premium": true,
@@ -97,6 +446,7 @@
     },
     {
       "id": "startup",
+      "maxPages": 4,
       "name": "Startup",
       "description": "Energetic colored header band. Shows you move fast and build things.",
       "premium": true,
@@ -110,6 +460,7 @@
     },
     {
       "id": "academic",
+      "maxPages": 4,
       "name": "Academic",
       "description": "Detailed left-aligned serif layout for research, publications and teaching.",
       "premium": true,
@@ -119,10 +470,19 @@
       "headingFamily": "serif",
       "sectionTitle": "rule",
       "skillsStyle": "inline",
-      "sectionOrder": ["summary", "education", "experience", "projects", "certifications", "skills", "languages"]
+      "sectionOrder": [
+        "summary",
+        "education",
+        "experience",
+        "projects",
+        "certifications",
+        "skills",
+        "languages"
+      ]
     },
     {
       "id": "nordic",
+      "maxPages": 4,
       "name": "Nordic",
       "description": "Scandinavian-inspired sidebar with soft slate tones and clean type.",
       "premium": true,
@@ -137,6 +497,7 @@
     },
     {
       "id": "bold",
+      "maxPages": 4,
       "name": "Bold",
       "description": "High-contrast black header band that commands attention instantly.",
       "premium": true,
@@ -150,6 +511,7 @@
     },
     {
       "id": "gradient",
+      "maxPages": 4,
       "name": "Gradient",
       "description": "Modern gradient header band. Stands out in creative industries.",
       "premium": true,
@@ -164,9 +526,10 @@
     },
     {
       "id": "compact",
+      "maxPages": 4,
       "name": "Compact",
-      "description": "Dense layout with smaller type and two-column skills. Fits more in less space.",
-      "premium": true,
+      "description": "Tight leading and two-column skills for senior candidates with long histories. Fits years of experience in fewer pages.",
+      "premium": false,
       "archetype": "compact",
       "accent": "#047857",
       "fontFamily": "sans",
@@ -176,6 +539,7 @@
     },
     {
       "id": "sidebar",
+      "maxPages": 4,
       "name": "Sidebar",
       "description": "Two-column layout with a colored sidebar for contact, skills and languages.",
       "premium": true,
@@ -190,8 +554,9 @@
     },
     {
       "id": "infographic",
+      "maxPages": 4,
       "name": "Infographic",
-      "description": "Visual skill-rating bars and accent blocks. Makes your strengths pop.",
+      "description": "Two-column accent skill chips and bold section blocks. Makes your strengths pop.",
       "premium": true,
       "archetype": "infographic",
       "accent": "#ea580c",
@@ -202,6 +567,7 @@
     },
     {
       "id": "dark",
+      "maxPages": 4,
       "name": "Dark Mode",
       "description": "Sleek dark sidebar theme. Memorable and unique for digital roles.",
       "premium": true,
@@ -213,6 +579,106 @@
       "headingFamily": "sans",
       "sectionTitle": "underline",
       "skillsStyle": "inline"
+    },
+    {
+      "id": "ats-max",
+      "maxPages": 4,
+      "name": "ATS-Max",
+      "description": "Deliberately plain single column with standard headings and no graphics. The safest parse for strict applicant tracking systems.",
+      "premium": false,
+      "archetype": "classic-left",
+      "accent": "#111827",
+      "fontFamily": "sans",
+      "headingFamily": "sans",
+      "sectionTitle": "plain",
+      "skillsStyle": "inline",
+      "headerRule": false,
+      "sectionLabels": {
+        "summary": "Summary"
+      }
+    },
+    {
+      "id": "academic-cv",
+      "maxPages": 4,
+      "name": "Academic CV",
+      "description": "Publications-forward serif CV for researchers and faculty. Multi-page by design, with research, teaching and grants sections.",
+      "premium": true,
+      "archetype": "formal-left",
+      "accent": "#3f3f46",
+      "fontFamily": "serif",
+      "headingFamily": "serif",
+      "sectionTitle": "smallcaps",
+      "skillsStyle": "inline",
+      "sectionOrder": ["summary", "education", "projects", "experience", "certifications", "skills", "languages"],
+      "sectionLabels": {
+        "summary": "Research Statement",
+        "projects": "Publications",
+        "experience": "Research & Teaching",
+        "certifications": "Grants & Awards",
+        "skills": "Research Areas"
+      }
+    },
+    {
+      "id": "europass",
+      "maxPages": 4,
+      "name": "Europass-style",
+      "description": "Clean two-column layout following European CV conventions. Pairs well with translation for EU applications.",
+      "premium": true,
+      "archetype": "sidebar",
+      "accent": "#1e40af",
+      "sidebarBg": "#eef2f7",
+      "sidebarText": "#1e293b",
+      "fontFamily": "sans",
+      "headingFamily": "sans",
+      "sectionTitle": "rule",
+      "skillsStyle": "inline",
+      "sectionLabels": {
+        "summary": "Personal Statement",
+        "experience": "Work Experience",
+        "education": "Education & Training"
+      }
+    },
+    {
+      "id": "creative-serif",
+      "maxPages": 4,
+      "name": "Creative Serif",
+      "description": "Editorial serif layout for design and marketing roles, on an ATS-safe single-column structure.",
+      "premium": true,
+      "archetype": "classic-centered",
+      "accent": "#9f1239",
+      "fontFamily": "serif",
+      "headingFamily": "serif",
+      "sectionTitle": "smallcaps",
+      "skillsStyle": "tags",
+      "sectionLabels": {
+        "summary": "Profile",
+        "projects": "Selected Work"
+      }
+    },
+    {
+      "id": "tech-grid",
+      "maxPages": 4,
+      "name": "Tech Grid",
+      "description": "Projects-forward layout with repository and portfolio links up front. Built for developers.",
+      "premium": true,
+      "archetype": "classic-left",
+      "accent": "#0f766e",
+      "fontFamily": "sans",
+      "headingFamily": "sans",
+      "sectionTitle": "bar",
+      "skillsStyle": "bars",
+      "sectionOrder": ["summary", "skills", "projects", "experience", "education", "certifications", "languages"],
+      "sectionLabels": {
+        "projects": "Projects & Repositories",
+        "skills": "Tech Stack"
+      }
     }
-  ]
+  ],
+  "separators": {
+    "inlineSkills": " · ",
+    "languages": " • ",
+    "entryTitle": " · ",
+    "educationMeta": " - ",
+    "certIssuer": " - "
+  }
 }

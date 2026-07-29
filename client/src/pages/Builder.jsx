@@ -6,7 +6,8 @@ import ResumePreview from '../components/builder/ResumePreview';
 import ATSScoreWidget from '../components/builder/ATSScoreWidget';
 import TailorModal from '../components/builder/TailorModal';
 import TranslateModal from '../components/builder/TranslateModal';
-import { Download, CheckCircle, Loader, Eye, Edit3, ChevronLeft, ChevronRight, FileText, Wand2, Languages } from 'lucide-react';
+import TemplateSwitcher from '../components/builder/TemplateSwitcher';
+import { Download, CheckCircle, Loader, Eye, Edit3, ChevronLeft, ChevronRight, FileText, Wand2, Languages, LayoutTemplate } from 'lucide-react';
 import { generatePDF, generateDOCX } from '../services/api';
 import toast from 'react-hot-toast';
 import Spotlight from '../components/onboarding/Spotlight';
@@ -20,6 +21,7 @@ const Builder = () => {
   const [mobileView, setMobileView] = useState('edit'); // 'edit' | 'preview'
   const [tailorOpen, setTailorOpen] = useState(false);
   const [translateOpen, setTranslateOpen] = useState(false);
+  const [templateOpen, setTemplateOpen] = useState(false);
   const [loadError, setLoadError] = useState(false);
 
   useEffect(() => {
@@ -154,6 +156,10 @@ const Builder = () => {
             {previewCollapsed ? <><ChevronLeft size={14} /> Show Preview</> : <><ChevronRight size={14} /> Hide Preview</>}
           </button>
 
+          <button className="btn btn-secondary btn-sm" onClick={() => setTemplateOpen(true)} data-tour="builder-template">
+            <LayoutTemplate size={14} /> Template
+          </button>
+
           <button className="btn btn-accent btn-sm" onClick={() => setTailorOpen(true)} data-tour="builder-tailor">
             <Wand2 size={14} /> Tailor
           </button>
@@ -190,6 +196,7 @@ const Builder = () => {
       </div>
       <TailorModal open={tailorOpen} onClose={() => setTailorOpen(false)} />
       <TranslateModal open={translateOpen} onClose={() => setTranslateOpen(false)} />
+      <TemplateSwitcher open={templateOpen} onClose={() => setTemplateOpen(false)} />
       <Spotlight tour={tours.builder} />
     </div>
   );

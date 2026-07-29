@@ -38,6 +38,33 @@ const initialState = {
   error: null,
 };
 
+// The columns saveResume() actually writes. The dirty check compares exactly
+// these, so anything else moving - a re-render, a fresh load - is not a change.
+const PERSISTED_FIELDS = [
+  'title',
+  'personal_info',
+  'summary',
+  'work_experience',
+  'education',
+  'skills',
+  'projects',
+  'certifications',
+  'languages',
+  'template',
+];
+
+/**
+ * Fingerprint of the saveable content of a resume.
+ *
+ * `updated_at` is deliberately excluded: the reducer stamps a new one on every
+ * dispatch, so including it would make every comparison differ and defeat the
+ * guard entirely - which is what made merely opening a resume rewrite it.
+ */
+const signatureOf = (resume) => {
+  if (!resume) return null;
+  return JSON.stringify(PERSISTED_FIELDS.map((f) => resume[f] ?? null));
+};
+
 const reducer = (state, action) => {
   switch (action.type) {
     case 'SET_LOADING':
@@ -102,6 +129,11 @@ export const ResumeProvider = ({ children }) => {
     if (user) {
       fetchResumes();
     } else {
+      // Signed out: drop the baseline and any queued write so the cleared
+      // editor is never flushed over the previous user's resume.
+      if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+      saveTimerRef.current = null;
+      lastSavedRef.current = null;
       dispatch({ type: 'SET_RESUMES', payload: [] });
       dispatch({ type: 'RESET' });
     }
@@ -119,6 +151,9 @@ export const ResumeProvider = ({ children }) => {
         .single();
 
       if (error) throw error;
+      // What we just read IS what the database holds - record it as the save
+      // baseline so the autosave effect below doesn't immediately write it back.
+      lastSavedRef.current = signatureOf(data);
       dispatch({ type: 'SET_RESUME', payload: data });
       return data;
     } catch (err) {
@@ -150,6 +185,8 @@ export const ResumeProvider = ({ children }) => {
 
       if (error) throw error;
 
+      // Freshly inserted - the row already matches local state.
+      lastSavedRef.current = signatureOf(data);
       dispatch({ type: 'SET_RESUME', payload: data });
       // Add to list
       dispatch({ type: 'SET_RESUMES', payload: [data, ...state.resumes] });
@@ -165,14 +202,20 @@ export const ResumeProvider = ({ children }) => {
   const saveResume = useCallback(async (resumeData) => {
     if (!resumeData?.id) return;
 
-    const dataStr = JSON.stringify(resumeData);
-    if (lastSavedRef.current === dataStr) return;
+    const signature = signatureOf(resumeData);
+    if (lastSavedRef.current === signature) {
+      // Nothing to persist. If an edit was queued and then undone back to the
+      // saved state, drop that pending write instead of letting it fire.
+      if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+      saveTimerRef.current = null;
+      return;
+    }
 
     if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
 
     saveTimerRef.current = setTimeout(async () => {
       dispatch({ type: 'SET_SAVING', payload: true });
-      lastSavedRef.current = dataStr;
+      lastSavedRef.current = signature;
 
       try {
         const { error } = await supabase
@@ -207,7 +250,12 @@ export const ResumeProvider = ({ children }) => {
     dispatch({ type: 'UPDATE_FIELD', field, value });
   }, []);
 
-  // Trigger save after field updates
+  // Trigger save after field updates.
+  //
+  // This fires on every resumeData reference change, including the one from
+  // loading a resume. saveResume() is the gate: it writes only when the content
+  // differs from the last known database state, so opening a resume (or
+  // switching template back and forth) costs zero writes.
   useEffect(() => {
     if (state.resumeData?.id) {
       saveResume(state.resumeData);
@@ -319,3 +367,12 @@ export const useResume = () => {
   }
   return context;
 };
+
+/**
+ * Same context, but null outside a provider instead of throwing.
+ *
+ * The preview renders both inside the builder (live context) and standalone
+ * with an explicit `data` prop - template thumbnails and the layout-parity
+ * harness - where no provider exists.
+ */
+export const useResumeOptional = () => useContext(ResumeContext);

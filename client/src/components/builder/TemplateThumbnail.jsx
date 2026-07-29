@@ -34,7 +34,7 @@ const TemplateThumbnail = ({ templateId, data, height = 200 }) => {
         className="tpl-thumb-page"
         style={{ width: PAGE_WIDTH, transform: `scale(${scale})` }}
       >
-        <ResumePreview templateId={templateId} data={data} />
+        <ResumePreview templateId={templateId} data={data} paginate={false} />
       </div>
     </div>
   );

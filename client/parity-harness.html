@@ -1,0 +1,20 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Preview / PDF layout parity harness</title>
+    <!--
+      Dev-only entry point used by server/__tests__/previewParity.test.js.
+      Vite's production build only takes index.html as input, so this page is
+      never shipped. It renders the real ResumePreview so the harness measures
+      the component users actually see, not a reimplementation of it.
+    -->
+    <style>
+      html, body { margin: 0; padding: 0; background: #fff; }
+    </style>
+  </head>
+  <body>
+    <div id="harness-root"></div>
+    <script type="module" src="/src/parityHarness.jsx"></script>
+  </body>
+</html>

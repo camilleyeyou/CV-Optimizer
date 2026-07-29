@@ -20,6 +20,7 @@ class DocxService {
       headingFont: spec.headingFamily === 'serif' ? 'Georgia' : 'Calibri',
       bodyFont: spec.fontFamily === 'serif' ? 'Georgia' : 'Calibri',
       sectionTitle: spec.sectionTitle || 'underline',
+      sectionLabels: spec.sectionLabels || {},
     };
     const sections = [];
 
@@ -64,167 +65,11 @@ class DocxService {
       );
     }
 
-    // Summary
-    if (resumeData.summary) {
-      sections.push(this._sectionHeading('PROFESSIONAL SUMMARY', theme));
-      sections.push(
-        new Paragraph({
-          spacing: { after: 200 },
-          children: [
-            new TextRun({ text: resumeData.summary, size: 20, font: 'Calibri' }),
-          ],
-        })
-      );
-    }
-
-    // Experience
-    if (resumeData.work_experience?.length > 0) {
-      sections.push(this._sectionHeading('EXPERIENCE', theme));
-      for (const exp of resumeData.work_experience) {
-        // Position + Company line with dates on the right
-        const dateLine = this._formatDateRange(exp.start_date, exp.end_date, exp.current);
-        sections.push(
-          new Paragraph({
-            spacing: { before: 120, after: 40 },
-            tabStops: [{ type: TabStopType.RIGHT, position: TabStopPosition.MAX }],
-            children: [
-              new TextRun({ text: exp.position || '', bold: true, size: 20, font: 'Calibri' }),
-              ...(exp.company ? [new TextRun({ text: ` — ${exp.company}`, size: 20, font: 'Calibri' })] : []),
-              new TextRun({ text: '\t', size: 20 }),
-              new TextRun({ text: dateLine, size: 18, color: '666666', font: 'Calibri' }),
-            ],
-          })
-        );
-
-        if (exp.location) {
-          sections.push(
-            new Paragraph({
-              spacing: { after: 40 },
-              children: [
-                new TextRun({ text: exp.location, size: 18, italics: true, color: '666666', font: 'Calibri' }),
-              ],
-            })
-          );
-        }
-
-        // Bullet points
-        const bullets = Array.isArray(exp.description) ? exp.description : [];
-        for (const bullet of bullets.filter(Boolean)) {
-          sections.push(
-            new Paragraph({
-              bullet: { level: 0 },
-              spacing: { after: 40 },
-              children: [
-                new TextRun({ text: bullet, size: 20, font: 'Calibri' }),
-              ],
-            })
-          );
-        }
-      }
-    }
-
-    // Education
-    if (resumeData.education?.length > 0) {
-      sections.push(this._sectionHeading('EDUCATION', theme));
-      for (const edu of resumeData.education) {
-        const dateLine = this._formatDateRange(edu.start_date, edu.end_date);
-        const degreeLine = [edu.degree, edu.field_of_study].filter(Boolean).join(' in ');
-        sections.push(
-          new Paragraph({
-            spacing: { before: 120, after: 40 },
-            tabStops: [{ type: TabStopType.RIGHT, position: TabStopPosition.MAX }],
-            children: [
-              new TextRun({ text: degreeLine || '', bold: true, size: 20, font: 'Calibri' }),
-              new TextRun({ text: '\t', size: 20 }),
-              new TextRun({ text: dateLine, size: 18, color: '666666', font: 'Calibri' }),
-            ],
-          })
-        );
-        const subLine = [edu.institution, edu.gpa ? `GPA: ${edu.gpa}` : ''].filter(Boolean).join(' — ');
-        if (subLine) {
-          sections.push(
-            new Paragraph({
-              spacing: { after: 80 },
-              children: [
-                new TextRun({ text: subLine, size: 18, color: '666666', font: 'Calibri' }),
-              ],
-            })
-          );
-        }
-      }
-    }
-
-    // Skills
-    if (resumeData.skills?.length > 0) {
-      sections.push(this._sectionHeading('SKILLS', theme));
-      sections.push(
-        new Paragraph({
-          spacing: { after: 200 },
-          children: [
-            new TextRun({ text: resumeData.skills.filter(Boolean).join('  •  '), size: 20, font: 'Calibri' }),
-          ],
-        })
-      );
-    }
-
-    // Projects
-    if (resumeData.projects?.length > 0) {
-      sections.push(this._sectionHeading('PROJECTS', theme));
-      for (const proj of resumeData.projects) {
-        sections.push(
-          new Paragraph({
-            spacing: { before: 120, after: 40 },
-            children: [
-              new TextRun({ text: proj.name || '', bold: true, size: 20, font: 'Calibri' }),
-              ...(proj.technologies ? [new TextRun({ text: ` (${proj.technologies})`, size: 18, color: '666666', font: 'Calibri' })] : []),
-            ],
-          })
-        );
-        if (proj.description) {
-          sections.push(
-            new Paragraph({
-              spacing: { after: 80 },
-              children: [
-                new TextRun({ text: proj.description, size: 20, font: 'Calibri' }),
-              ],
-            })
-          );
-        }
-      }
-    }
-
-    // Certifications
-    if (resumeData.certifications?.length > 0) {
-      sections.push(this._sectionHeading('CERTIFICATIONS', theme));
-      for (const cert of resumeData.certifications) {
-        const parts = [cert.name, cert.issuer].filter(Boolean).join(' — ');
-        sections.push(
-          new Paragraph({
-            bullet: { level: 0 },
-            spacing: { after: 40 },
-            children: [
-              new TextRun({ text: parts, size: 20, font: 'Calibri' }),
-              ...(cert.date ? [new TextRun({ text: ` (${cert.date})`, size: 18, color: '666666', font: 'Calibri' })] : []),
-            ],
-          })
-        );
-      }
-    }
-
-    // Languages
-    if (resumeData.languages?.length > 0) {
-      sections.push(this._sectionHeading('LANGUAGES', theme));
-      const langText = resumeData.languages
-        .map((l) => `${l.name}${l.proficiency ? ` (${l.proficiency})` : ''}`)
-        .join('  •  ');
-      sections.push(
-        new Paragraph({
-          spacing: { after: 200 },
-          children: [
-            new TextRun({ text: langText, size: 20, font: 'Calibri' }),
-          ],
-        })
-      );
+    // Body sections, in the order the template declares. Registry-driven, so a
+    // template that leads with publications exports that way too instead of
+    // always falling back to the default order.
+    for (const key of spec.sectionOrder) {
+      sections.push(...this._bodySection(key, resumeData, theme));
     }
 
     const doc = new Document({
@@ -329,6 +174,208 @@ class DocxService {
     });
 
     return Packer.toBuffer(doc);
+  }
+
+  /**
+   * Paragraphs for one section, or [] when the resume has nothing for it.
+   *
+   * Mirrors pdfService._section: the template picks both the order (via
+   * sectionOrder) and the heading (via sectionLabels), so all three renderers
+   * agree on what a section is called and where it sits.
+   */
+  _bodySection(key, resumeData, theme) {
+    const out = [];
+    const label = (fallback) => (theme.sectionLabels[key] || fallback).toUpperCase();
+
+    switch (key) {
+      case 'summary': {
+      if (resumeData.summary) {
+        out.push(this._sectionHeading(label('PROFESSIONAL SUMMARY'), theme));
+        out.push(
+          new Paragraph({
+            spacing: { after: 200 },
+            children: [
+              new TextRun({ text: resumeData.summary, size: 20, font: 'Calibri' }),
+            ],
+          })
+        );
+      }
+        break;
+      }
+      case 'experience': {
+      if (resumeData.work_experience?.length > 0) {
+        out.push(this._sectionHeading(label('EXPERIENCE'), theme));
+        for (const exp of resumeData.work_experience) {
+          // Position + Company line with dates on the right
+          const dateLine = this._formatDateRange(exp.start_date, exp.end_date, exp.current);
+          out.push(
+            new Paragraph({
+              spacing: { before: 120, after: 40 },
+              tabStops: [{ type: TabStopType.RIGHT, position: TabStopPosition.MAX }],
+              children: [
+                new TextRun({ text: exp.position || '', bold: true, size: 20, font: 'Calibri' }),
+                ...(exp.company ? [new TextRun({ text: ` — ${exp.company}`, size: 20, font: 'Calibri' })] : []),
+                new TextRun({ text: '\t', size: 20 }),
+                new TextRun({ text: dateLine, size: 18, color: '666666', font: 'Calibri' }),
+              ],
+            })
+          );
+
+          if (exp.location) {
+            out.push(
+              new Paragraph({
+                spacing: { after: 40 },
+                children: [
+                  new TextRun({ text: exp.location, size: 18, italics: true, color: '666666', font: 'Calibri' }),
+                ],
+              })
+            );
+          }
+
+          // Bullet points
+          const bullets = Array.isArray(exp.description) ? exp.description : [];
+          for (const bullet of bullets.filter(Boolean)) {
+            out.push(
+              new Paragraph({
+                bullet: { level: 0 },
+                spacing: { after: 40 },
+                children: [
+                  new TextRun({ text: bullet, size: 20, font: 'Calibri' }),
+                ],
+              })
+            );
+          }
+        }
+      }
+        break;
+      }
+      case 'education': {
+      if (resumeData.education?.length > 0) {
+        out.push(this._sectionHeading(label('EDUCATION'), theme));
+        for (const edu of resumeData.education) {
+          const dateLine = this._formatDateRange(edu.start_date, edu.end_date);
+          const degreeLine = [edu.degree, edu.field_of_study].filter(Boolean).join(' in ');
+          out.push(
+            new Paragraph({
+              spacing: { before: 120, after: 40 },
+              tabStops: [{ type: TabStopType.RIGHT, position: TabStopPosition.MAX }],
+              children: [
+                new TextRun({ text: degreeLine || '', bold: true, size: 20, font: 'Calibri' }),
+                new TextRun({ text: '\t', size: 20 }),
+                new TextRun({ text: dateLine, size: 18, color: '666666', font: 'Calibri' }),
+              ],
+            })
+          );
+          const subLine = [edu.institution, edu.gpa ? `GPA: ${edu.gpa}` : ''].filter(Boolean).join(' — ');
+          if (subLine) {
+            out.push(
+              new Paragraph({
+                spacing: { after: 80 },
+                children: [
+                  new TextRun({ text: subLine, size: 18, color: '666666', font: 'Calibri' }),
+                ],
+              })
+            );
+          }
+        }
+      }
+        break;
+      }
+      case 'skills': {
+      if (resumeData.skills?.length > 0) {
+        out.push(this._sectionHeading(label('SKILLS'), theme));
+        out.push(
+          new Paragraph({
+            spacing: { after: 200 },
+            children: [
+              new TextRun({ text: resumeData.skills.filter(Boolean).join('  •  '), size: 20, font: 'Calibri' }),
+            ],
+          })
+        );
+      }
+        break;
+      }
+      case 'projects': {
+      if (resumeData.projects?.length > 0) {
+        out.push(this._sectionHeading(label('PROJECTS'), theme));
+        for (const proj of resumeData.projects) {
+          out.push(
+            new Paragraph({
+              spacing: { before: 120, after: 40 },
+              children: [
+                new TextRun({ text: proj.name || '', bold: true, size: 20, font: 'Calibri' }),
+                ...(proj.technologies ? [new TextRun({ text: ` (${proj.technologies})`, size: 18, color: '666666', font: 'Calibri' })] : []),
+              ],
+            })
+          );
+          // The repo/portfolio link is often the point of the entry, and the PDF
+          // and preview both render it - dropping it here lost real content.
+          if (proj.url) {
+            out.push(
+              new Paragraph({
+                spacing: { after: 40 },
+                children: [
+                  new TextRun({
+                    text: proj.url, size: 18, color: theme.accent, font: 'Calibri',
+                  }),
+                ],
+              })
+            );
+          }
+          if (proj.description) {
+            out.push(
+              new Paragraph({
+                spacing: { after: 80 },
+                children: [
+                  new TextRun({ text: proj.description, size: 20, font: 'Calibri' }),
+                ],
+              })
+            );
+          }
+        }
+      }
+        break;
+      }
+      case 'certifications': {
+      if (resumeData.certifications?.length > 0) {
+        out.push(this._sectionHeading(label('CERTIFICATIONS'), theme));
+        for (const cert of resumeData.certifications) {
+          const parts = [cert.name, cert.issuer].filter(Boolean).join(' — ');
+          out.push(
+            new Paragraph({
+              bullet: { level: 0 },
+              spacing: { after: 40 },
+              children: [
+                new TextRun({ text: parts, size: 20, font: 'Calibri' }),
+                ...(cert.date ? [new TextRun({ text: ` (${cert.date})`, size: 18, color: '666666', font: 'Calibri' })] : []),
+              ],
+            })
+          );
+        }
+      }
+        break;
+      }
+      case 'languages': {
+      if (resumeData.languages?.length > 0) {
+        out.push(this._sectionHeading(label('LANGUAGES'), theme));
+        const langText = resumeData.languages
+          .map((l) => `${l.name}${l.proficiency ? ` (${l.proficiency})` : ''}`)
+          .join('  •  ');
+        out.push(
+          new Paragraph({
+            spacing: { after: 200 },
+            children: [
+              new TextRun({ text: langText, size: 20, font: 'Calibri' }),
+            ],
+          })
+        );
+      }
+        break;
+      }
+      default:
+        break;
+    }
+    return out;
   }
 
   _sectionHeading(title, theme = {}) {

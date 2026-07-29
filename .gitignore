@@ -50,3 +50,8 @@ preview-response.json
 # Backup files
 *.backup
 .vercel
+.parity-out/
+
+# Local tool settings (per-machine permission allowlist, not shared config)
+.claude/settings.local.json
+.claude/skills/

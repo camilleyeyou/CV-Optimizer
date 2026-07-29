@@ -1,228 +1,296 @@
-/* Resume Preview - A4 document themed entirely by CSS variables set in ResumePreview.jsx.
-   Layout differences live in .arch-* classes; accent/typography come from --tpl-* vars,
-   which mirror the values the server PDF renderer uses (template-registry.json). */
-.preview-page {
-  --tpl-accent: #2563eb;
-  --tpl-accent-2: #2563eb;
-  --tpl-sidebar-bg: #1d4ed8;
-  --tpl-sidebar-text: #ffffff;
-  --tpl-body-font: 'Georgia', 'Times New Roman', serif;
-  --tpl-heading-font: 'Inter', -apple-system, sans-serif;
+/* Resume preview.
+   Every length, size and font here comes from template-registry.json via
+   previewTheme.js (--pg-*, --t-*, --sp-*, --tpl-*). Do not reintroduce literal
+   sizes: the preview only predicts the exported page count correctly while its
+   geometry is byte-for-byte the geometry the PDF renderer uses.
+   All units are pt, the same unit PDFKit lays out in. */
 
-  width: 210mm;
-  min-height: 297mm;
-  max-width: 100%;
+/* ---- Page sheet ---------------------------------------------------------- */
+.preview-doc {
+  width: var(--pg-w);
   background-color: #ffffff;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08), 0 1px 4px rgba(0, 0, 0, 0.04);
-  border-radius: 4px;
-  padding: 40px 48px;
   font-family: var(--tpl-body-font);
-  font-size: 10.5pt;
-  line-height: 1.5;
-  color: #1a1a1a;
-  overflow: hidden;
+  /* A base size so no element can silently inherit the browser default of
+     16px, which would wrap text at a different width than the PDF. */
+  font-size: var(--t-summary-size);
+  line-height: var(--t-summary-lh);
+  color: var(--tpl-text);
+  /* A page is exactly the PDF page box; content is clipped to it so anything
+     that would overflow is visibly wrong rather than silently reflowed. */
+  position: relative;
+  box-sizing: border-box;
 }
 
-/* Header */
+.preview-sheet {
+  width: var(--pg-w);
+  height: var(--pg-h);
+  background: #ffffff;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08), 0 1px 4px rgba(0, 0, 0, 0.04);
+  border-radius: 4px;
+  position: relative;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+/* The flowing content. The padding supplies the page margins; .preview-clip
+   then shows exactly one page's worth of it. */
+.preview-flow {
+  width: var(--pg-w);
+  box-sizing: border-box;
+  padding: var(--pg-mt) var(--pg-mr) var(--pg-mb) var(--pg-ml);
+}
+
+/* One page's slice of the flow.
+   clip-path rather than overflow:hidden because the header-band archetype
+   bleeds horizontally past the margins on purpose; this clips top and bottom
+   only, so content never spills into the bottom margin or repeats on the next
+   sheet. */
+.preview-clip {
+  clip-path: inset(0 -1000pt);
+}
+
+/* Measurement pass: same box, off-screen, never painted. */
+.preview-measure {
+  position: absolute;
+  visibility: hidden;
+  pointer-events: none;
+  left: -10000pt;
+  top: 0;
+}
+
+/* ---- Header -------------------------------------------------------------- */
 .preview-header {
   text-align: center;
-  margin-bottom: 20px;
-  padding-bottom: 16px;
-  border-bottom: 2px solid var(--tpl-accent);
+  padding-bottom: var(--sp-headerRuleGap);
+  border-bottom: var(--sp-headerRuleWidth) solid var(--tpl-accent);
+  margin-bottom: var(--sp-headerBottomGap);
+}
+
+/* headerRule: false. The PDF's divider is a stroked line that advances no y,
+   so hiding this one must not change the box height either - colour it away
+   rather than removing the border, or the preview paginates 2pt short. */
+.no-header-rule .preview-header {
+  border-bottom-color: transparent;
 }
 
 .preview-name {
-  font-size: 22pt;
-  font-weight: 700;
-  letter-spacing: 0.5px;
-  color: #111827;
-  margin-bottom: 4px;
+  font-size: var(--t-name-size);
+  line-height: var(--t-name-lh);
+  font-weight: var(--t-name-weight);
+  color: var(--tpl-name);
   font-family: var(--tpl-heading-font);
+  margin: 0;
 }
 
-.preview-name.preview-placeholder {
-  color: #d1d5db;
-}
+.preview-name.preview-placeholder { color: #d1d5db; }
 
 .preview-job-title {
-  font-size: 11pt;
+  font-size: var(--t-jobTitle-size);
+  line-height: var(--t-jobTitle-lh);
   color: var(--tpl-accent);
-  font-weight: 500;
-  margin-bottom: 10px;
   font-family: var(--tpl-heading-font);
+  margin: 0 0 var(--sp-headerTitleGap) 0;
 }
 
 .preview-contact {
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
-  gap: 12px;
+  gap: var(--sp-contactGap);
 }
 
 .contact-item {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
-  font-size: 8.5pt;
-  color: #4b5563;
+  gap: var(--sp-contactIconGap);
+  font-size: var(--t-contact-size);
+  line-height: var(--t-contact-lh);
+  color: var(--tpl-muted);
   font-family: var(--tpl-heading-font);
+  white-space: nowrap;
 }
 
 .contact-item svg {
-  color: #6b7280;
+  color: var(--tpl-muted);
+  width: var(--sp-contactIconSize);
+  height: var(--sp-contactIconSize);
+  flex: none;
 }
 
-a.contact-link {
-  color: #4b5563;
-  text-decoration: none;
-}
+a.contact-link { color: inherit; text-decoration: none; }
+a.contact-link:hover { color: var(--tpl-accent); }
+a.preview-entry-link { text-decoration: none; }
+a.preview-entry-link:hover { text-decoration: underline; }
 
-a.contact-link:hover {
-  color: var(--tpl-accent);
-}
-
-a.preview-entry-link {
-  text-decoration: none;
-}
-
-a.preview-entry-link:hover {
-  text-decoration: underline;
-}
-
-/* Sections */
-.preview-section {
-  margin-bottom: 16px;
-}
+/* ---- Sections ------------------------------------------------------------ */
+.preview-section { margin-bottom: var(--sp-sectionGap); }
+.preview-section:last-child { margin-bottom: 0; }
 
 .preview-section-title {
-  font-size: 11pt;
-  font-weight: 700;
+  font-size: var(--t-sectionTitle-size);
+  line-height: var(--t-sectionTitle-lh);
+  font-weight: var(--t-sectionTitle-weight);
+  letter-spacing: var(--t-sectionTitle-ls);
   text-transform: uppercase;
-  letter-spacing: 1px;
-  color: #111827;
-  padding-bottom: 4px;
-  border-bottom: 1px solid #e5e7eb;
-  margin-bottom: 10px;
+  color: var(--tpl-name);
   font-family: var(--tpl-heading-font);
+  padding-bottom: var(--sp-sectionTitleRuleGap);
+  border-bottom: 0.6pt solid #d1d5db;
+  margin: 0 0 var(--sp-sectionTitleGap) 0;
 }
 .preview-section-title span { display: inline; }
 
-/* ---- Section-title styles ------------------------------------------------ */
+/* Section-title styles - these mirror pdfService._sectionTitle() */
 .sectitle-underline .preview-section-title {
-  border-bottom: 2px solid var(--tpl-accent);
+  border-bottom: 1.5pt solid var(--tpl-accent);
   color: var(--tpl-accent);
 }
 .sectitle-rule .preview-section-title {
-  border-bottom: 1px solid #d1d5db;
-  color: #111827;
+  border-bottom: 0.6pt solid #d1d5db;
+  color: var(--tpl-name);
 }
 .sectitle-plain .preview-section-title {
   border-bottom: none;
-  letter-spacing: 2px;
-  color: #111827;
+  padding-bottom: 0;
+  margin-bottom: var(--sp-sectionTitleGapPlain);
 }
 .sectitle-smallcaps .preview-section-title {
-  border-bottom: 1px solid var(--tpl-accent);
+  border-bottom: 0.6pt solid var(--tpl-accent);
   text-transform: none;
   font-variant: small-caps;
-  letter-spacing: 2px;
-  font-weight: 600;
+  letter-spacing: var(--t-sectionTitleSmallcaps-ls);
   color: var(--tpl-accent);
 }
 .sectitle-pill .preview-section-title {
   border-bottom: none;
+  padding-bottom: 0;
+  margin-bottom: var(--sp-sectionTitlePillGap);
+  line-height: var(--sp-sectionTitlePillHeight);
 }
 .sectitle-pill .preview-section-title span {
   background: var(--tpl-accent);
   color: #fff;
-  padding: 3px 12px;
-  border-radius: 12px;
-  font-size: 9.5pt;
+  padding: 0 var(--sp-sectionTitlePillPadX);
+  border-radius: 7pt;
+  font-size: var(--t-sectionTitlePill-size);
+  display: inline-block;
+  height: var(--sp-sectionTitlePillHeight);
+  line-height: var(--sp-sectionTitlePillHeight);
 }
 .sectitle-bar .preview-section-title {
   border-bottom: none;
-  padding-left: 10px;
-  border-left: 4px solid var(--tpl-accent);
+  padding-bottom: 0;
+  padding-left: var(--sp-sectionTitleBarTextGap);
+  border-left: var(--sp-sectionTitleBarWidth) solid var(--tpl-accent);
+  margin-bottom: var(--sp-sectionTitleBarGap);
 }
 .sectitle-bracket .preview-section-title {
-  border-bottom: 1px dashed #d1d5db;
-  color: #111827;
+  border-bottom: 0.6pt solid #d1d5db;
+  color: var(--tpl-name);
 }
 .sectitle-bracket .preview-section-title span::before {
   content: '# ';
   color: var(--tpl-accent);
 }
 
-/* Entries */
-.preview-entry { margin-bottom: 12px; }
+/* ---- Entries ------------------------------------------------------------- */
+.preview-entry { margin-bottom: var(--sp-entryGap); }
 .preview-entry:last-child { margin-bottom: 0; }
-.preview-entry-compact { margin-bottom: 4px; }
+.preview-entry-compact { margin-bottom: 0; }
 
 .preview-entry-header {
   display: flex;
   justify-content: space-between;
   align-items: baseline;
-  gap: 8px;
+  gap: var(--sp-entryDatePad);
 }
 
 .preview-entry-title {
-  font-size: 10.5pt;
-  font-weight: 700;
-  color: #111827;
-}
-
-.preview-entry-subtitle {
-  font-size: 10pt;
-  color: #4b5563;
-}
-
-.preview-entry-date {
-  font-size: 9pt;
-  color: #6b7280;
-  white-space: nowrap;
+  font-size: var(--t-entryTitle-size);
+  line-height: var(--t-entryTitle-lh);
+  font-weight: var(--t-entryTitle-weight);
+  color: var(--tpl-name);
   font-family: var(--tpl-heading-font);
 }
 
+.preview-entry-subtitle {
+  font-size: var(--t-entryTitle-size);
+  line-height: var(--t-entryTitle-lh);
+  font-weight: var(--t-entryTitle-weight);
+  color: var(--tpl-name);
+  font-family: var(--tpl-heading-font);
+}
+
+.preview-entry-date {
+  font-size: var(--t-entryDate-size);
+  line-height: var(--t-entryDate-lh);
+  color: var(--tpl-muted);
+  white-space: nowrap;
+  font-family: var(--tpl-heading-font);
+  flex: none;
+}
+
 .preview-entry-location {
-  font-size: 9.5pt;
-  color: #6b7280;
-  margin: 2px 0;
+  font-size: var(--t-entryLocation-size);
+  line-height: var(--t-entryLocation-lh);
+  font-style: var(--t-entryLocation-style);
+  color: var(--tpl-muted);
+  margin: 0 0 var(--sp-entryInnerGap) 0;
 }
 
 .preview-entry-link {
-  font-size: 9pt;
+  font-size: var(--t-projectUrl-size);
+  line-height: var(--t-projectUrl-lh);
   color: var(--tpl-accent);
+  font-family: var(--tpl-heading-font);
+  display: block;
 }
 
 .preview-entry-tech {
-  font-size: 9pt;
-  color: #6b7280;
-  font-style: italic;
-  margin-top: 4px;
-  margin-bottom: 0;
+  font-size: var(--t-projectTech-size);
+  line-height: var(--t-projectTech-lh);
+  font-style: var(--t-projectTech-style);
+  color: var(--tpl-muted);
+  margin: 0;
 }
 
-/* Text */
+.preview-education-meta {
+  font-size: var(--t-educationMeta-size);
+  line-height: var(--t-educationMeta-lh);
+  color: var(--tpl-muted);
+  margin: 0;
+}
+.preview-entry-education { margin-bottom: var(--sp-educationEntryGap); }
+.preview-entry-project { margin-bottom: var(--sp-projectEntryGap); }
+
+/* ---- Text ---------------------------------------------------------------- */
 .preview-text {
-  font-size: 10pt;
-  color: #374151;
-  line-height: 1.6;
-  margin-bottom: 0;
+  font-size: var(--t-summary-size);
+  line-height: var(--t-summary-lh);
+  color: var(--tpl-text);
+  margin: 0;
 }
 
-/* Bullet points */
+.preview-project-description {
+  font-size: var(--t-projectDescription-size);
+  line-height: var(--t-projectDescription-lh);
+  color: var(--tpl-text);
+  margin: 0;
+}
+
+/* ---- Bullets ------------------------------------------------------------- */
 .preview-bullets {
   list-style: none;
   padding: 0;
-  margin: 6px 0 0 0;
+  margin: 0;
 }
 .preview-bullets li {
   position: relative;
-  padding-left: 14px;
-  font-size: 10pt;
-  color: #374151;
-  line-height: 1.5;
-  margin-bottom: 3px;
+  padding-left: var(--t-bullet-indent);
+  font-size: var(--t-bullet-size);
+  line-height: var(--t-bullet-lh);
+  color: var(--tpl-text);
+  margin: 0;
 }
 .preview-bullets li::before {
   content: '\2022';
@@ -231,183 +299,278 @@ a.preview-entry-link:hover {
   color: var(--tpl-accent);
 }
 
-/* Skills */
+/* ---- Skills -------------------------------------------------------------- */
 .preview-skills {
   display: flex;
   flex-wrap: wrap;
-  gap: 6px;
+  gap: calc(var(--sp-tagLineHeight) - var(--sp-tagHeight)) var(--sp-tagGap);
 }
 .preview-skill {
-  padding: 2px 10px;
+  padding: 0 var(--sp-tagPadX);
+  height: var(--sp-tagHeight);
+  line-height: var(--sp-tagHeight);
   background-color: #f3f4f6;
-  border: 1px solid #e5e7eb;
-  border-radius: 3px;
-  font-size: 9pt;
-  color: #374151;
+  /* PDFKit strokes the tag outline centred on its path, so the border does not
+     change how tags pack. A CSS border would add 1pt to every tag and shift the
+     wrap; box-shadow paints outside the layout box instead. */
+  box-shadow: 0 0 0 0.5pt #e5e7eb;
+  border: none;
+  border-radius: var(--sp-tagRadius);
+  font-size: var(--t-skillTag-size);
+  color: var(--tpl-text);
   font-family: var(--tpl-heading-font);
+  box-sizing: border-box;
+  white-space: nowrap;
 }
-/* Inline skills: comma-flow rather than chips */
-.skills-inline .preview-skills { gap: 0; }
+
+/* Inline skills: mid-dot flow, matching skills.join('  ·  ') in the PDF */
+.skills-inline .preview-skills { display: block; }
 .skills-inline .preview-skill {
+  display: inline;
   background: none;
   border: none;
   padding: 0;
+  height: auto;
+  font-size: var(--t-skillsInline-size);
+  line-height: var(--t-skillsInline-lh);
+  font-family: var(--tpl-body-font);
+  white-space: normal;
 }
 .skills-inline .preview-skill:not(:last-child)::after {
   content: '\00b7';
-  margin: 0 6px;
+  margin: 0 4pt;
   color: #9ca3af;
 }
-/* Skill rating bars (infographic) */
-.skills-bars .preview-skills { display: block; }
+
+/* Infographic chips. These were proficiency bars whose fill came from the
+   skill's index in the list - a rating the user never supplied. */
+.skills-bars .preview-skills {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  column-gap: var(--sp-chipColumnGap);
+  row-gap: calc(var(--sp-chipRowHeight) - var(--sp-chipHeight));
+}
 .skills-bars .preview-skill {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  background: none;
-  border: none;
-  padding: 2px 0;
-  width: 48%;
-  float: left;
-  margin-right: 2%;
-}
-.preview-skill-bar {
-  display: inline-block;
-  width: 90px;
-  height: 5px;
-  background: #e5e7eb;
-  border-radius: 3px;
-  margin-left: 8px;
-  overflow: hidden;
-}
-.preview-skill-bar span {
   display: block;
-  height: 100%;
-  background: var(--tpl-accent);
+  height: var(--sp-chipHeight);
+  line-height: var(--sp-chipHeight);
+  background: #f3f4f6; /* fallback where color-mix is unsupported */
+  background: color-mix(in srgb, var(--tpl-accent) 12%, transparent);
+  /* The PDF draws the accent bar inside the chip rect, overlapping the left
+     padding, so it must not widen the box here either. */
+  border: none;
+  box-shadow: inset var(--sp-chipAccentWidth) 0 0 var(--tpl-accent);
+  border-radius: var(--sp-chipRadius);
+  padding: 0 var(--sp-chipPadX);
+  font-family: var(--tpl-body-font);
+  font-size: var(--t-skillChip-size);
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-/* Languages */
+/* ---- Languages ----------------------------------------------------------- */
 .preview-languages {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 16px;
+  font-size: var(--t-languages-size);
+  line-height: var(--t-languages-lh);
+  color: var(--tpl-text);
 }
-.preview-language { font-size: 10pt; color: #374151; }
-.lang-level { color: #6b7280; font-size: 9pt; }
+.preview-language { font-size: inherit; color: inherit; }
+.preview-language:not(:last-child)::after {
+  content: '\2022';
+  margin: 0 6pt;
+  color: #9ca3af;
+}
+.lang-level { color: inherit; }
 
-/* Empty state */
+/* ---- Certifications ------------------------------------------------------ */
+.preview-cert-name {
+  font-size: var(--t-certName-size);
+  line-height: var(--t-certName-lh);
+  font-weight: var(--t-certName-weight);
+  color: var(--tpl-name);
+  font-family: var(--tpl-heading-font);
+}
+.preview-cert-issuer {
+  font-size: var(--t-certIssuer-size);
+  line-height: var(--t-certIssuer-lh);
+  color: var(--tpl-text);
+}
+.preview-cert-date {
+  font-size: var(--t-certDate-size);
+  line-height: var(--t-certDate-lh);
+  color: var(--tpl-muted);
+}
+
+/* ---- Empty state --------------------------------------------------------- */
 .preview-empty {
   display: flex;
   align-items: center;
   justify-content: center;
-  min-height: 300px;
+  min-height: 200pt;
   text-align: center;
 }
 .preview-empty p {
   color: #9ca3af;
-  font-size: 10pt;
+  font-size: var(--t-summary-size);
   font-style: italic;
   font-family: var(--tpl-heading-font);
 }
 
 /* ===== Archetype layouts ================================================== */
-
-/* Classic left & formal left: left-aligned header */
 .arch-classic-left .preview-header,
 .arch-formal-left .preview-header,
-.arch-compact .preview-header {
-  text-align: left;
-}
+.arch-compact .preview-header { text-align: left; }
 .arch-classic-left .preview-contact,
 .arch-formal-left .preview-contact,
-.arch-compact .preview-contact {
-  justify-content: flex-start;
-}
+.arch-compact .preview-contact { justify-content: flex-start; }
 
-/* Formal-left: serif, larger refined name, thin rule */
-.arch-formal-left .preview-name { font-size: 24pt; letter-spacing: 0; }
-.arch-formal-left .preview-header { border-bottom-width: 1px; }
-
-/* Header band: full-bleed colored header */
+/* Header band: full-bleed colored header, sized from the registry */
+.arch-header-band .preview-flow { padding-top: 0; }
 .arch-header-band .preview-header {
   text-align: center;
-  margin: -40px -48px 22px;
-  padding: 30px 48px 24px;
+  margin: 0 calc(-1 * var(--pg-mr)) 20pt calc(-1 * var(--pg-ml));
+  padding: var(--pg-band-pad-top) var(--pg-band-pad-x) var(--pg-band-pad-bottom);
   background: linear-gradient(135deg, var(--tpl-accent), var(--tpl-accent-2));
   border-bottom: none;
 }
 .arch-header-band .preview-name { color: var(--tpl-sidebar-text); }
-.arch-header-band .preview-job-title { color: var(--tpl-sidebar-text); opacity: 0.92; }
+.arch-header-band .preview-job-title { color: var(--tpl-sidebar-text); margin-bottom: 4pt; }
 .arch-header-band .preview-contact .contact-item,
-.arch-header-band a.contact-link { color: var(--tpl-sidebar-text); opacity: 0.92; }
+.arch-header-band a.contact-link { color: var(--tpl-sidebar-text); }
 .arch-header-band .preview-contact svg { color: var(--tpl-sidebar-text); }
 
-/* Compact: denser type & spacing, two-column skills */
-.arch-compact { font-size: 9.5pt; padding: 30px 40px; }
-.arch-compact .preview-section { margin-bottom: 11px; }
-.arch-compact .preview-entry { margin-bottom: 8px; }
-.arch-compact .preview-name { font-size: 19pt; }
-.arch-compact .preview-skills { gap: 4px; }
-.arch-compact .preview-bullets li { margin-bottom: 2px; }
-
-/* Infographic clearfix for floated skill bars */
-.skills-bars .preview-skills::after { content: ''; display: block; clear: both; }
+/* Compact: the denser roles are swapped in by previewTheme's .arch-compact rule */
+.arch-compact .preview-section { margin-bottom: var(--sp-sectionGapCompact); }
+.arch-compact .preview-entry { margin-bottom: var(--sp-entryGapCompact); }
 
 /* ===== Sidebar archetype ================================================== */
-.arch-sidebar.preview-page { padding: 0; }
+.arch-sidebar .preview-flow { padding: 0; }
 .preview-sidebar-layout {
   display: flex;
   align-items: stretch;
-  min-height: 297mm;
+  min-height: var(--pg-h);
 }
 .preview-sidebar {
-  width: 34%;
+  width: var(--pg-sidebar-w);
+  flex: none;
   background: var(--tpl-sidebar-bg);
   color: var(--tpl-sidebar-text);
-  padding: 34px 22px;
+  padding: var(--pg-sidebar-top) var(--pg-sidebar-pad) var(--pg-mb);
   box-sizing: border-box;
 }
 .preview-main {
   flex: 1;
-  padding: 36px 32px;
-  box-sizing: border-box;
   min-width: 0;
+  box-sizing: border-box;
+  padding: var(--pg-mt) var(--pg-mr) var(--pg-mb) var(--pg-main-gap);
 }
-.preview-sidebar-name { margin-bottom: 18px; }
+.preview-sidebar-name { margin-bottom: var(--sp-sidebarNameGap); }
 .preview-sidebar .preview-name {
   color: var(--tpl-sidebar-text);
-  font-size: 18pt;
+  font-size: var(--t-sidebarName-size);
+  line-height: var(--t-sidebarName-lh);
 }
 .preview-sidebar .preview-job-title {
   color: var(--tpl-sidebar-text);
-  opacity: 0.9;
+  font-size: var(--t-sidebarJobTitle-size);
+  line-height: var(--t-sidebarJobTitle-lh);
+  margin-bottom: 0;
 }
 .preview-sidebar .preview-contact {
   flex-direction: column;
   align-items: flex-start;
-  gap: 7px;
-  margin-bottom: 18px;
+  gap: var(--sp-sidebarContactGap);
+  margin-bottom: var(--sp-sidebarSectionGap);
 }
 .preview-sidebar .contact-item,
-.preview-sidebar a.contact-link { color: var(--tpl-sidebar-text); opacity: 0.92; }
+.preview-sidebar a.contact-link {
+  color: var(--tpl-sidebar-text);
+  font-size: var(--t-sidebarContact-size);
+  line-height: var(--t-sidebarContact-lh);
+  white-space: normal;
+  align-items: flex-start;
+}
 .preview-sidebar .preview-contact svg { color: var(--tpl-sidebar-text); }
+.preview-sidebar .preview-section { margin-bottom: var(--sp-sidebarSectionGap); }
 .preview-sidebar .preview-section-title {
   color: var(--tpl-sidebar-text);
-  border-color: rgba(255, 255, 255, 0.35);
+  border-color: rgba(255, 255, 255, 0.4);
+  border-bottom-width: 0.5pt;
+  font-size: var(--t-sidebarSectionTitle-size);
+  line-height: var(--t-sidebarSectionTitle-lh);
+  letter-spacing: var(--t-sidebarSectionTitle-ls);
+  margin-bottom: var(--sp-sidebarTitleGap);
 }
-.preview-sidebar .preview-skill {
+/* Sidebar skills/languages are a stacked list in the PDF, not chips or an
+   inline run, so the tag outline and the inline separator are both dropped. */
+.preview-sidebar .preview-skills { display: block; }
+.preview-sidebar .preview-skill,
+.preview-sidebar .preview-language {
+  display: block;
+  background: none;
+  border: none;
+  box-shadow: none;
+  padding: 0;
+  height: auto;
+  white-space: normal;
   color: var(--tpl-sidebar-text);
+  font-family: var(--tpl-body-font);
+  font-size: var(--t-sidebarItem-size);
+  line-height: var(--t-sidebarItem-lh);
+  margin-bottom: var(--sp-sidebarItemGap);
 }
-.preview-sidebar .preview-skill:not(:last-child)::after { color: rgba(255, 255, 255, 0.5); }
-.preview-sidebar .preview-language { color: var(--tpl-sidebar-text); }
-.preview-sidebar .lang-level { color: var(--tpl-sidebar-text); opacity: 0.7; }
+.preview-sidebar .preview-skills .preview-skill:not(:last-child)::after,
+.preview-sidebar .preview-skill::after,
+.preview-sidebar .preview-language::after { content: none; margin: 0; }
+.preview-sidebar .preview-languages { display: block; }
+.preview-sidebar .lang-level { color: var(--tpl-sidebar-text); }
 
-/* Print */
-@media print {
-  .preview-page {
-    box-shadow: none;
-    padding: 0;
-    margin: 0;
-  }
-  .arch-header-band .preview-header { margin-top: 0; }
+/* ===== Pagination chrome ================================================== */
+.preview-pages {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16pt;
 }
+.preview-page-wrap { position: relative; }
+.preview-page-badge {
+  position: absolute;
+  right: 0;
+  bottom: -14pt;
+  font-size: 7.5pt;
+  color: #6b7280;
+  font-family: system-ui, sans-serif;
+  letter-spacing: 0.3pt;
+  white-space: nowrap;
+}
+/* Dashed rule marking where the PDF will break, drawn inside the sheet. */
+.preview-break-line {
+  position: absolute;
+  left: 0;
+  right: 0;
+  border-top: 1px dashed #cbd5e1;
+  pointer-events: none;
+}
+
+@media print {
+  .preview-sheet { box-shadow: none; border-radius: 0; }
+  .preview-page-badge, .preview-break-line { display: none; }
+  .preview-pages { gap: 0; }
+}
+
+/* Inline skills and languages are one joined string, exactly as the PDF joins
+   them (registry `separators`), so both wrap at the same points. The strings
+   are single-spaced precisely so HTML whitespace collapsing is a no-op. */
+.preview-joined { display: block; }
+.skills-inline .preview-skills.preview-joined {
+  font-family: var(--tpl-body-font);
+  font-size: var(--t-skillsInline-size);
+  line-height: var(--t-skillsInline-lh);
+  color: var(--tpl-text);
+}
+
+/* dir="auto" gives RTL runs their correct visual order, but it also flips block
+   alignment. pdfService only right-aligns when the resume as a whole reads
+   right-to-left, so pin alignment unless this is such a document. */
+.preview-doc:not(.rtl-doc) [dir='auto'] { text-align: left; }
+.preview-doc.rtl-doc [dir='auto'] { text-align: right; }

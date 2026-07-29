@@ -146,19 +146,48 @@ CV-Optimizer/
 │   │   ├── services/api.js   # Axios client with auth
 │   │   ├── context/          # Auth & Resume contexts
 │   │   └── config/           # Supabase client init
-│   └── public/
+│   └── public/fonts/         # Web fonts (same faces the PDF embeds)
 ├── server/                   # Express backend
 │   ├── src/
 │   │   ├── controllers/      # Route handlers
-│   │   ├── services/         # Business logic (OpenAI, ATS, PDF, DOCX)
+│   │   ├── services/         # Business logic (OpenAI, ATS, PDF, DOCX, fonts)
 │   │   ├── middleware/       # Auth, credits, validation
 │   │   ├── routes/           # Route definitions
+│   │   ├── fonts/            # Embedded TTF/OTF faces for PDF export
 │   │   └── server.js         # Express app setup
 │   └── __tests__/            # Server tests
 ├── design-system/            # UI/UX design documentation
+├── scripts/                  # Template validation & preview/PDF parity harness
+├── template-registry.json    # Single source of truth for templates + layout
+├── TEMPLATES.md              # Template contract — read before adding one
 ├── supabase-schema.sql       # Database schema
 └── vercel.json               # Deployment config
 ```
+
+## Résumé templates
+
+Templates are defined entirely in `template-registry.json`, which is also the
+shared layout contract the live preview and the PDF exporter both obey — that is
+what keeps the on-screen page count equal to the exported one.
+
+**Read [TEMPLATES.md](TEMPLATES.md) before adding or changing a template.** It
+documents every field a template must define, what each of the three renderers
+(preview, PDF, DOCX) consumes, and the rules (registry-driven only, no fabricated
+data, no per-template branching in renderers).
+
+Every template must pass the shipping gate before it ships:
+
+```bash
+npm run validate:templates                      # all templates
+npm run validate:templates -- --templates=my-new-one
+npm run validate:templates -- --no-preview      # skip Chromium
+```
+
+It renders each template against the stress fixture and asserts no content falls
+outside the page box, the page count stays within the declared budget, non-Latin
+text renders and is extractable, the preview and PDF agree on page count, and the
+DOCX keeps all content in the declared section order. Needs `python3` with
+`pymupdf`, plus Playwright and a local Chrome for the preview pass.
 
 ## License
 
