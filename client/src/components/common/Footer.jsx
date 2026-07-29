@@ -1,6 +1,6 @@
 import { Link, useLocation } from 'react-router-dom';
-import { FileText } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
+import Logo from './Logo';
 import { LEGAL } from '../../config/legal';
 import './Footer.css';
 
@@ -87,7 +87,7 @@ const Footer = () => {
         <div className="ft-top">
           <div className="ft-brand">
             <Link to={isAuthenticated ? '/dashboard' : '/'} className="ft-logo">
-              <FileText size={19} aria-hidden="true" />
+              <Logo size={20} />
               <span>CV Optimizer</span>
             </Link>
             <p className="ft-tagline">

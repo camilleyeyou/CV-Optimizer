@@ -2,7 +2,8 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { getCredits } from '../../services/api';
-import { FileText, Menu, X, LogOut, User, ChevronDown, LayoutDashboard, FileSearch, Sparkles, PenTool, Layout, Mail, Zap, Briefcase, MessageSquare, BarChart3, Settings } from 'lucide-react';
+import { Menu, X, LogOut, User, ChevronDown, LayoutDashboard, FileSearch, Sparkles, PenTool, Layout, Mail, Zap, Briefcase, MessageSquare, BarChart3, Settings } from 'lucide-react';
+import Logo from './Logo';
 import './Header.css';
 
 const Header = () => {
@@ -99,7 +100,7 @@ const Header = () => {
       <header className="header">
         <div className="header-inner">
           <Link to={isAuthenticated ? '/dashboard' : '/'} className="header-logo">
-            <FileText size={24} aria-hidden="true" />
+            <Logo size={24} />
             <span>CV Optimizer</span>
           </Link>
 

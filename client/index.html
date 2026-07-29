@@ -2,9 +2,13 @@
 <html lang="en">
   <head>
     <meta charset="utf-8" />
-    <link rel="icon" href="/favicon.ico" />
+    <!-- SVG first: modern browsers take it and render the mark crisply at any
+         size. The .ico is a PNG container kept for older clients and crawlers. -->
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="icon" href="/favicon.ico" sizes="16x16 32x32 48x48" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-    <meta name="theme-color" content="#08080a" />
+    <meta name="theme-color" content="#08090c" />
     <!--SEO-START-->
     <title data-rh="true">CV Optimizer — Build ATS-Optimized Resumes with AI</title>
     <meta data-rh="true" name="description" content="Build professional, ATS-optimized resumes with 11 AI tools. Score your resume against ATS systems, generate tailored cover letters, track applications, and prepare for interviews." />
@@ -22,7 +26,6 @@
     <meta data-rh="true" name="twitter:description" content="Build professional, ATS-optimized resumes with 11 AI tools — ATS scoring, tailored cover letters, application tracking, and interview prep." />
     <meta data-rh="true" name="twitter:image" content="https://cv-optimizer.vercel.app/og-image.png" />
     <!--SEO-END-->
-    <link rel="apple-touch-icon" href="/logo192.png" />
     <link rel="manifest" href="/manifest.json" />
     <!-- Typefaces are self-hosted (see styles/tokens.css). Preloading the two
          faces used above the fold removes a render-blocking third-party
