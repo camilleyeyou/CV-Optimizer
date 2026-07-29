@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { Helmet } from 'react-helmet-async';
+import Seo from '../components/common/Seo';
 import { FileQuestion, ArrowLeft } from 'lucide-react';
 
 const NotFound = () => (
@@ -15,10 +15,11 @@ const NotFound = () => (
       padding: 'var(--space-16) var(--space-6)',
     }}
   >
-    <Helmet>
-      <title>Page not found — CV Optimizer</title>
-      <meta name="robots" content="noindex" />
-    </Helmet>
+    <Seo
+      title="Page not found — CV Optimizer"
+      description="The page you were looking for doesn't exist."
+      noindex
+    />
     <FileQuestion size={56} style={{ color: 'var(--primary)' }} aria-hidden="true" />
     <h1 style={{ fontSize: '2rem' }}>Page not found</h1>
     <p style={{ color: 'var(--text-secondary)', maxWidth: 420 }}>

@@ -12,6 +12,8 @@
     "test": "cd server && npx jest",
     "verify:parity": "node scripts/verify-preview-parity.mjs && python3 scripts/preview-parity-report.py",
     "validate:templates": "node scripts/validate-templates.mjs",
+    "verify:seo": "node scripts/verify-seo.mjs",
+    "previews:generate": "node scripts/generate-template-previews.mjs",
     "prepare": "husky || true"
   },
   "repository": {

@@ -1,9 +1,11 @@
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { Helmet } from 'react-helmet-async';
+import Seo from '../components/common/Seo';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { verifyStudent } from '../services/api';
-import { SITE_URL, OG_IMAGE } from '../config/site';
+import { useResume } from '../context/ResumeContext';
+import { isTemplateSlug } from '../config/templateContent';
+import { getTemplate } from '../config/templates';
 import { Mail, Lock, User, ArrowRight, GraduationCap } from 'lucide-react';
 import './Auth.css';
 
@@ -19,7 +21,14 @@ const Register = () => {
   const [error, setError] = useState('');
 
   const { signUp } = useAuth();
+  const { createResume } = useResume();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+
+  // Carried from a "Use this template" click on a public template page, so the
+  // choice survives signup instead of dropping the user on an empty dashboard.
+  const rawTemplate = searchParams.get('template');
+  const preselected = rawTemplate && isTemplateSlug(rawTemplate) ? rawTemplate : null;
 
   const handleChange = (e) => {
     setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
@@ -51,6 +60,18 @@ const Register = () => {
       if (/\.edu$/i.test(domain) || /\.ac\.[a-z]{2}$/i.test(domain)) {
         try { await verifyStudent(); } catch { /* non-blocking */ }
       }
+      // Honour a preselected template by opening its builder directly. A
+      // failure here must not strand a user who has just signed up, so it
+      // falls back to the dashboard.
+      if (preselected) {
+        try {
+          const resume = await createResume(preselected);
+          if (resume?.id) {
+            navigate(`/builder/${resume.id}`);
+            return;
+          }
+        } catch { /* fall through to the dashboard */ }
+      }
       navigate('/dashboard');
     } catch (err) {
       setError(err.message || 'Failed to create account.');
@@ -62,28 +83,34 @@ const Register = () => {
 
   return (
     <div className="auth-page">
-      <Helmet>
-        <title>Create Your Free Account — CV Optimizer</title>
-        <meta name="description" content="Create a free CV Optimizer account and build an ATS-optimized resume with AI — 5 free AI credits, 6 templates, and an ATS score checker." />
-        <link rel="canonical" href={`${SITE_URL}/register`} />
-        <meta property="og:type" content="website" />
-        <meta property="og:site_name" content="CV Optimizer" />
-        <meta property="og:title" content="Create Your Free Account — CV Optimizer" />
-        <meta property="og:description" content="Create a free CV Optimizer account and build an ATS-optimized resume with AI — free to start, no credit card required." />
-        <meta property="og:url" content={`${SITE_URL}/register`} />
-        <meta property="og:image" content={OG_IMAGE} />
-        <meta property="og:image:width" content="1200" />
-        <meta property="og:image:height" content="630" />
-        <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:title" content="Create Your Free Account — CV Optimizer" />
-        <meta name="twitter:description" content="Create a free CV Optimizer account and build an ATS-optimized resume with AI — free to start, no credit card required." />
-        <meta name="twitter:image" content={OG_IMAGE} />
-      </Helmet>
+      <Seo
+        title="Create Your Free Account — CV Optimizer"
+        description="Create a free CV Optimizer account and build an ATS-optimized resume with AI — free to start, no credit card required."
+        path="/register"
+      />
       <div className="auth-card">
         <div className="auth-header">
           <h1>Create your account</h1>
-          <p>Start building professional resumes in minutes</p>
+          <p>
+            {preselected
+              ? `You'll start with the ${getTemplate(preselected).name} template — you can change it any time.`
+              : 'Start building professional resumes in minutes'}
+          </p>
         </div>
+
+        {preselected && (
+          <div className="auth-preselect">
+            <img
+              src={`/template-previews/${preselected}.png`}
+              alt=""
+              width="1191"
+              height="1685"
+              loading="lazy"
+              decoding="async"
+            />
+            <span>{getTemplate(preselected).name} template selected</span>
+          </div>
+        )}
 
         {error && (
           <div className="alert alert-error">

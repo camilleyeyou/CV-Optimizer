@@ -1,6 +1,5 @@
 import { lazy, Suspense } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import { HelmetProvider } from 'react-helmet-async';
 import { Toaster } from 'react-hot-toast';
 import { AuthProvider } from './context/AuthContext';
 import { ResumeProvider } from './context/ResumeContext';
@@ -9,6 +8,7 @@ import Footer from './components/common/Footer';
 import ErrorBoundary from './components/common/ErrorBoundary';
 import PrivateRoute from './components/common/PrivateRoute';
 import PublicRoute from './components/common/PublicRoute';
+import { SeoDefaults } from './components/common/Seo';
 import Skeleton, { SkeletonCard } from './components/common/Skeleton';
 // LandingPage is the entry point — keep it eager. Everything else is
 // code-split so the initial bundle stays small.
@@ -18,6 +18,7 @@ import './styles.css';
 const Dashboard = lazy(() => import('./pages/Dashboard'));
 const Builder = lazy(() => import('./pages/Builder'));
 const Templates = lazy(() => import('./pages/Templates'));
+const TemplateDetail = lazy(() => import('./pages/TemplateDetail'));
 const Login = lazy(() => import('./pages/Login'));
 const Register = lazy(() => import('./pages/Register'));
 const ATSChecker = lazy(() => import('./pages/ATSChecker'));
@@ -44,7 +45,8 @@ const PageFallback = () => (
 
 function App() {
   return (
-    <HelmetProvider>
+    <>
+      <SeoDefaults />
       <Router>
         <AuthProvider>
           <ResumeProvider>
@@ -62,10 +64,13 @@ function App() {
                     <Route path="/privacy" element={<Privacy />} />
                     <Route path="/terms" element={<Terms />} />
                     <Route path="/refund" element={<Refund />} />
+                    {/* Public and indexable: the template gallery is a top-of-funnel
+                        SEO surface, not an app screen. */}
+                    <Route path="/templates" element={<Templates />} />
+                    <Route path="/templates/:slug" element={<TemplateDetail />} />
 
                     {/* Protected */}
                     <Route path="/dashboard" element={<PrivateRoute><Dashboard /></PrivateRoute>} />
-                    <Route path="/templates" element={<PrivateRoute><Templates /></PrivateRoute>} />
                     <Route path="/builder" element={<PrivateRoute><Builder /></PrivateRoute>} />
                     <Route path="/builder/:id" element={<PrivateRoute><Builder /></PrivateRoute>} />
                     <Route path="/ats-checker" element={<PrivateRoute><ATSChecker /></PrivateRoute>} />
@@ -99,7 +104,7 @@ function App() {
           </ResumeProvider>
         </AuthProvider>
       </Router>
-    </HelmetProvider>
+    </>
   );
 }
 

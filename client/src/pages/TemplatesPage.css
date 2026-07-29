@@ -282,3 +282,97 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* ---- Public gallery (cards are <article> with a real <img> preview) -------
+   The card used to be a single <button> rendering a live React thumbnail. It is
+   now a linked static image so crawlers get an <a> to every template page and
+   the browser gets a cacheable asset instead of 21 mounted preview trees. */
+.template-card {
+  cursor: default;
+  display: flex;
+  flex-direction: column;
+}
+
+a.template-preview {
+  display: block;
+  text-decoration: none;
+}
+
+.template-preview-img {
+  display: block;
+  width: 100%;
+  height: auto;
+  /* Only the top of the page is shown on a card; the rest is clipped by the
+     fixed aspect box so every card is the same height. */
+  aspect-ratio: 1191 / 900;
+  object-fit: cover;
+  object-position: top center;
+  border-radius: var(--radius-md) var(--radius-md) 0 0;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-bottom: none;
+  background: #ffffff;
+}
+
+.template-info {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-4);
+  flex: 1;
+}
+
+.template-info h2 {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--text-base);
+  font-weight: 650;
+  margin: 0;
+}
+
+.template-info h2 a {
+  color: var(--text-primary);
+  text-decoration: none;
+}
+
+.template-info h2 a:hover {
+  color: var(--primary);
+}
+
+.template-info p {
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+  line-height: 1.5;
+  margin: 0;
+  flex: 1;
+}
+
+.template-use-btn {
+  align-self: flex-start;
+  margin-top: var(--space-1);
+}
+
+.template-lock-overlay {
+  position: absolute;
+  top: var(--space-4);
+  right: var(--space-4);
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 9px;
+  border-radius: var(--radius-full);
+  background: rgba(8, 8, 10, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  inset: auto var(--space-4) auto auto;
+  backdrop-filter: none;
+}
+
+.template-lock-overlay span {
+  font-size: 0.6rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--primary);
+  background: none;
+  padding: 0;
+}

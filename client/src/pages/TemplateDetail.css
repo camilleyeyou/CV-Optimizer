@@ -1,0 +1,292 @@
+/* Public, indexable template page. App chrome stays on the near-black theme;
+   the résumé preview itself is product output and stays white paper. */
+.tpl-detail {
+  min-height: 100vh;
+  padding: var(--space-6) var(--space-4) var(--space-10);
+}
+
+.tpl-detail-container {
+  max-width: 1080px;
+  margin: 0 auto;
+}
+
+.tpl-breadcrumb {
+  margin-bottom: var(--space-5);
+}
+
+.tpl-breadcrumb a {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: var(--text-sm);
+  color: var(--text-muted);
+  text-decoration: none;
+}
+
+.tpl-breadcrumb a:hover {
+  color: var(--text-primary);
+}
+
+/* ---- Hero ---------------------------------------------------------------- */
+.tpl-detail-hero {
+  display: grid;
+  grid-template-columns: 1fr 380px;
+  gap: var(--space-8);
+  align-items: start;
+  margin-bottom: var(--space-10);
+}
+
+.tpl-detail-copy h1 {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  font-size: clamp(1.9rem, 4vw, 2.6rem);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+  margin: 0 0 var(--space-3);
+}
+
+.tpl-detail-tier {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.66rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  padding: 4px 9px;
+  border-radius: var(--radius-full);
+  background: var(--primary-light, rgba(129, 140, 248, 0.12));
+  color: var(--primary);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.tpl-detail-tagline {
+  font-size: var(--text-lg);
+  color: var(--text-secondary);
+  line-height: 1.55;
+  margin: 0 0 var(--space-5);
+}
+
+.tpl-detail-para {
+  font-size: var(--text-base);
+  color: var(--text-secondary);
+  line-height: 1.7;
+  margin: 0 0 var(--space-4);
+  max-width: 62ch;
+}
+
+.tpl-detail-h2 {
+  font-size: var(--text-lg);
+  font-weight: 650;
+  letter-spacing: -0.01em;
+  margin: var(--space-6) 0 var(--space-3);
+}
+
+.tpl-detail-list {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 var(--space-5);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.tpl-detail-list li {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+  font-size: var(--text-base);
+  color: var(--text-secondary);
+}
+
+.tpl-detail-list svg {
+  color: var(--primary);
+  flex-shrink: 0;
+  margin-top: 3px;
+}
+
+.tpl-detail-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  margin-top: var(--space-6);
+}
+
+/* ---- Preview ------------------------------------------------------------- */
+.tpl-detail-preview img {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--shadow-xl);
+  background: #ffffff;
+}
+
+.tpl-detail-preview-note {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+  margin: var(--space-2) 0 0;
+}
+
+/* ---- Sections ------------------------------------------------------------ */
+.tpl-detail-section {
+  margin-bottom: var(--space-9);
+}
+
+.tpl-detail-specs {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: var(--space-3);
+  margin: 0;
+}
+
+.tpl-detail-specs > div {
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-lg);
+  background: var(--glass-bg);
+}
+
+.tpl-detail-specs dt {
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--text-muted);
+  margin-bottom: 4px;
+}
+
+.tpl-detail-specs dd {
+  margin: 0;
+  font-size: var(--text-sm);
+  color: var(--text-primary);
+}
+
+/* ---- FAQs ---------------------------------------------------------------- */
+.tpl-detail-faqs {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.tpl-detail-faq {
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-lg);
+  background: var(--glass-bg);
+  overflow: hidden;
+}
+
+.tpl-detail-faq summary {
+  padding: var(--space-4);
+  cursor: pointer;
+  font-size: var(--text-base);
+  font-weight: 600;
+  list-style: none;
+}
+
+.tpl-detail-faq summary::-webkit-details-marker { display: none; }
+
+.tpl-detail-faq summary::after {
+  content: '+';
+  float: right;
+  color: var(--text-muted);
+  font-weight: 400;
+}
+
+.tpl-detail-faq[open] summary::after { content: '−'; }
+
+.tpl-detail-faq p {
+  padding: 0 var(--space-4) var(--space-4);
+  margin: 0;
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+  line-height: 1.7;
+  max-width: 72ch;
+}
+
+/* ---- Related ------------------------------------------------------------- */
+.tpl-detail-related {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: var(--space-4);
+}
+
+.tpl-detail-related a {
+  display: block;
+  text-decoration: none;
+  color: var(--text-primary);
+}
+
+.tpl-detail-related img {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--glass-border);
+  background: #ffffff;
+  transition: border-color var(--transition-base), transform var(--transition-base);
+}
+
+.tpl-detail-related a:hover img {
+  border-color: rgba(255, 255, 255, 0.25);
+  transform: translateY(-2px);
+}
+
+.tpl-detail-related span {
+  display: block;
+  margin-top: var(--space-2);
+  font-size: var(--text-sm);
+  font-weight: 600;
+}
+
+/* ---- Closing CTA --------------------------------------------------------- */
+.tpl-detail-cta {
+  text-align: center;
+  padding: var(--space-8) var(--space-4);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-xl);
+  background: var(--glass-bg);
+}
+
+.tpl-detail-cta h2 {
+  font-size: var(--text-2xl);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  margin: 0 0 var(--space-2);
+}
+
+.tpl-detail-cta p {
+  font-size: var(--text-base);
+  color: var(--text-secondary);
+  margin: 0 auto var(--space-5);
+  max-width: 48ch;
+}
+
+@media (max-width: 860px) {
+  .tpl-detail-hero {
+    grid-template-columns: 1fr;
+  }
+
+  /* Preview first on mobile: it is what the visitor came to see. */
+  .tpl-detail-preview {
+    order: -1;
+    max-width: 340px;
+    margin: 0 auto var(--space-4);
+  }
+
+  .tpl-detail-actions .btn {
+    flex: 1 1 100%;
+    justify-content: center;
+  }
+}

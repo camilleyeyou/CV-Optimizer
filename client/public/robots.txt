@@ -1,10 +1,12 @@
 # https://www.robotstxt.org/robotstxt.html
 User-agent: *
 Allow: /
-# Keep authenticated app areas out of the index
+# Keep authenticated app areas out of the index.
+# /templates is deliberately NOT listed: the gallery and the per-template pages
+# are public marketing surfaces. Disallowing /templates would also have blocked
+# every /templates/<slug> page beneath it.
 Disallow: /dashboard
 Disallow: /builder
-Disallow: /templates
 Disallow: /ats-checker
 Disallow: /ai-creator
 Disallow: /cover-letter

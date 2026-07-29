@@ -1,6 +1,6 @@
-import { Helmet } from 'react-helmet-async';
 import { Link } from 'react-router-dom';
 import { LEGAL } from '../../config/legal';
+import Seo from '../../components/common/Seo';
 import './legal.css';
 
 /**
@@ -9,11 +9,13 @@ import './legal.css';
  */
 const LegalLayout = ({ title, description, slug, children }) => (
   <div className="legal-page">
-    <Helmet>
-      <title>{title} — {LEGAL.productName}</title>
-      <meta name="description" content={description} />
-      <link rel="canonical" href={`${LEGAL.siteUrl}/${slug}`} />
-    </Helmet>
+    {/* Interpolated as one string: Helmet reads only the first child of
+        <title>, so `{title} — {name}` used to render an empty title. */}
+    <Seo
+      title={`${title} — ${LEGAL.productName}`}
+      description={description}
+      path={`/${slug}`}
+    />
 
     <article className="legal-prose">
       <h1>{title}</h1>

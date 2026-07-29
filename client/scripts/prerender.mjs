@@ -9,13 +9,38 @@
 import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { createRequire } from 'node:module';
 
+const require = createRequire(import.meta.url);
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const BUILD = join(ROOT, 'build');
 const SITE_URL = (process.env.VITE_SITE_URL || 'https://cv-optimizer.vercel.app').replace(/\/$/, '');
 const OG_IMAGE = `${SITE_URL}/og-image.png`;
 
 const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/"/g, '&quot;');
+// Strip tags for use inside attributes/JSON-LD without dragging in a parser.
+const text = (s) => String(s).replace(/<[^>]*>/g, '');
+
+const registry = require(join(ROOT, '../template-registry.json'));
+const TEMPLATES = registry.templates;
+
+/**
+ * The page copy, loaded from the very module the React pages render.
+ *
+ * templateContent.js is an ES module that imports the registry through Vite's
+ * JSON handling, which plain Node can't resolve - so its imports are swapped
+ * for the server-side registry loader (same data, CommonJS) and the body is
+ * evaluated. Duplicating the copy here instead would guarantee the prerendered
+ * HTML and the rendered page drift apart.
+ */
+const { getTemplate } = require(join(ROOT, '../server/src/templateRegistry'));
+const contentSrc = readFileSync(join(ROOT, 'src/config/templateContent.js'), 'utf8')
+  .replace(/^import[\s\S]*?from '\.\/templates';\n/m, '')
+  .replace(/^export /gm, '');
+const { templateContent, templateFacts } = (new Function(
+  'getTemplate', 'TEMPLATES',
+  `${contentSrc}\nreturn { templateContent, templateFacts };`,
+))(getTemplate, TEMPLATES);
 
 const routes = [
   {
@@ -63,24 +88,154 @@ const routes = [
   },
 ];
 
-function seoBlock({ title, description, path }) {
+// ---- Public template pages -------------------------------------------------
+// These exist to be found in search, so the HTML a crawler receives without
+// running JS has to carry the real copy, not an empty #root.
+
+const GALLERY_DESC = `Browse ${TEMPLATES.length} professional résumé templates, each ATS-friendly `
+  + 'and free to preview. Pick a design, fill it in with AI help, and export to PDF or DOCX.';
+
+routes.push({
+  out: ['templates.html', 'templates/index.html'],
+  path: '/templates',
+  title: `Free Résumé Templates — ATS-Friendly, ${TEMPLATES.length} Designs | CV Optimizer`,
+  description: GALLERY_DESC,
+  jsonLd: {
+    '@context': 'https://schema.org',
+    '@type': 'CollectionPage',
+    name: 'Résumé Templates',
+    description: GALLERY_DESC,
+    url: `${SITE_URL}/templates`,
+    isPartOf: { '@type': 'WebSite', name: 'CV Optimizer', url: SITE_URL },
+    mainEntity: {
+      '@type': 'ItemList',
+      numberOfItems: TEMPLATES.length,
+      itemListElement: TEMPLATES.map((t, i) => ({
+        '@type': 'ListItem',
+        position: i + 1,
+        name: `${t.name} résumé template`,
+        url: `${SITE_URL}/templates/${t.id}`,
+      })),
+    },
+  },
+  hero: `
+      <section class="templates-page">
+        <div class="templates-container">
+          <div class="templates-header">
+            <h1>Résumé templates</h1>
+            <p>${esc(GALLERY_DESC)}</p>
+          </div>
+          <ul class="templates-grid">
+            ${TEMPLATES.map((t) => `<li><a href="/templates/${t.id}">
+              <img src="/template-previews/${t.id}.png" alt="${esc(t.name)} résumé template preview" width="1191" height="1685" loading="lazy" />
+              <h2>${esc(t.name)}</h2>
+              <p>${esc(text(templateContent(t.id).tagline))}</p>
+            </a></li>`).join('\n            ')}
+          </ul>
+        </div>
+      </section>`,
+});
+
+for (const t of TEMPLATES) {
+  const { tagline, intro, bestFor, faqs } = templateContent(t.id);
+  const facts = templateFacts(t.id);
+  const url = `${SITE_URL}/templates/${t.id}`;
+  const image = `${SITE_URL}/template-previews/${t.id}-og.png`;
+
+  routes.push({
+    out: [`templates/${t.id}.html`, `templates/${t.id}/index.html`],
+    path: `/templates/${t.id}`,
+    title: `${t.name} Résumé Template — Free ATS-Friendly Download | CV Optimizer`,
+    description: tagline,
+    image,
+    jsonLd: [
+      {
+        '@context': 'https://schema.org',
+        '@type': 'SoftwareApplication',
+        name: `${t.name} Résumé Template`,
+        description: tagline,
+        url,
+        applicationCategory: 'BusinessApplication',
+        applicationSubCategory: 'Résumé Builder',
+        operatingSystem: 'Web browser',
+        image,
+        inLanguage: 'en',
+        isAccessibleForFree: !t.premium,
+        offers: {
+          '@type': 'Offer',
+          price: '0',
+          priceCurrency: 'USD',
+          description: t.premium
+            ? 'Free to preview and edit; exporting with this template requires CV Optimizer Pro.'
+            : 'Free to use, edit and export.',
+        },
+        featureList: facts.map(([k, v]) => `${k}: ${v}`),
+        publisher: { '@type': 'Organization', name: 'CV Optimizer', url: SITE_URL },
+      },
+      {
+        '@context': 'https://schema.org',
+        '@type': 'FAQPage',
+        mainEntity: faqs.map(({ q, a }) => ({
+          '@type': 'Question',
+          name: q,
+          acceptedAnswer: { '@type': 'Answer', text: a },
+        })),
+      },
+      {
+        '@context': 'https://schema.org',
+        '@type': 'BreadcrumbList',
+        itemListElement: [
+          { '@type': 'ListItem', position: 1, name: 'Home', item: `${SITE_URL}/` },
+          { '@type': 'ListItem', position: 2, name: 'Résumé templates', item: `${SITE_URL}/templates` },
+          { '@type': 'ListItem', position: 3, name: `${t.name} template`, item: url },
+        ],
+      },
+    ],
+    hero: `
+      <section class="tpl-detail">
+        <div class="tpl-detail-container">
+          <nav aria-label="Breadcrumb"><a href="/templates">All templates</a></nav>
+          <h1>${esc(t.name)} résumé template</h1>
+          <p>${esc(text(tagline))}</p>
+          ${intro.map((p) => `<p>${esc(text(p))}</p>`).join('\n          ')}
+          ${bestFor.length ? `<h2>Best for</h2>\n          <ul>${bestFor.map((b) => `<li>${esc(b)}</li>`).join('')}</ul>` : ''}
+          <p><a class="btn btn-primary btn-lg" href="/register?template=${t.id}">Use this template</a></p>
+          <img src="/template-previews/${t.id}.png" alt="${esc(t.name)} résumé template, shown with sample content" width="1191" height="1685" />
+          <h2>Template details</h2>
+          <dl>${facts.map(([k, v]) => `<dt>${esc(k)}</dt><dd>${esc(v)}</dd>`).join('')}</dl>
+          <h2>Questions about the ${esc(t.name)} template</h2>
+          ${faqs.map(({ q, a }) => `<h3>${esc(q)}</h3><p>${esc(text(a))}</p>`).join('\n          ')}
+        </div>
+      </section>`,
+  });
+}
+
+// Every tag carries data-rh so react-helmet-async takes ownership on mount and
+// *replaces* it. Without that the page ends up with the prerendered tag and the
+// React one side by side - two titles, two descriptions, two canonicals.
+function seoBlock({ title, description, path, image = OG_IMAGE, jsonLd }) {
   const url = `${SITE_URL}${path}`;
+  const ld = (jsonLd ? [].concat(jsonLd) : [])
+    .map((block) => `\n    <script type="application/ld+json">${
+      JSON.stringify(block).replace(/</g, '\\u003c')
+    }</script>`)
+    .join('');
   return `<!--SEO-START-->
-    <title>${esc(title)}</title>
-    <meta name="description" content="${esc(description)}" />
-    <link rel="canonical" href="${url}" />
-    <meta property="og:type" content="website" />
-    <meta property="og:site_name" content="CV Optimizer" />
-    <meta property="og:title" content="${esc(title)}" />
-    <meta property="og:description" content="${esc(description)}" />
-    <meta property="og:url" content="${url}" />
-    <meta property="og:image" content="${OG_IMAGE}" />
-    <meta property="og:image:width" content="1200" />
-    <meta property="og:image:height" content="630" />
-    <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="${esc(title)}" />
-    <meta name="twitter:description" content="${esc(description)}" />
-    <meta name="twitter:image" content="${OG_IMAGE}" />
+    <title data-rh="true">${esc(title)}</title>
+    <meta data-rh="true" name="description" content="${esc(description)}" />
+    <link data-rh="true" rel="canonical" href="${url}" />
+    <meta data-rh="true" property="og:type" content="website" />
+    <meta data-rh="true" property="og:site_name" content="CV Optimizer" />
+    <meta data-rh="true" property="og:title" content="${esc(title)}" />
+    <meta data-rh="true" property="og:description" content="${esc(description)}" />
+    <meta data-rh="true" property="og:url" content="${url}" />
+    <meta data-rh="true" property="og:image" content="${esc(image)}" />
+    <meta data-rh="true" property="og:image:width" content="1200" />
+    <meta data-rh="true" property="og:image:height" content="630" />
+    <meta data-rh="true" name="twitter:card" content="summary_large_image" />
+    <meta data-rh="true" name="twitter:title" content="${esc(title)}" />
+    <meta data-rh="true" name="twitter:description" content="${esc(description)}" />
+    <meta data-rh="true" name="twitter:image" content="${esc(image)}" />${ld}
     <!--SEO-END-->`;
 }
 
@@ -104,4 +259,34 @@ for (const route of routes) {
   }
 }
 
+// ---- Sitemap ---------------------------------------------------------------
+// Generated from the same route list, so a new template can never ship with a
+// page but no sitemap entry (or an entry pointing at a page that isn't built).
+const PRIORITY = {
+  '/': '1.0', '/templates': '0.9', '/register': '0.8', '/login': '0.5',
+};
+const FREQ = {
+  '/': 'weekly', '/templates': 'weekly', '/privacy': 'yearly', '/terms': 'yearly',
+  '/refund': 'yearly',
+};
+
+const sitemapPaths = [
+  ...routes.map((r) => r.path),
+  // Legal pages are served by the SPA fallback rather than prerendered, but
+  // they are indexable and carry their own canonical.
+  '/privacy', '/terms', '/refund',
+];
+
+const sitemap = `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+${[...new Set(sitemapPaths)].map((p) => `  <url>
+    <loc>${SITE_URL}${p}</loc>
+    <changefreq>${FREQ[p] || (p.startsWith('/templates/') ? 'monthly' : 'monthly')}</changefreq>
+    <priority>${PRIORITY[p] || (p.startsWith('/templates/') ? '0.7' : '0.3')}</priority>
+  </url>`).join('\n')}
+</urlset>
+`;
+writeFileSync(join(BUILD, 'sitemap.xml'), sitemap);
+
 console.log(`prerender: wrote ${files} HTML file(s) across ${routes.length} public routes (site: ${SITE_URL})`);
+console.log(`prerender: sitemap.xml lists ${new Set(sitemapPaths).size} URLs`);

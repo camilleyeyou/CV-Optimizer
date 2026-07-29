@@ -1,6 +1,6 @@
 import { useState } from 'react';
+import Seo from '../components/common/Seo';
 import { useNavigate } from 'react-router-dom';
-import { Helmet } from 'react-helmet-async';
 import { Download, Trash2, Loader, ShieldAlert } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useAuth } from '../context/AuthContext';
@@ -50,10 +50,11 @@ const Account = () => {
 
   return (
     <div className="account-page">
-      <Helmet>
-        <title>Account &amp; Data — CV Optimizer</title>
-        <meta name="robots" content="noindex" />
-      </Helmet>
+      <Seo
+        title="Account & Data — CV Optimizer"
+        description="Manage your CV Optimizer account, billing, and data."
+        noindex
+      />
 
       <h1>Account &amp; Data</h1>
       <p className="account-email">{user?.email}</p>

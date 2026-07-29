@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
+import Seo from '../components/common/Seo';
 import { useParams, Link } from 'react-router-dom';
-import { Helmet } from 'react-helmet-async';
 import { Loader, FileText } from 'lucide-react';
 import api from '../services/api';
 import './SharedResume.css';
@@ -66,9 +66,11 @@ const SharedResume = () => {
 
   return (
     <div className="shared-resume">
-      <Helmet>
-        <title>{name ? `${name} - Resume` : 'Shared Resume'} | CV Optimizer</title>
-      </Helmet>
+      <Seo
+        title={name ? `${name} - Resume | CV Optimizer` : 'Shared Resume | CV Optimizer'}
+        description="A resume shared from CV Optimizer."
+        noindex
+      />
 
       <div className="shared-resume-card">
         {/* Header */}
