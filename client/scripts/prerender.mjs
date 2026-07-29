@@ -48,14 +48,23 @@ const routes = [
     path: '/',
     title: 'CV Optimizer — Build ATS-Optimized Resumes with AI',
     description:
-      'Build professional, ATS-optimized resumes with 11 AI tools. Score your resume against ATS systems, generate tailored cover letters, track applications, and prepare for interviews.',
+      `Score your resume against applicant tracking systems, fix what they flag, and export a clean PDF or DOCX. 11 AI tools and ${TEMPLATES.length} templates, free to start.`,
+    // Must mirror the hero in LandingPage.jsx — same copy, same class names.
+    // A crawler that does not run JS sees only this, so drift here means the
+    // indexed page and the real page make different promises.
     hero: `
-      <section class="landing-hero">
-        <h1>Build ATS-Optimized Resumes with AI</h1>
-        <p>11 AI-powered tools to build your resume, score it against ATS systems, generate cover letters, and land more interviews.</p>
-        <div class="landing-hero-actions">
-          <a class="btn btn-primary btn-lg" href="/register">Get Started Free</a>
-          <a class="btn btn-secondary btn-lg" href="#ats-checker">Try ATS Checker</a>
+      <section class="lp-hero">
+        <div class="lp-hero-inner">
+          <div class="lp-hero-copy">
+            <a class="lp-pill" href="#ats-checker">Free ATS check, no account needed</a>
+            <h1 class="display-1">Build a resume that clears the filter</h1>
+            <p class="lead lp-hero-lead">Most applications are read by software before a person sees them. CV Optimizer scores your resume the way those systems do, shows you what is missing, and helps you fix it.</p>
+            <div class="lp-hero-actions">
+              <a class="btn btn-primary btn-xl" href="/register">Start building — free</a>
+              <a class="btn btn-secondary btn-xl" href="#ats-checker">Check my score</a>
+            </div>
+            <p class="lp-hero-trust">No card required. 5 AI credits every month on the free plan.</p>
+          </div>
         </div>
       </section>`,
   },

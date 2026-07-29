@@ -101,7 +101,9 @@
 
 .lead {
   font-size: var(--text-lg);
-  line-height: var(--leading-relaxed);
+  /* Body leading, not relaxed — at 19px, 1.75 opens gaps wide enough that a
+     wrapped lead stops reading as one paragraph. */
+  line-height: var(--leading-body);
   color: var(--text-secondary);
   max-width: var(--measure);
   text-wrap: pretty;
@@ -925,13 +927,19 @@ a.btn-ghost:hover { color: var(--text-primary); }
   .skeleton::after { animation: none; }
 }
 
+/* Fills the viewport rather than sitting at a fixed 320px.
+   A short loading state leaves the footer parked mid-screen; when the real page
+   arrives the footer drops thousands of pixels, and that single jump was the
+   whole of the landing page's 0.40 CLS. Holding full height keeps the footer
+   below the fold, so the swap costs nothing. */
 .loading-screen {
   display: flex;
+  flex: 1;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   gap: var(--space-4);
-  min-height: 320px;
+  min-height: calc(100vh - var(--header-height));
   font-size: var(--text-sm);
   color: var(--text-tertiary);
 }

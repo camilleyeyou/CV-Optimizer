@@ -34,7 +34,9 @@ const TemplateThumbnail = ({ templateId, data, height = 200 }) => {
         className="tpl-thumb-page"
         style={{ width: PAGE_WIDTH, transform: `scale(${scale})` }}
       >
-        <ResumePreview templateId={templateId} data={data} paginate={false} />
+        {/* nameTag="div": a gallery renders many of these, and each one shipping
+            an <h1> would bury the page's real heading structure. */}
+        <ResumePreview templateId={templateId} data={data} paginate={false} nameTag="div" />
       </div>
     </div>
   );

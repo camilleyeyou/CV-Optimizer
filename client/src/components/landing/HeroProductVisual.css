@@ -1,0 +1,201 @@
+/* Hero product visual — an app frame holding a real rendered resume, with the
+   ATS score card overlapping its lower-left corner. */
+
+.hpv {
+  position: relative;
+  width: 100%;
+  /* Room for the score card to hang off the frame without clipping */
+  padding-bottom: var(--space-10);
+  padding-left: var(--space-6);
+}
+
+.hpv-frame {
+  position: relative;
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-2xl);
+  background: var(--surface-raised);
+  box-shadow: var(--highlight-top), var(--shadow-xl), var(--glow-accent);
+  overflow: hidden;
+  /* A subtle rotation reads as a product shot rather than a flat screenshot */
+  transform: perspective(1600px) rotateY(-3deg) rotateX(1.5deg);
+  transform-origin: center left;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hpv-frame { transform: none; }
+}
+
+/* --- Window chrome ------------------------------------------------------- */
+
+.hpv-chrome {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-4);
+  background: var(--surface-overlay);
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.hpv-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--n-600);
+}
+
+.hpv-chrome-title {
+  margin-left: var(--space-3);
+  font-size: var(--text-2xs);
+  font-weight: var(--weight-medium);
+  color: var(--text-tertiary);
+  letter-spacing: var(--tracking-tight);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* --- The rendered sheet -------------------------------------------------- */
+
+.hpv-sheet {
+  position: relative;
+  /* Height is reserved by aspect-ratio so the lazy sheet cannot shift layout */
+  aspect-ratio: 1 / 1.05;
+  overflow: hidden;
+  background: #ffffff;
+}
+
+/* The frame shows the top of a full page, so the sheet is always cut off. A
+   fade at the crop reads as "continues below"; a hard edge reads as a bug. */
+.hpv-sheet::after {
+  content: '';
+  position: absolute;
+  inset-inline: 0;
+  bottom: 0;
+  height: 22%;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0) 0%, #ffffff 88%);
+  pointer-events: none;
+}
+
+/* The preview renders at natural A4 width and is scaled down to fit. */
+.hpv-page {
+  position: absolute;
+  top: 0;
+  left: 0;
+  transform-origin: top left;
+}
+
+.hpv-page-fallback {
+  width: 100%;
+  height: 100%;
+  background: #ffffff;
+}
+
+/* --- Score card ---------------------------------------------------------- */
+
+.hpv-score {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 190px;
+  padding: var(--space-4);
+  background: var(--surface-overlay);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--highlight-top), var(--shadow-xl);
+}
+
+.hpv-score-head {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--text-2xs);
+  font-weight: var(--weight-medium);
+  color: var(--text-tertiary);
+  letter-spacing: var(--tracking-caps);
+  text-transform: uppercase;
+}
+
+.hpv-score-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  color: var(--success-fg);
+  background: var(--success-bg);
+  border-radius: var(--radius-sm);
+}
+
+.hpv-score-value {
+  display: flex;
+  align-items: baseline;
+  gap: 2px;
+  margin-top: var(--space-2);
+  font-family: var(--font-display);
+  font-size: var(--text-3xl);
+  font-weight: var(--weight-bold);
+  line-height: 1;
+  letter-spacing: var(--tracking-display);
+  color: var(--text-primary);
+}
+
+.hpv-score-max {
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+  color: var(--text-tertiary);
+}
+
+.hpv-score-bar {
+  height: 4px;
+  margin-top: var(--space-3);
+  background: var(--surface-inset);
+  border-radius: var(--radius-full);
+  overflow: hidden;
+}
+
+.hpv-score-bar > span {
+  display: block;
+  height: 100%;
+  background: var(--success-fg);
+  border-radius: inherit;
+}
+
+.hpv-score-list {
+  margin-top: var(--space-3);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  list-style: none;
+}
+
+.hpv-score-list li {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--text-2xs);
+  color: var(--text-tertiary);
+}
+
+.hpv-score-list svg { color: var(--success-fg); }
+
+/* --- Responsive ---------------------------------------------------------- */
+
+@media (max-width: 1024px) {
+  .hpv-frame { transform: none; }
+}
+
+@media (max-width: 560px) {
+  .hpv { padding-left: 0; padding-bottom: var(--space-8); }
+
+  /* On a phone the sheet is too small to read, so show the top third of the
+     page at a usable scale instead of a full page nobody can parse. */
+  .hpv-sheet { aspect-ratio: 1 / 0.72; }
+
+  .hpv-score {
+    position: relative;
+    width: 100%;
+    margin-top: calc(var(--space-4) * -1);
+  }
+
+  .hpv-score-list { flex-direction: row; flex-wrap: wrap; gap: var(--space-3); }
+}

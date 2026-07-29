@@ -79,9 +79,11 @@ a {
 a:hover { color: var(--a-200); }
 
 /* Inline links inside prose keep an underline — colour alone is not a
-   sufficient affordance (WCAG 1.4.1). */
+   sufficient affordance (WCAG 1.4.1). Navigation lists are excluded: there the
+   link *is* the content, so position and grouping already carry the affordance
+   and underlining every item just makes the block noisy. */
 p > a:not([class]),
-li > a:not([class]) {
+li:not(nav li) > a:not([class]) {
   text-decoration: underline;
   text-underline-offset: 0.2em;
   text-decoration-thickness: 1px;
@@ -89,7 +91,7 @@ li > a:not([class]) {
 }
 
 p > a:not([class]):hover,
-li > a:not([class]):hover {
+li:not(nav li) > a:not([class]):hover {
   text-decoration-color: currentColor;
 }
 

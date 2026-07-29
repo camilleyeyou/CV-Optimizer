@@ -72,8 +72,16 @@ const SIDEBAR_SECTIONS = ['skills', 'languages'];
  * `data`/`templateId` let this render arbitrary content (e.g. a scaled template
  * thumbnail); it falls back to the live builder context otherwise.
  * `paginate={false}` renders a single unbroken sheet, for thumbnails.
+ *
+ * `nameTag` sets the element used for the candidate's name. It is an <h1> by
+ * default, which is right when the resume is the page's subject. Embedding a
+ * preview as decoration — the landing-page hero, a template thumbnail — would
+ * then put a second <h1> in the host document, so those callers pass "div".
+ * Styling keys off .preview-name, not the tag, so nothing else moves.
  */
-const ResumePreview = ({ data: dataProp, templateId, paginate = true } = {}) => {
+const ResumePreview = ({
+  data: dataProp, templateId, paginate = true, nameTag: NameTag = 'h1',
+} = {}) => {
   ensurePreviewCss();
 
   const ctx = useResumeOptional();
@@ -287,8 +295,8 @@ const ResumePreview = ({ data: dataProp, templateId, paginate = true } = {}) => 
   const Header = () => (
     <div className="preview-header" data-keep-together>
       {hasName
-        ? <h1 className="preview-name">{p.first_name} {p.last_name}</h1>
-        : <h1 className="preview-name preview-placeholder">Your Name</h1>}
+        ? <NameTag className="preview-name">{p.first_name} {p.last_name}</NameTag>
+        : <NameTag className="preview-name preview-placeholder">Your Name</NameTag>}
       {p.job_title && <p className="preview-job-title">{p.job_title}</p>}
       {renderContact()}
     </div>
@@ -319,7 +327,7 @@ const ResumePreview = ({ data: dataProp, templateId, paginate = true } = {}) => 
       {withContent && (
         <>
           <div className="preview-sidebar-name">
-            <h1 className="preview-name">{hasName ? `${p.first_name} ${p.last_name}` : 'Your Name'}</h1>
+            <NameTag className="preview-name">{hasName ? `${p.first_name} ${p.last_name}` : 'Your Name'}</NameTag>
             {p.job_title && <p className="preview-job-title">{p.job_title}</p>}
           </div>
           {renderContact()}

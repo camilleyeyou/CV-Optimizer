@@ -55,8 +55,11 @@ function App() {
           <ResumeProvider>
             <ErrorBoundary>
               <div className="app">
+                {/* First tab stop on every page — lets keyboard users skip the
+                    nav instead of tabbing through it on each navigation. */}
+                <a href="#main" className="skip-link">Skip to content</a>
                 <Header />
-                <main className="main-content">
+                <main className="main-content" id="main" tabIndex={-1}>
                   <Suspense fallback={<PageFallback />}>
                   <Routes>
                     {/* Public */}

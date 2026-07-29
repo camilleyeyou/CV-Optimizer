@@ -1,50 +1,115 @@
 import { useState } from 'react';
-import Seo from '../components/common/Seo';
 import { Link, useNavigate } from 'react-router-dom';
 import {
-  FileText, Target, PenTool, Briefcase, MessageSquare,
-  Mail, Layout, Globe, Check, ArrowRight, Loader, Sparkles,
-  GraduationCap,
+  Target, PenTool, Briefcase, MessageSquare, Mail, Globe, Check, ArrowRight,
+  Loader, Sparkles, GraduationCap, Wand2, ListChecks, LineChart, FileDown,
+  Link2, ShieldCheck, Lock,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
+import Seo from '../components/common/Seo';
 import api, { startCheckout } from '../services/api';
 import { useAuth } from '../context/AuthContext';
+import HeroProductVisual from '../components/landing/HeroProductVisual';
 import './LandingPage.css';
 
-const FEATURES = [
-  { icon: Sparkles, title: 'AI Resume Builder', desc: 'Generate professional resumes from a job description using AI.' },
-  { icon: Target, title: 'ATS Score Checker', desc: 'Score your resume against ATS systems and get keyword suggestions.' },
-  { icon: PenTool, title: 'Cover Letters', desc: 'Generate tailored cover letters that match your resume to the job.' },
-  { icon: Briefcase, title: 'Job Tracker', desc: 'Track applications across stages with a visual kanban board.' },
-  { icon: MessageSquare, title: 'Interview Prep', desc: 'Practice with AI-generated questions based on the role.' },
-  { icon: Mail, title: 'Email Generator', desc: 'Write follow-up, thank-you, and negotiation emails in seconds.' },
-  { icon: Layout, title: 'Professional Templates', desc: '16 templates designed to pass ATS and impress recruiters.' },
-  { icon: Globe, title: 'Resume Translation', desc: 'Translate your resume into any language while keeping formatting.' },
+/* ---------------------------------------------------------------------------
+   Counted from template-registry.json at build time (see vite.config.js), so
+   these cannot drift when a template ships — and the registry itself never
+   reaches this bundle. The landing page is eager-loaded; 18KB of JSON to
+   derive two integers is not a trade worth making.
+   ------------------------------------------------------------------------ */
+const TEMPLATE_COUNT = __TEMPLATE_COUNT__;
+const FREE_TEMPLATE_COUNT = __FREE_TEMPLATE_COUNT__;
+
+/* ---------------------------------------------------------------------------
+   SOCIAL PROOF — intentionally empty.
+
+   Each section below renders only when its array has entries, so nothing
+   unverified can ship by accident. Fill these in with real material and the
+   sections appear; leave them empty and the page skips them cleanly.
+
+   LOGOS expects:  { name: 'Company', src: '/logos/company.svg' }
+   QUOTES expects: { quote, name, role, company, avatar? }
+
+   Both are rendered as placeholders during local development so the layout
+   stays reviewable — see import.meta.env.DEV below.
+   ------------------------------------------------------------------------ */
+const LOGOS = [];
+const QUOTES = [];
+
+/* Verifiable product facts only. No usage or outcome metrics — we cannot
+   substantiate them, and an unbacked number on a trust-led page costs more
+   than it earns. */
+const FACTS = [
+  { value: String(TEMPLATE_COUNT), label: 'Resume templates' },
+  { value: '11', label: 'AI-powered tools' },
+  { value: '2', label: 'Export formats — PDF and DOCX' },
+  { value: 'Free', label: 'To start, no card required' },
 ];
 
-const HOW_IT_WORKS = [
-  { step: '1', title: 'Build or import', desc: 'Start from scratch with AI, or import an existing resume or LinkedIn PDF in seconds.' },
-  { step: '2', title: 'Optimize for the job', desc: 'Score against ATS systems, tailor to a job description, and fill gaps with AI suggestions.' },
-  { step: '3', title: 'Export and apply', desc: 'Download a polished PDF or DOCX, generate a matching cover letter, and track every application.' },
+/* Every entry maps to a shipping endpoint or route. */
+const TOOLS = [
+  { icon: Sparkles, title: 'AI resume builder', desc: 'Generate a first draft from a job description, then edit it line by line.' },
+  { icon: Target, title: 'ATS score checker', desc: 'Score a resume against applicant tracking systems and see the keywords it is missing.' },
+  { icon: Wand2, title: 'Job tailoring', desc: 'Rewrite an existing resume against a specific posting without starting over.' },
+  { icon: PenTool, title: 'Summary and bullet writer', desc: 'Turn plain notes into achievement bullets that lead with the result.' },
+  { icon: ListChecks, title: 'Skill suggestions', desc: 'Surface the skills a role expects that your resume does not yet mention.' },
+  { icon: Mail, title: 'Cover letters', desc: 'Draft a letter that matches your resume to the posting, then export it.' },
+  { icon: MessageSquare, title: 'Interview prep', desc: 'Practice role-specific questions and get your answers assessed.' },
+  { icon: Mail, title: 'Follow-up emails', desc: 'Write thank-you, check-in and negotiation emails in your own register.' },
+  { icon: Globe, title: 'Resume translation', desc: 'Translate a finished resume while keeping its layout intact.' },
+  { icon: Briefcase, title: 'Job tracker', desc: 'Move applications through stages on a board so nothing goes quiet.' },
+  { icon: LineChart, title: 'Score history', desc: 'Watch your ATS scores move over time and see which keywords keep recurring.' },
 ];
 
-const PRICING = [
+const STEPS = [
+  {
+    n: '01',
+    title: 'Start from anywhere',
+    desc: 'Import an existing resume, paste a job description and let AI draft one, or begin from a blank template.',
+  },
+  {
+    n: '02',
+    title: 'Fix what the filter flags',
+    desc: 'Score against applicant tracking systems, add the keywords you are missing, and tighten weak bullets.',
+  },
+  {
+    n: '03',
+    title: 'Export and apply',
+    desc: 'Download a clean PDF or DOCX, generate a matching cover letter, and track every application in one place.',
+  },
+];
+
+/* Feature lists reflect what the server actually gates. See requirePlan and
+   templateAccess middleware — anything not enforced there does not belong here. */
+const PLANS = [
   {
     name: 'Free',
     price: '$0',
     period: '',
-    desc: 'Great for getting started',
-    features: ['5 AI credits/month', '6 templates', 'ATS score checker', 'Job tracker', 'PDF & DOCX export'],
-    cta: 'Get Started',
+    desc: 'Enough to build and export a real resume.',
+    features: [
+      '5 AI credits every month',
+      `${FREE_TEMPLATE_COUNT} templates`,
+      'ATS score checker',
+      'Job tracker and score history',
+      'PDF and DOCX export',
+    ],
+    cta: 'Create free account',
     ctaLink: '/register',
-    popular: false,
   },
   {
     name: 'Pro',
     price: '$12',
-    period: '/mo',
-    desc: 'For active job seekers',
-    features: ['Unlimited AI credits', 'All 16 templates', 'Cover letter export (PDF/DOCX)', 'Resume sharing links', 'Priority support'],
+    period: '/month',
+    desc: 'For an active search, where you tailor every application.',
+    features: [
+      'Unlimited AI credits',
+      `All ${TEMPLATE_COUNT} templates`,
+      'Cover letter PDF and DOCX export',
+      'Shareable resume links',
+      'Everything in Free',
+    ],
     cta: 'Upgrade to Pro',
     plan: 'pro',
     popular: true,
@@ -52,14 +117,19 @@ const PRICING = [
   {
     name: 'Premium',
     price: '$24',
-    period: '/mo',
-    desc: 'For power users and teams',
-    features: ['Everything in Pro', 'Resume translation', 'Advanced analytics', 'Custom branding', 'API access'],
+    period: '/month',
+    desc: 'For applying across languages and markets.',
+    features: ['Resume translation into any language', 'Everything in Pro'],
     cta: 'Get Premium',
     plan: 'premium',
-    popular: false,
   },
 ];
+
+const scoreBand = (score) => {
+  if (score >= 70) return 'is-high';
+  if (score >= 50) return 'is-mid';
+  return 'is-low';
+};
 
 const LandingPage = () => {
   const [atsText, setAtsText] = useState('');
@@ -73,7 +143,6 @@ const LandingPage = () => {
 
   const handleUpgrade = async (plan) => {
     if (!isAuthenticated) {
-      // Send to sign-up; they can upgrade from the app once registered.
       navigate(`/register?plan=${plan}`);
       return;
     }
@@ -88,9 +157,10 @@ const LandingPage = () => {
     }
   };
 
-  const handleAtsCheck = async () => {
+  const handleAtsCheck = async (e) => {
+    e.preventDefault();
     if (!atsText.trim() || !atsJobTitle.trim()) {
-      setAtsError('Please enter both resume text and a job title.');
+      setAtsError('Add both a job title and your resume text.');
       return;
     }
     setAtsLoading(true);
@@ -104,219 +174,358 @@ const LandingPage = () => {
       });
       setAtsResult(res.data);
     } catch (err) {
-      setAtsError(err.response?.data?.error || 'Failed to score resume. Please try again.');
+      setAtsError(err.response?.data?.error || 'Could not score that resume. Please try again.');
     } finally {
       setAtsLoading(false);
     }
   };
 
-  const getScoreClass = (score) => {
-    if (score >= 70) return 'score-high';
-    if (score >= 50) return 'score-mid';
-    return 'score-low';
-  };
+  const showProofPlaceholders = import.meta.env.DEV;
 
   return (
-    <div className="landing">
+    <div className="lp">
       <Seo
         title="CV Optimizer — Build ATS-Optimized Resumes with AI"
-        description="Build professional, ATS-optimized resumes with 11 AI tools. Score your resume against ATS systems, generate tailored cover letters, track applications, and prepare for interviews."
+        description={`Score your resume against applicant tracking systems, fix what they flag, and export a clean PDF or DOCX. 11 AI tools and ${TEMPLATE_COUNT} templates, free to start.`}
         path="/"
       />
 
-      {/* Hero */}
-      <section className="landing-hero">
-        <Link to="/register" className="landing-badge">
-          <span className="landing-badge-dot" />
-          11 AI tools for your job search
-          <ArrowRight size={13} />
-        </Link>
-        <h1>Build ATS-Optimized Resumes with AI</h1>
-        <p>
-          11 AI-powered tools to build your resume, score it against ATS systems,
-          generate cover letters, and land more interviews.
-        </p>
-        <div className="landing-hero-actions">
-          <Link to="/register" className="btn btn-primary btn-lg">
-            Get Started Free <ArrowRight size={16} />
-          </Link>
-          <a href="#ats-checker" className="btn btn-secondary btn-lg">
-            Try ATS Checker
-          </a>
+      {/* ================= HERO ================= */}
+      <section className="lp-hero">
+        <div className="lp-hero-inner">
+          <div className="lp-hero-copy">
+            <a className="lp-pill" href="#ats-checker">
+              <span className="lp-pill-dot" aria-hidden="true" />
+              Free ATS check, no account needed
+              <ArrowRight size={13} aria-hidden="true" />
+            </a>
+
+            <h1 className="display-1">
+              Build a resume that clears the filter
+            </h1>
+
+            <p className="lead lp-hero-lead">
+              Most applications are read by software before a person sees them. CV Optimizer
+              scores your resume the way those systems do, shows you what is missing, and
+              helps you fix it.
+            </p>
+
+            <div className="lp-hero-actions">
+              <Link to="/register" className="btn btn-primary btn-xl">
+                Start building — free <ArrowRight size={17} aria-hidden="true" />
+              </Link>
+              <a href="#ats-checker" className="btn btn-secondary btn-xl">
+                <Target size={17} aria-hidden="true" /> Check my score
+              </a>
+            </div>
+
+            <p className="lp-hero-trust">
+              <ShieldCheck size={15} aria-hidden="true" />
+              No card required. 5 AI credits every month on the free plan.
+            </p>
+          </div>
+
+          <div className="lp-hero-visual">
+            <HeroProductVisual />
+          </div>
         </div>
       </section>
 
-      {/* Stats — verifiable product facts only (no usage metrics we can't back) */}
-      <section className="landing-stats">
-        <div className="landing-stat">
-          <span className="landing-stat-value">16</span>
-          <p className="landing-stat-label">Resume templates</p>
-        </div>
-        <div className="landing-stat">
-          <span className="landing-stat-value">11</span>
-          <p className="landing-stat-label">AI-powered tools</p>
-        </div>
-        <div className="landing-stat">
-          <span className="landing-stat-value">Free</span>
-          <p className="landing-stat-label">to get started</p>
-        </div>
-      </section>
-
-      {/* Features */}
-      <section className="landing-features">
-        <span className="landing-eyebrow">Features</span>
-        <h2>Everything you need to land the job</h2>
-        <p>From resume building to interview prep, all in one platform.</p>
-        <div className="landing-features-grid">
-          {FEATURES.map(({ icon: Icon, title, desc }) => (
-            <div key={title} className="landing-feature-card">
-              <div className="landing-feature-icon">
-                <Icon size={22} />
-              </div>
-              <h3>{title}</h3>
-              <p>{desc}</p>
+      {/* ================= FACTS ================= */}
+      <section className="lp-facts" aria-label="Product at a glance">
+        <div className="lp-facts-inner">
+          {FACTS.map(({ value, label }) => (
+            <div key={label} className="lp-fact">
+              <span className="lp-fact-value">{value}</span>
+              <span className="lp-fact-label">{label}</span>
             </div>
           ))}
         </div>
       </section>
 
-      {/* Free ATS Checker */}
-      <section className="landing-ats" id="ats-checker">
-        <div className="landing-ats-card">
-          <span className="landing-eyebrow">Try it free</span>
-          <h2>Free ATS Score Checker</h2>
-          <p>Paste your resume text and get an instant ATS compatibility score. No signup required.</p>
+      {/* ================= SOCIAL PROOF =================
+          Renders only when LOGOS / QUOTES are populated. In development the
+          empty slots are drawn so the layout can be reviewed before real
+          material exists. */}
+      {(LOGOS.length > 0 || showProofPlaceholders) && (
+        <section className="lp-logos" aria-label="Where our users work">
+          <p className="lp-logos-label">
+            {LOGOS.length > 0 ? 'Used by people hired at' : 'Logo strip — add entries to LOGOS in LandingPage.jsx'}
+          </p>
+          <div className="lp-logos-strip">
+            {LOGOS.length > 0
+              ? LOGOS.map(({ name, src }) => (
+                  <img key={name} className="lp-logo" src={src} alt={name} height={26} loading="lazy" />
+                ))
+              : Array.from({ length: 5 }, (_, i) => (
+                  <span key={i} className="lp-logo-placeholder" aria-hidden="true" />
+                ))}
+          </div>
+        </section>
+      )}
 
-          <div className="landing-ats-form">
-            <div className="form-group" style={{ marginBottom: 0 }}>
-              <label className="form-label" htmlFor="ats-job-title">Job title</label>
+      {/* ================= TOOLS ================= */}
+      <section className="lp-section" id="features">
+        <header className="lp-section-head">
+          <span className="eyebrow">The toolkit</span>
+          <h2 className="display-3">Eleven tools, one job search</h2>
+          <p className="lead">
+            Everything between a blank page and a signed offer, in a single workspace.
+          </p>
+        </header>
+
+        <div className="lp-tools">
+          {TOOLS.map(({ icon: Icon, title, desc }) => (
+            <article key={title} className="lp-tool">
+              <span className="lp-tool-icon">
+                <Icon size={18} aria-hidden="true" />
+              </span>
+              <h3 className="lp-tool-title">{title}</h3>
+              <p className="lp-tool-desc">{desc}</p>
+            </article>
+          ))}
+        </div>
+      </section>
+
+      {/* ================= ATS CHECKER ================= */}
+      <section className="lp-ats" id="ats-checker">
+        <div className="lp-ats-card">
+          <div className="lp-ats-intro">
+            <span className="eyebrow">Try it now</span>
+            <h2 className="display-3">Score your resume in seconds</h2>
+            <p className="lead">
+              Paste your resume text and the role you are targeting. You will get a
+              compatibility score and the keywords the posting expects but your resume
+              does not mention. No account, no card.
+            </p>
+            <ul className="lp-ats-points">
+              <li><Check size={15} aria-hidden="true" /> Runs on the same scoring engine as the app</li>
+              <li><Check size={15} aria-hidden="true" /> Nothing you paste here is saved to an account</li>
+              <li><Check size={15} aria-hidden="true" /> Works with any resume, wherever you built it</li>
+            </ul>
+          </div>
+
+          <form className="lp-ats-form" onSubmit={handleAtsCheck}>
+            <div className="form-group">
+              <label className="form-label" htmlFor="ats-job-title">
+                Target job title
+              </label>
               <input
                 id="ats-job-title"
                 className="form-input"
                 value={atsJobTitle}
                 onChange={(e) => setAtsJobTitle(e.target.value)}
-                placeholder="e.g. Marketing Manager"
+                placeholder="Marketing Manager"
+                autoComplete="organization-title"
               />
             </div>
-            <div className="form-group" style={{ marginBottom: 0 }}>
-              <label className="form-label" htmlFor="ats-resume-text">Resume text</label>
+
+            <div className="form-group">
+              <label className="form-label" htmlFor="ats-resume-text">
+                Resume text
+              </label>
               <textarea
                 id="ats-resume-text"
-                className="form-textarea"
+                className="form-textarea lp-ats-textarea"
                 value={atsText}
                 onChange={(e) => setAtsText(e.target.value)}
-                placeholder="Paste your resume text here..."
-                rows={6}
+                placeholder="Paste the full text of your resume here."
+                rows={7}
+                aria-describedby={atsError ? 'ats-error' : undefined}
+                aria-invalid={atsError ? 'true' : undefined}
               />
             </div>
 
-            {atsError && <div className="alert alert-error">{atsError}</div>}
+            {atsError && (
+              <div className="alert alert-error" id="ats-error" role="alert">
+                {atsError}
+              </div>
+            )}
 
             <button
-              className="btn btn-primary btn-lg"
-              onClick={handleAtsCheck}
+              type="submit"
+              className="btn btn-primary btn-lg btn-block"
+              data-loading={atsLoading || undefined}
               disabled={atsLoading || !atsText.trim() || !atsJobTitle.trim()}
             >
-              {atsLoading ? (
-                <><Loader size={16} className="spin" /> Scoring...</>
-              ) : (
-                <><Target size={16} /> Check ATS Score</>
-              )}
+              {atsLoading ? 'Scoring' : <><Target size={16} aria-hidden="true" /> Check ATS score</>}
             </button>
-          </div>
 
-          {atsResult && (
-            <div className="landing-ats-result">
-              <div className={`landing-ats-score ${getScoreClass(atsResult.score)}`}>
-                {atsResult.score}/100
+            {atsLoading && !atsResult && (
+              <div className="lp-ats-result" aria-hidden="true">
+                <div className="skeleton" style={{ width: 96, height: 56, margin: '0 auto' }} />
+                <div className="skeleton skeleton-text" style={{ width: 180, margin: '12px auto 0' }} />
               </div>
-              <p style={{ marginBottom: 0 }}>ATS Compatibility Score</p>
-              {atsResult.missing_keywords?.length > 0 && (
-                <>
-                  <p style={{ fontSize: 'var(--text-xs)', color: 'var(--text-muted)', marginTop: 'var(--space-3)', marginBottom: 'var(--space-2)' }}>
-                    Missing keywords:
-                  </p>
-                  <div className="landing-ats-keywords">
-                    {atsResult.missing_keywords.map((kw) => (
-                      <span key={kw} className="badge badge-error">{kw}</span>
-                    ))}
+            )}
+
+            {atsResult && (
+              <div className="lp-ats-result" role="status">
+                <div className={`lp-ats-score ${scoreBand(atsResult.score)}`}>
+                  <span className="lp-ats-score-value tabular">{atsResult.score}</span>
+                  <span className="lp-ats-score-max">/100</span>
+                </div>
+                <p className="lp-ats-score-label">ATS compatibility</p>
+
+                {atsResult.missing_keywords?.length > 0 && (
+                  <div className="lp-ats-missing">
+                    <p className="lp-ats-missing-label">
+                      Missing keywords for this role
+                    </p>
+                    <div className="lp-ats-keywords">
+                      {atsResult.missing_keywords.map((kw) => (
+                        <span key={kw} className="badge badge-warning">{kw}</span>
+                      ))}
+                    </div>
                   </div>
-                </>
-              )}
-              <div style={{ marginTop: 'var(--space-6)' }}>
-                <Link to="/register" className="btn btn-primary">
-                  Sign up to optimize your resume <ArrowRight size={14} />
+                )}
+
+                <Link to="/register" className="btn btn-accent btn-block">
+                  Fix these with AI <ArrowRight size={15} aria-hidden="true" />
                 </Link>
               </div>
-            </div>
-          )}
+            )}
+          </form>
         </div>
       </section>
 
-      {/* Pricing */}
-      <section className="landing-pricing">
-        <span className="landing-eyebrow">Pricing</span>
-        <h2>Simple, transparent pricing</h2>
-        <p>Start free. Upgrade when you need more power.</p>
-        <div className="landing-pricing-grid">
-          {PRICING.map((plan) => (
-            <div key={plan.name} className={`pricing-card ${plan.popular ? 'pricing-popular' : ''}`}>
-              {plan.popular && <span className="pricing-popular-badge">Most Popular</span>}
-              <h3>{plan.name}</h3>
-              <div className="pricing-price">
-                {plan.price}<span>{plan.period}</span>
-              </div>
-              <p className="pricing-desc">{plan.desc}</p>
-              <ul className="pricing-features">
+      {/* ================= HOW IT WORKS ================= */}
+      <section className="lp-section">
+        <header className="lp-section-head">
+          <span className="eyebrow">How it works</span>
+          <h2 className="display-3">Three steps to a stronger application</h2>
+        </header>
+
+        <ol className="lp-steps">
+          {STEPS.map(({ n, title, desc }) => (
+            <li key={n} className="lp-step">
+              <span className="lp-step-n mono">{n}</span>
+              <h3 className="lp-step-title">{title}</h3>
+              <p className="lp-step-desc">{desc}</p>
+            </li>
+          ))}
+        </ol>
+      </section>
+
+      {/* ================= TESTIMONIALS (structure only) ================= */}
+      {(QUOTES.length > 0 || showProofPlaceholders) && (
+        <section className="lp-section">
+          <header className="lp-section-head">
+            <span className="eyebrow">Testimonials</span>
+            <h2 className="display-3">
+              {QUOTES.length > 0 ? 'What people say' : 'Testimonial grid — add entries to QUOTES'}
+            </h2>
+          </header>
+          <div className="lp-quotes">
+            {QUOTES.length > 0
+              ? QUOTES.map((q) => (
+                  <figure key={q.name} className="lp-quote card">
+                    <blockquote>{q.quote}</blockquote>
+                    <figcaption>
+                      <span className="lp-quote-name">{q.name}</span>
+                      <span className="lp-quote-role">{q.role} · {q.company}</span>
+                    </figcaption>
+                  </figure>
+                ))
+              : Array.from({ length: 3 }, (_, i) => (
+                  <figure key={i} className="lp-quote card" aria-hidden="true">
+                    <div className="skeleton skeleton-text" style={{ width: '100%' }} />
+                    <div className="skeleton skeleton-text" style={{ width: '88%' }} />
+                    <div className="skeleton skeleton-text" style={{ width: '62%' }} />
+                    <figcaption style={{ marginTop: 'var(--space-5)' }}>
+                      <div className="skeleton skeleton-text" style={{ width: 110 }} />
+                    </figcaption>
+                  </figure>
+                ))}
+          </div>
+        </section>
+      )}
+
+      {/* ================= PRICING ================= */}
+      <section className="lp-section" id="pricing">
+        <header className="lp-section-head">
+          <span className="eyebrow">Pricing</span>
+          <h2 className="display-3">Start free, upgrade when it pays for itself</h2>
+          <p className="lead">
+            Every plan exports unlimited PDFs and DOCX files. Cancel at any time.
+          </p>
+        </header>
+
+        <div className="lp-plans">
+          {PLANS.map((plan) => (
+            <div key={plan.name} className={`lp-plan card ${plan.popular ? 'card-featured' : ''}`}>
+              {plan.popular && <span className="lp-plan-flag">Most popular</span>}
+
+              <h3 className="lp-plan-name">{plan.name}</h3>
+              <p className="lp-plan-price">
+                <span className="lp-plan-amount">{plan.price}</span>
+                <span className="lp-plan-period">{plan.period}</span>
+              </p>
+              <p className="lp-plan-desc">{plan.desc}</p>
+
+              <ul className="lp-plan-features">
                 {plan.features.map((f) => (
-                  <li key={f}><Check size={14} /> {f}</li>
+                  <li key={f}>
+                    <Check size={15} aria-hidden="true" /> {f}
+                  </li>
                 ))}
               </ul>
+
               {plan.ctaLink ? (
-                <Link to={plan.ctaLink} className="btn btn-primary btn-lg">
-                  {plan.cta} <ArrowRight size={14} />
+                <Link to={plan.ctaLink} className="btn btn-secondary btn-lg btn-block">
+                  {plan.cta}
                 </Link>
               ) : (
                 <button
-                  className={`btn btn-lg ${plan.popular ? 'btn-primary' : 'btn-secondary'}`}
+                  type="button"
+                  className={`btn btn-lg btn-block ${plan.popular ? 'btn-primary' : 'btn-secondary'}`}
                   onClick={() => handleUpgrade(plan.plan)}
+                  data-loading={checkoutPlan === plan.plan || undefined}
                   disabled={checkoutPlan === plan.plan}
                 >
-                  {checkoutPlan === plan.plan ? <span className="spinner" /> : <>{plan.cta} <ArrowRight size={14} /></>}
+                  {plan.cta}
                 </button>
               )}
             </div>
           ))}
         </div>
 
-        <div className="pricing-student">
-          <h4><GraduationCap size={18} style={{ verticalAlign: 'middle', marginRight: '0.5rem' }} />Student Program</h4>
-          <p>Sign up with your .edu email and get Pro features free for 6 months.</p>
+        <div className="lp-student">
+          <span className="lp-student-icon">
+            <GraduationCap size={20} aria-hidden="true" />
+          </span>
+          <div>
+            <h3 className="lp-student-title">Students get Pro free for six months</h3>
+            <p className="lp-student-desc">
+              Verify a .edu address from your account and Pro unlocks straight away.
+            </p>
+          </div>
+          <Link to="/register" className="btn btn-secondary">
+            Verify a .edu address
+          </Link>
         </div>
       </section>
 
-      {/* How it works */}
-      <section className="landing-testimonials">
-        <span className="landing-eyebrow">How it works</span>
-        <h2>Three steps to your next role</h2>
-        <div className="landing-testimonials-grid">
-          {HOW_IT_WORKS.map((s) => (
-            <div key={s.step} className="testimonial-card">
-              <div className="testimonial-avatar">{s.step}</div>
-              <div className="testimonial-name" style={{ marginTop: '0.75rem' }}>{s.title}</div>
-              <p className="testimonial-text" style={{ marginTop: '0.5rem' }}>{s.desc}</p>
-            </div>
-          ))}
+      {/* ================= CLOSING CTA ================= */}
+      <section className="lp-cta">
+        <div className="lp-cta-inner">
+          <h2 className="display-2">Your next application deserves better odds</h2>
+          <p className="lead">
+            Build it, score it, and send it in the same afternoon.
+          </p>
+          <div className="lp-hero-actions">
+            <Link to="/register" className="btn btn-primary btn-xl">
+              Create your free account <ArrowRight size={17} aria-hidden="true" />
+            </Link>
+            <Link to="/templates" className="btn btn-secondary btn-xl">
+              Browse {TEMPLATE_COUNT} templates
+            </Link>
+          </div>
+          <ul className="lp-cta-points">
+            <li><FileDown size={14} aria-hidden="true" /> PDF and DOCX export on every plan</li>
+            <li><Link2 size={14} aria-hidden="true" /> Shareable links on Pro</li>
+            <li><Lock size={14} aria-hidden="true" /> Delete your data whenever you want</li>
+          </ul>
         </div>
-      </section>
-
-      {/* Final CTA */}
-      <section className="landing-cta">
-        <h2>Ready to land your dream job?</h2>
-        <p>Build an ATS-ready resume with AI — free to start, no credit card required.</p>
-        <Link to="/register" className="btn btn-primary btn-lg">
-          Create Your Free Account <ArrowRight size={16} />
-        </Link>
       </section>
     </div>
   );
