@@ -22,6 +22,8 @@ const Pricing = lazy(() => import('./pages/Pricing'));
 const TemplateDetail = lazy(() => import('./pages/TemplateDetail'));
 const Login = lazy(() => import('./pages/Login'));
 const Register = lazy(() => import('./pages/Register'));
+const ForgotPassword = lazy(() => import('./pages/ForgotPassword'));
+const ResetPassword = lazy(() => import('./pages/ResetPassword'));
 const ATSChecker = lazy(() => import('./pages/ATSChecker'));
 const AICreator = lazy(() => import('./pages/AICreator'));
 const CoverLetter = lazy(() => import('./pages/CoverLetter'));
@@ -85,6 +87,12 @@ function App() {
                     <Route path="/" element={<PublicRoute><LandingPage /></PublicRoute>} />
                     <Route path="/login" element={<Login />} />
                     <Route path="/register" element={<Register />} />
+                    <Route path="/forgot-password" element={<ForgotPassword />} />
+                    {/* Not wrapped in PublicRoute: following the emailed link
+                        establishes a recovery session, and PublicRoute would
+                        bounce the user to the dashboard before they can set a
+                        password. */}
+                    <Route path="/reset-password" element={<ResetPassword />} />
                     <Route path="/share/:token" element={<SharedResume />} />
                     <Route path="/privacy" element={<Privacy />} />
                     <Route path="/terms" element={<Terms />} />

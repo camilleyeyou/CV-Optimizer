@@ -417,6 +417,14 @@ a.btn-ghost:hover { color: var(--text-primary); }
   box-shadow: 0 0 0 3px var(--error-bg);
 }
 
+/* Buttons already grow on touch; fields were left behind. A 40px field is a
+   40px target, and a mistap on an input costs a keyboard dismissal to recover
+   from. Applies everywhere, so no form has to remember it. */
+@media (pointer: coarse) {
+  .form-input,
+  .form-select { min-height: 44px; }
+}
+
 .form-textarea { min-height: 104px; resize: vertical; }
 
 .form-select {

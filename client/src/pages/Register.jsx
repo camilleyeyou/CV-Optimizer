@@ -1,13 +1,19 @@
 import { useState } from 'react';
-import Seo from '../components/common/Seo';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import {
+  Mail, User, ArrowRight, GraduationCap, AlertCircle, Check, Circle,
+} from 'lucide-react';
+import Seo from '../components/common/Seo';
+import AuthShell from '../components/auth/AuthShell';
+import PasswordField from '../components/auth/PasswordField';
 import { useAuth } from '../context/AuthContext';
 import { verifyStudent } from '../services/api';
 import { useResume } from '../context/ResumeContext';
 import { isTemplateSlug } from '../config/templateContent';
 import { getTemplate } from '../config/templates';
-import { Mail, Lock, User, ArrowRight, GraduationCap } from 'lucide-react';
-import './Auth.css';
+
+const MIN_PASSWORD = 8;
+const STUDENT_DOMAIN = /\.(edu|ac\.[a-z]{2})$/i;
 
 const Register = () => {
   const [formData, setFormData] = useState({
@@ -43,8 +49,8 @@ const Register = () => {
       return;
     }
 
-    if (formData.password.length < 8) {
-      setError('Password must be at least 8 characters.');
+    if (formData.password.length < MIN_PASSWORD) {
+      setError(`Password must be at least ${MIN_PASSWORD} characters.`);
       return;
     }
 
@@ -80,26 +86,29 @@ const Register = () => {
     }
   };
 
+  const isStudent = STUDENT_DOMAIN.test(formData.email.split('@')[1] || '');
+  const longEnough = formData.password.length >= MIN_PASSWORD;
+  const matches = formData.confirmPassword.length > 0
+    && formData.password === formData.confirmPassword;
 
   return (
-    <div className="auth-page">
+    <>
       <Seo
         title="Create Your Free Account — CV Optimizer"
         description="Create a free CV Optimizer account and build an ATS-optimized resume with AI — free to start, no credit card required."
         path="/register"
       />
-      <div className="auth-card">
-        <div className="auth-header">
-          <h1>Create your account</h1>
-          <p>
-            {preselected
-              ? `You'll start with the ${getTemplate(preselected).name} template — you can change it any time.`
-              : 'Start building professional resumes in minutes'}
-          </p>
-        </div>
-
+      <AuthShell
+        title="Create your account"
+        subtitle={
+          preselected
+            ? `You will start on the ${getTemplate(preselected).name} template. You can change it any time.`
+            : 'Free to start. No card required.'
+        }
+        footer={<>Already have an account? <Link to="/login">Sign in</Link></>}
+      >
         {preselected && (
-          <div className="auth-preselect">
+          <div className="au-banner">
             <img
               src={`/template-previews/${preselected}.png`}
               alt=""
@@ -108,30 +117,50 @@ const Register = () => {
               loading="lazy"
               decoding="async"
             />
-            <span>{getTemplate(preselected).name} template selected</span>
+            <div className="au-banner-text">
+              <p className="au-banner-title">{getTemplate(preselected).name} template</p>
+              <p className="au-banner-desc">Opens in the builder as soon as you sign up.</p>
+            </div>
+          </div>
+        )}
+
+        {/* Above the form, not below the button: the offer is only useful if it
+            is read before the decision, and a .edu address is worth six months
+            of Pro. */}
+        {isStudent && (
+          <div className="au-banner">
+            <span className="au-banner-icon">
+              <GraduationCap size={17} aria-hidden="true" />
+            </span>
+            <div className="au-banner-text">
+              <p className="au-banner-title">Student email recognised</p>
+              <p className="au-banner-desc">Pro is free for six months on this address.</p>
+            </div>
           </div>
         )}
 
         {error && (
-          <div className="alert alert-error">
-            {error}
+          <div className="alert alert-error au-alert" role="alert">
+            <AlertCircle size={16} aria-hidden="true" />
+            <span>{error}</span>
           </div>
         )}
 
-        <form className="auth-form" onSubmit={handleSubmit}>
+        <form className="au-form" onSubmit={handleSubmit}>
           <div className="form-row">
             <div className="form-group">
               <label className="form-label" htmlFor="firstName">First name</label>
-              <div className="input-with-icon">
-                <User size={16} className="input-icon" />
+              <div className="input-wrap">
+                <User size={16} aria-hidden="true" />
                 <input
                   id="firstName"
                   name="firstName"
                   type="text"
-                  className="form-input has-icon"
+                  className="form-input"
                   value={formData.firstName}
                   onChange={handleChange}
-                  placeholder="John"
+                  placeholder="Ada"
+                  autoComplete="given-name"
                   required
                 />
               </div>
@@ -145,7 +174,8 @@ const Register = () => {
                 className="form-input"
                 value={formData.lastName}
                 onChange={handleChange}
-                placeholder="Doe"
+                placeholder="Lovelace"
+                autoComplete="family-name"
                 required
               />
             </div>
@@ -153,87 +183,80 @@ const Register = () => {
 
           <div className="form-group">
             <label className="form-label" htmlFor="email">Email</label>
-            <div className="input-with-icon">
-              <Mail size={16} className="input-icon" />
+            <div className="input-wrap">
+              <Mail size={16} aria-hidden="true" />
               <input
                 id="email"
                 name="email"
                 type="email"
-                className="form-input has-icon"
+                className="form-input"
                 value={formData.email}
                 onChange={handleChange}
                 placeholder="you@example.com"
-                required
                 autoComplete="email"
-              />
-            </div>
-          </div>
-
-          <div className="form-group">
-            <label className="form-label" htmlFor="password">Password</label>
-            <div className="input-with-icon">
-              <Lock size={16} className="input-icon" />
-              <input
-                id="password"
-                name="password"
-                type="password"
-                className="form-input has-icon"
-                value={formData.password}
-                onChange={handleChange}
-                placeholder="Min. 8 characters"
-                minLength={8}
                 required
-                autoComplete="new-password"
               />
             </div>
           </div>
 
-          <div className="form-group">
-            <label className="form-label" htmlFor="confirmPassword">Confirm password</label>
-            <div className="input-with-icon">
-              <Lock size={16} className="input-icon" />
-              <input
-                id="confirmPassword"
-                name="confirmPassword"
-                type="password"
-                className="form-input has-icon"
-                value={formData.confirmPassword}
-                onChange={handleChange}
-                placeholder="Repeat your password"
-                minLength={8}
-                required
-                autoComplete="new-password"
-              />
-            </div>
-          </div>
+          <PasswordField
+            id="password"
+            name="password"
+            label="Password"
+            value={formData.password}
+            onChange={handleChange}
+            placeholder={`At least ${MIN_PASSWORD} characters`}
+            autoComplete="new-password"
+            minLength={MIN_PASSWORD}
+          />
 
-          <button type="submit" className="btn btn-primary btn-lg auth-submit" disabled={loading}>
-            {loading ? (
-              <span className="spinner" />
-            ) : (
-              <>Create account <ArrowRight size={16} /></>
-            )}
+          <PasswordField
+            id="confirmPassword"
+            name="confirmPassword"
+            label="Confirm password"
+            value={formData.confirmPassword}
+            onChange={handleChange}
+            placeholder="Type it again"
+            autoComplete="new-password"
+            minLength={MIN_PASSWORD}
+            invalid={formData.confirmPassword.length > 0 && !matches}
+          />
+
+          {/* Stated up front and checked live. The same two rules are enforced
+              in handleSubmit — this only tells you where you stand before you
+              hit a wall. */}
+          <ul className="au-rules" aria-live="polite">
+            <li className="au-rule" data-met={longEnough}>
+              {longEnough
+                ? <Check size={13} aria-hidden="true" />
+                : <Circle size={13} aria-hidden="true" />}
+              At least {MIN_PASSWORD} characters
+            </li>
+            <li className="au-rule" data-met={matches}>
+              {matches
+                ? <Check size={13} aria-hidden="true" />
+                : <Circle size={13} aria-hidden="true" />}
+              Both passwords match
+            </li>
+          </ul>
+
+          <button
+            type="submit"
+            className="btn btn-primary btn-lg au-submit"
+            data-loading={loading || undefined}
+            disabled={loading}
+          >
+            Create account <ArrowRight size={16} aria-hidden="true" />
           </button>
 
-          <p className="auth-consent">
-            By creating an account, you agree to our{' '}
+          <p className="au-consent">
+            By creating an account you agree to the{' '}
             <Link to="/terms">Terms of Service</Link> and{' '}
             <Link to="/privacy">Privacy Policy</Link>.
           </p>
         </form>
-
-        {formData.email && /\.(edu|ac\.[a-z]{2})$/i.test(formData.email.split('@')[1] || '') && (
-          <div className="alert alert-success" style={{ marginBottom: 'var(--space-4)', fontSize: 'var(--text-sm)' }}>
-            <GraduationCap size={16} />
-            <span>Student email detected! You&apos;ll get Pro features free for 6 months.</span>
-          </div>
-        )}
-
-        <p className="auth-footer">
-          Already have an account? <Link to="/login">Sign in</Link>
-        </p>
-      </div>
-    </div>
+      </AuthShell>
+    </>
   );
 };
 

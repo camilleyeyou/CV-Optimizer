@@ -92,10 +92,13 @@ const routes = [
     title: 'Sign In — CV Optimizer',
     description: 'Sign in to CV Optimizer to build, score, and tailor your ATS-optimized resume.',
     hero: `
-      <section class="auth-page">
-        <div class="auth-card">
-          <h1>Welcome back</h1>
-          <p>Sign in to continue building your resume.</p>
+      <section class="au">
+        <div class="au-inner">
+          <div class="au-card">
+            <h1 class="au-title">Welcome back</h1>
+            <p class="au-sub">Sign in to pick up where you left off.</p>
+          </div>
+          <p class="au-alt">New here? <a href="/register">Create a free account</a></p>
         </div>
       </section>`,
   },
@@ -106,10 +109,13 @@ const routes = [
     description:
       'Create a free CV Optimizer account and build an ATS-optimized resume with AI — free to start, no credit card required.',
     hero: `
-      <section class="auth-page">
-        <div class="auth-card">
-          <h1>Create your account</h1>
-          <p>Start building an ATS-optimized resume with AI — free to start, no credit card required.</p>
+      <section class="au">
+        <div class="au-inner">
+          <div class="au-card">
+            <h1 class="au-title">Create your account</h1>
+            <p class="au-sub">Free to start. No card required.</p>
+          </div>
+          <p class="au-alt">Already have an account? <a href="/login">Sign in</a></p>
         </div>
       </section>`,
   },

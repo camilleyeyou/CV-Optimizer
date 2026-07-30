@@ -1,9 +1,10 @@
 import { useState } from 'react';
-import Seo from '../components/common/Seo';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { Mail, ArrowRight, AlertCircle } from 'lucide-react';
+import Seo from '../components/common/Seo';
+import AuthShell from '../components/auth/AuthShell';
+import PasswordField from '../components/auth/PasswordField';
 import { useAuth } from '../context/AuthContext';
-import { Mail, Lock, ArrowRight } from 'lucide-react';
-import './Auth.css';
 
 const Login = () => {
   const [email, setEmail] = useState('');
@@ -32,76 +33,67 @@ const Login = () => {
   };
 
   return (
-    <div className="auth-page">
+    <>
       <Seo
         title="Sign In — CV Optimizer"
         description="Sign in to CV Optimizer to build, score, and tailor your ATS-optimized resume."
         path="/login"
       />
-      <div className="auth-card">
-        <div className="auth-header">
-          <h1>Welcome back</h1>
-          <p>Sign in to continue building your resume</p>
-        </div>
-
+      <AuthShell
+        title="Welcome back"
+        subtitle="Sign in to pick up where you left off."
+        footer={<>New here? <Link to="/register">Create a free account</Link></>}
+      >
         {error && (
-          <div className="alert alert-error">
-            {error}
+          <div className="alert alert-error au-alert" role="alert">
+            <AlertCircle size={16} aria-hidden="true" />
+            <span>{error}</span>
           </div>
         )}
 
-        <form className="auth-form" onSubmit={handleSubmit}>
+        <form className="au-form" onSubmit={handleSubmit} noValidate={false}>
           <div className="form-group">
             <label className="form-label" htmlFor="email">Email</label>
-            <div className="input-with-icon">
-              <Mail size={16} className="input-icon" />
+            <div className="input-wrap">
+              <Mail size={16} aria-hidden="true" />
               <input
                 id="email"
                 type="email"
-                className="form-input has-icon"
+                className="form-input"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="you@example.com"
-                required
                 autoComplete="email"
-              />
-            </div>
-          </div>
-
-          <div className="form-group">
-            <div className="form-label-row">
-              <label className="form-label" htmlFor="password">Password</label>
-              <span className="form-link form-link-disabled">Forgot password?</span>
-            </div>
-            <div className="input-with-icon">
-              <Lock size={16} className="input-icon" />
-              <input
-                id="password"
-                type="password"
-                className="form-input has-icon"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="Enter your password"
+                aria-invalid={error ? true : undefined}
                 required
-                autoComplete="current-password"
               />
             </div>
           </div>
 
-          <button type="submit" className="btn btn-primary btn-lg auth-submit" disabled={loading}>
-            {loading ? (
-              <span className="spinner" />
-            ) : (
-              <>Sign in <ArrowRight size={16} /></>
-            )}
+          <PasswordField
+            id="password"
+            label="Password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            placeholder="Your password"
+            autoComplete="current-password"
+            invalid={!!error}
+            action={
+              <Link to="/forgot-password" className="au-link">Forgot password?</Link>
+            }
+          />
+
+          <button
+            type="submit"
+            className="btn btn-primary btn-lg au-submit"
+            data-loading={loading || undefined}
+            disabled={loading}
+          >
+            Sign in <ArrowRight size={16} aria-hidden="true" />
           </button>
         </form>
-
-        <p className="auth-footer">
-          Don't have an account? <Link to="/register">Create one</Link>
-        </p>
-      </div>
-    </div>
+      </AuthShell>
+    </>
   );
 };
 

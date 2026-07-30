@@ -68,6 +68,17 @@ export const AuthProvider = ({ children }) => {
     if (error) throw error;
   };
 
+  /**
+   * Second half of the reset flow, called from the page the emailed link lands
+   * on. Requires the recovery session Supabase establishes from that link — it
+   * is the only thing authorising the change, so there is no old-password
+   * argument to pass.
+   */
+  const updatePassword = async (password) => {
+    const { error } = await supabase.auth.updateUser({ password });
+    if (error) throw error;
+  };
+
   const value = {
     user,
     loading,
@@ -75,6 +86,7 @@ export const AuthProvider = ({ children }) => {
     signIn,
     signOut,
     resetPassword,
+    updatePassword,
     isAuthenticated: !!user,
   };
 
