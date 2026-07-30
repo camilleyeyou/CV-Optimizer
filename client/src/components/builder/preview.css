@@ -46,6 +46,18 @@
    only, so content never spills into the bottom margin or repeats on the next
    sheet. */
 .preview-clip {
+  /* flow-root, so the window itself stays put.
+     Each page shifts the content with a negative margin-top on the child. With
+     no formatting context here that margin collapsed *through* .preview-clip
+     and moved the window instead of the content: page 2's window ended up 963px
+     above the sheet, so the page opened flush against its top edge, on a line
+     sliced through the middle, with the top margin gone. Page 1 was unaffected
+     because its offset is 0, which is why this only ever showed from page 2 on.
+
+     flow-root and not overflow:hidden — the clip-path below is deliberately
+     open at the sides so a full-bleed band is not cut horizontally, and
+     overflow:hidden would cut it. */
+  display: flow-root;
   clip-path: inset(0 -1000pt);
 }
 

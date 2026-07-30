@@ -459,6 +459,11 @@ a.btn-ghost:hover { color: var(--text-primary); }
   gap: var(--space-4);
 }
 
+/* Groups in a row sit side by side, so the stacking margin above must not
+   apply — it was pushing every second column down by a full gap, leaving
+   "Last Name" a step below "First Name" in every two-up row in the app. */
+.form-row > .form-group + .form-group { margin-top: 0; }
+
 @media (max-width: 640px) {
   .form-row { grid-template-columns: 1fr; }
 }

@@ -399,7 +399,16 @@ const ResumePreview = ({
                 </main>
               </div>
             ) : (
-              <div className="preview-flow" style={isBand && i === 0 ? { paddingTop: 0 } : undefined}>
+              /* The header band bleeds to the paper edge, so page 1 has no top
+                 margin — but `.arch-header-band .preview-flow` zeroes it for
+                 every page, and the band only exists on page 1. Later pages
+                 were starting hard against the top edge with their first line
+                 sliced. Restated inline so pages 2+ get the real margin back;
+                 the CSS rule still serves the unpaginated thumbnail. */
+              <div
+                className="preview-flow"
+                style={isBand ? { paddingTop: i === 0 ? 0 : 'var(--pg-mt)' } : undefined}
+              >
                 <div className="preview-clip" style={{ height: sliceHeight(i) }}>
                   <div style={{ marginTop: -offset }}>{flow}</div>
                 </div>

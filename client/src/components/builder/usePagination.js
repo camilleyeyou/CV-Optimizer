@@ -46,6 +46,27 @@ export default function usePagination({
       })
       .filter((b) => b.bottom > b.top);
 
+    /* Every line box in the flow, so a break can be snapped to one.
+     *
+     * The cut is otherwise a raw pixel offset and lands wherever the page
+     * capacity falls — routinely through the middle of a wrapped line, so a
+     * page opened on sliced glyphs. The exported PDF never does that: pdfkit
+     * lays text out line by line and moves whole lines to the next page, so a
+     * preview that cuts through one is not showing what gets exported.
+     *
+     * Range.getClientRects() returns one rect per line box, which is the only
+     * way to see wrapping inside a paragraph from the DOM. */
+    const lines = [];
+    const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+    const range = document.createRange();
+    for (let node = walker.nextNode(); node; node = walker.nextNode()) {
+      if (!node.nodeValue.trim()) continue;
+      range.selectNodeContents(node);
+      for (const rect of range.getClientRects()) {
+        if (rect.height > 0) lines.push({ top: rect.top - rootTop, bottom: rect.bottom - rootTop });
+      }
+    }
+
     const breaks = [0];
     let guard = 0;
     const capacityAt = (i) => (i === 0 ? firstH : pageH);
@@ -60,6 +81,14 @@ export default function usePagination({
         .sort((a, b) => a.top - b.top)[0];
       const cap = capacityAt(breaks.length - 1);
       if (straddling && straddling.top > start + cap * 0.15) cut = straddling.top;
+
+      // Then the same rule one level down: a single line must not be sliced
+      // through. Applied after the block rule so a keep-together move wins.
+      const cutLine = lines
+        .filter((l) => l.top > start + 1 && l.top < cut - 0.5 && l.bottom > cut + 0.5)
+        .sort((a, b) => a.top - b.top)[0];
+      if (cutLine && cutLine.top > start + cap * 0.15) cut = cutLine.top;
+
       breaks.push(cut);
     }
 
