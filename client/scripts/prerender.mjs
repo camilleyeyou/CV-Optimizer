@@ -6,15 +6,16 @@
 // static hero/content block into copies of the built index.html. Crawlers and
 // social scrapers (which don't run JS) get real HTML; in the browser, React's
 // createRoot replaces the #root content as usual.
-import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
+import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createRequire } from 'node:module';
+import { resolveSiteOrigin } from './site-origin.mjs';
 
 const require = createRequire(import.meta.url);
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const BUILD = join(ROOT, 'build');
-const SITE_URL = (process.env.VITE_SITE_URL || 'https://cv-optimizer.vercel.app').replace(/\/$/, '');
+const SITE_URL = resolveSiteOrigin();
 const OG_IMAGE = `${SITE_URL}/og-image.png`;
 
 const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/"/g, '&quot;');
@@ -322,4 +323,21 @@ ${[...new Set(sitemapPaths)].map((p) => `  <url>
 writeFileSync(join(BUILD, 'sitemap.xml'), sitemap);
 
 console.log(`prerender: wrote ${files} HTML file(s) across ${routes.length} public routes (site: ${SITE_URL})`);
+
+/* A share card is invisible until something 404s, and then it is invisible for
+   good — the platforms cache the miss. Fail the build instead. */
+{
+  const og = new URL('../build/og-image.png', import.meta.url);
+  if (!existsSync(og)) {
+    console.error('prerender: og-image.png is missing from the build output; '
+      + 'every share card would render without an image.');
+    process.exit(1);
+  }
+  if (!/^https:\/\//.test(SITE_URL) && process.env.VERCEL) {
+    console.error(`prerender: refusing to ship absolute URLs pointing at ${SITE_URL}. `
+      + 'Set VITE_SITE_URL to this deployment\'s domain.');
+    process.exit(1);
+  }
+  console.log(`prerender: share image ${SITE_URL}/og-image.png`);
+}
 console.log(`prerender: sitemap.xml lists ${new Set(sitemapPaths).size} URLs`);

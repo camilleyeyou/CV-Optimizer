@@ -2,6 +2,7 @@ import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
+import { resolveSiteOrigin } from './scripts/site-origin.mjs';
 
 /* The landing page quotes how many templates ship, and how many are free.
    Importing the registry to count them would drag ~18KB of JSON into the eager
@@ -19,6 +20,9 @@ export default defineConfig({
   define: {
     __TEMPLATE_COUNT__: JSON.stringify(TEMPLATE_COUNT),
     __FREE_TEMPLATE_COUNT__: JSON.stringify(FREE_TEMPLATE_COUNT),
+    /* Baked in rather than read through import.meta.env so the prerenderer and
+       the client agree by construction — they call the same resolver. */
+    __SITE_URL__: JSON.stringify(resolveSiteOrigin()),
   },
   server: {
     port: 3000,
