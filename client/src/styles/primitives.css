@@ -1045,6 +1045,34 @@ a.btn-ghost:hover { color: var(--text-primary); }
   line-height: var(--leading-snug);
 }
 
+/* What the upgrade actually buys, stated rather than implied. */
+.locked-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin-block: var(--space-1);
+  text-align: left;
+  list-style: none;
+}
+
+.locked-list li {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--text-xs);
+  color: var(--text-secondary);
+}
+
+.locked-list svg { flex-shrink: 0; color: var(--success-fg); }
+
+.locked-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--space-2);
+  margin-top: var(--space-2);
+}
+
 /* Overlay variant — blurs the feature behind it so its value is visible */
 .locked-overlay {
   position: absolute;

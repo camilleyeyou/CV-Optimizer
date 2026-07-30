@@ -269,7 +269,13 @@ const ResumeForm = () => {
     <div className="resume-form">
       {SECTIONS.map(({ id, label, icon: Icon }) => (
         <div key={id} className={`form-section ${isOpen(id) ? 'is-open' : ''}`}>
-          <button className="section-header" onClick={() => toggleSection(id)}>
+          <button
+            type="button"
+            className="section-header"
+            onClick={() => toggleSection(id)}
+            aria-expanded={isOpen(id)}
+            aria-controls={`section-${id}`}
+          >
             <div className="section-header-left">
               <Icon size={16} />
               <span>{label}</span>
@@ -287,46 +293,46 @@ const ResumeForm = () => {
           </button>
 
           {isOpen(id) && (
-            <div className="section-content">
+            <div className="section-content" id={`section-${id}`}>
               {/* Personal Info */}
               {id === 'personal' && (
                 <div className="section-fields">
                   <div className="form-row">
                     <div className="form-group">
-                      <label className="form-label">First Name</label>
-                      <input className="form-input" value={resumeData.personal_info?.first_name || ''} onChange={(e) => updatePersonal('first_name', e.target.value)} placeholder="John" />
+                      <label className="form-label" htmlFor="pi-first-name">First Name</label>
+                      <input id="pi-first-name" className="form-input" value={resumeData.personal_info?.first_name || ''} onChange={(e) => updatePersonal('first_name', e.target.value)} placeholder="John" />
                     </div>
                     <div className="form-group">
-                      <label className="form-label">Last Name</label>
-                      <input className="form-input" value={resumeData.personal_info?.last_name || ''} onChange={(e) => updatePersonal('last_name', e.target.value)} placeholder="Doe" />
-                    </div>
-                  </div>
-                  <div className="form-group">
-                    <label className="form-label">Job Title</label>
-                    <input className="form-input" value={resumeData.personal_info?.job_title || ''} onChange={(e) => updatePersonal('job_title', e.target.value)} placeholder="Marketing Manager" />
-                  </div>
-                  <div className="form-row">
-                    <div className="form-group">
-                      <label className="form-label">Email</label>
-                      <input className="form-input" type="email" value={resumeData.personal_info?.email || ''} onChange={(e) => updatePersonal('email', e.target.value)} placeholder="john@example.com" />
-                    </div>
-                    <div className="form-group">
-                      <label className="form-label">Phone</label>
-                      <input className="form-input" value={resumeData.personal_info?.phone || ''} onChange={(e) => updatePersonal('phone', e.target.value)} placeholder="+1 (555) 000-0000" />
+                      <label className="form-label" htmlFor="pi-last-name">Last Name</label>
+                      <input id="pi-last-name" className="form-input" value={resumeData.personal_info?.last_name || ''} onChange={(e) => updatePersonal('last_name', e.target.value)} placeholder="Doe" />
                     </div>
                   </div>
                   <div className="form-group">
-                    <label className="form-label">Location</label>
-                    <input className="form-input" value={resumeData.personal_info?.location || ''} onChange={(e) => updatePersonal('location', e.target.value)} placeholder="New York, NY" />
+                    <label className="form-label" htmlFor="pi-job-title">Job Title</label>
+                    <input id="pi-job-title" className="form-input" value={resumeData.personal_info?.job_title || ''} onChange={(e) => updatePersonal('job_title', e.target.value)} placeholder="Marketing Manager" />
                   </div>
                   <div className="form-row">
                     <div className="form-group">
-                      <label className="form-label">LinkedIn</label>
-                      <input className="form-input" value={resumeData.personal_info?.linkedin || ''} onChange={(e) => updatePersonal('linkedin', e.target.value)} placeholder="linkedin.com/in/johndoe" />
+                      <label className="form-label" htmlFor="pi-email">Email</label>
+                      <input id="pi-email" className="form-input" type="email" value={resumeData.personal_info?.email || ''} onChange={(e) => updatePersonal('email', e.target.value)} placeholder="john@example.com" />
                     </div>
                     <div className="form-group">
-                      <label className="form-label">Website</label>
-                      <input className="form-input" value={resumeData.personal_info?.website || ''} onChange={(e) => updatePersonal('website', e.target.value)} placeholder="johndoe.com" />
+                      <label className="form-label" htmlFor="pi-phone">Phone</label>
+                      <input id="pi-phone" className="form-input" value={resumeData.personal_info?.phone || ''} onChange={(e) => updatePersonal('phone', e.target.value)} placeholder="+1 (555) 000-0000" />
+                    </div>
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label" htmlFor="pi-location">Location</label>
+                    <input id="pi-location" className="form-input" value={resumeData.personal_info?.location || ''} onChange={(e) => updatePersonal('location', e.target.value)} placeholder="New York, NY" />
+                  </div>
+                  <div className="form-row">
+                    <div className="form-group">
+                      <label className="form-label" htmlFor="pi-linkedin">LinkedIn</label>
+                      <input id="pi-linkedin" className="form-input" value={resumeData.personal_info?.linkedin || ''} onChange={(e) => updatePersonal('linkedin', e.target.value)} placeholder="linkedin.com/in/johndoe" />
+                    </div>
+                    <div className="form-group">
+                      <label className="form-label" htmlFor="pi-website">Website</label>
+                      <input id="pi-website" className="form-input" value={resumeData.personal_info?.website || ''} onChange={(e) => updatePersonal('website', e.target.value)} placeholder="johndoe.com" />
                     </div>
                   </div>
                 </div>
@@ -337,7 +343,7 @@ const ResumeForm = () => {
                 <div className="section-fields">
                   <div className="form-group">
                     <div className="form-label-row">
-                      <label className="form-label">Professional Summary</label>
+                      <label className="form-label" htmlFor="sum-professional-summary">Professional Summary</label>
                       <button
                         className="btn btn-ai btn-sm"
                         onClick={handleAISummary}
@@ -346,8 +352,8 @@ const ResumeForm = () => {
                         {aiLoading.summary ? <><Loader size={12} className="spin" /> Generating...</> : <><Sparkles size={12} /> AI Write</>}
                       </button>
                     </div>
-                    <textarea className="form-textarea" rows={4} value={resumeData.summary || ''} onChange={(e) => updateSummary(e.target.value)} placeholder="Results-driven professional with 5+ years of experience delivering measurable results and leading teams..." />
-                    <span className="form-hint">{(resumeData.summary || '').length}/500 characters</span>
+                    <textarea id="sum-professional-summary" aria-describedby="sum-count" className="form-textarea" rows={4} value={resumeData.summary || ''} onChange={(e) => updateSummary(e.target.value)} placeholder="Results-driven professional with 5+ years of experience delivering measurable results and leading teams..." />
+                    <span className="form-hint" id="sum-count">{(resumeData.summary || '').length}/500 characters</span>
                   </div>
                 </div>
               )}
@@ -359,30 +365,30 @@ const ResumeForm = () => {
                     <div key={exp.id || i} className="repeater-item">
                       <div className="repeater-header">
                         <span className="repeater-title">{exp.position || exp.company || `Position ${i + 1}`}</span>
-                        <button className="btn btn-ghost btn-sm" onClick={() => removeExperience(i)}><Trash2 size={14} /></button>
+                        <button type="button" className="btn btn-ghost btn-sm" aria-label={`Remove ${exp.position || exp.company || `position ${i + 1}`}`} onClick={() => removeExperience(i)}><Trash2 size={14} aria-hidden="true" /></button>
                       </div>
                       <div className="form-row">
                         <div className="form-group">
-                          <label className="form-label">Position</label>
-                          <input className="form-input" value={exp.position || ''} onChange={(e) => updateExperience(i, 'position', e.target.value)} placeholder="Marketing Manager" />
+                          <label className="form-label" htmlFor={`exp-${i}-position`}>Position</label>
+                          <input id={`exp-${i}-position`} className="form-input" value={exp.position || ''} onChange={(e) => updateExperience(i, 'position', e.target.value)} placeholder="Marketing Manager" />
                         </div>
                         <div className="form-group">
-                          <label className="form-label">Company</label>
-                          <input className="form-input" value={exp.company || ''} onChange={(e) => updateExperience(i, 'company', e.target.value)} placeholder="Acme Inc." />
+                          <label className="form-label" htmlFor={`exp-${i}-company`}>Company</label>
+                          <input id={`exp-${i}-company`} className="form-input" value={exp.company || ''} onChange={(e) => updateExperience(i, 'company', e.target.value)} placeholder="Acme Inc." />
                         </div>
                       </div>
                       <div className="form-group">
-                        <label className="form-label">Location</label>
-                        <input className="form-input" value={exp.location || ''} onChange={(e) => updateExperience(i, 'location', e.target.value)} placeholder="San Francisco, CA" />
+                        <label className="form-label" htmlFor={`exp-${i}-location`}>Location</label>
+                        <input id={`exp-${i}-location`} className="form-input" value={exp.location || ''} onChange={(e) => updateExperience(i, 'location', e.target.value)} placeholder="San Francisco, CA" />
                       </div>
                       <div className="form-row">
                         <div className="form-group">
-                          <label className="form-label">Start Date</label>
-                          <input className="form-input" type="month" value={exp.start_date || ''} onChange={(e) => updateExperience(i, 'start_date', e.target.value)} />
+                          <label className="form-label" htmlFor={`exp-${i}-start-date`}>Start Date</label>
+                          <input id={`exp-${i}-start-date`} className="form-input" type="month" value={exp.start_date || ''} onChange={(e) => updateExperience(i, 'start_date', e.target.value)} />
                         </div>
                         <div className="form-group">
-                          <label className="form-label">End Date</label>
-                          <input className="form-input" type="month" value={exp.end_date || ''} onChange={(e) => updateExperience(i, 'end_date', e.target.value)} disabled={exp.current} />
+                          <label className="form-label" htmlFor={`exp-${i}-end-date`}>End Date</label>
+                          <input id={`exp-${i}-end-date`} className="form-input" type="month" value={exp.end_date || ''} onChange={(e) => updateExperience(i, 'end_date', e.target.value)} disabled={exp.current} />
                           <label className="checkbox-label">
                             <input type="checkbox" checked={exp.current || false} onChange={(e) => updateExperience(i, 'current', e.target.checked)} />
                             Currently working here
@@ -391,7 +397,10 @@ const ResumeForm = () => {
                       </div>
                       <div className="form-group">
                         <div className="form-label-row">
-                          <label className="form-label">Key Achievements</label>
+                          {/* A <span>, not a <label>: this names a list of
+                              bullets rather than any one control. The group
+                              below borrows it, and each bullet is named too. */}
+                          <span className="form-label" id={`exp-${i}-bullets-label`}>Key Achievements</span>
                           <button
                             className="btn btn-ai btn-sm"
                             onClick={() => handleAIEnhance(i)}
@@ -400,18 +409,20 @@ const ResumeForm = () => {
                             {aiLoading[`exp_${i}`] ? <><Loader size={12} className="spin" /> Enhancing...</> : <><Sparkles size={12} /> AI Enhance</>}
                           </button>
                         </div>
-                        {(exp.description || []).map((bullet, bi) => (
-                          <div key={bi} className="bullet-row">
-                            <span className="bullet-dot" />
-                            <input className="form-input" value={bullet} onChange={(e) => updateBullet(i, bi, e.target.value)} placeholder="Led a team of 5 to deliver a 20% increase in..." />
-                            <button className="btn btn-ghost btn-icon btn-sm" onClick={() => removeBullet(i, bi)}><Trash2 size={12} /></button>
-                          </div>
-                        ))}
-                        <button className="btn btn-ghost btn-sm" onClick={() => addBullet(i)}><Plus size={14} /> Add bullet</button>
+                        <div role="group" aria-labelledby={`exp-${i}-bullets-label`}>
+                          {(exp.description || []).map((bullet, bi) => (
+                            <div key={bi} className="bullet-row">
+                              <span className="bullet-dot" />
+                              <input className="form-input" aria-label={`Achievement ${bi + 1}`} value={bullet} onChange={(e) => updateBullet(i, bi, e.target.value)} placeholder="Led a team of 5 to deliver a 20% increase in..." />
+                              <button type="button" className="btn btn-ghost btn-icon btn-sm" aria-label={`Remove achievement ${bi + 1}`} onClick={() => removeBullet(i, bi)}><Trash2 size={12} aria-hidden="true" /></button>
+                            </div>
+                          ))}
+                        </div>
+                        <button type="button" className="btn btn-ghost btn-sm" onClick={() => addBullet(i)}><Plus size={14} aria-hidden="true" /> Add bullet</button>
                       </div>
                     </div>
                   ))}
-                  <button className="btn btn-secondary btn-sm" onClick={addExperience}><Plus size={14} /> Add Experience</button>
+                  <button type="button" className="btn btn-secondary btn-sm" onClick={addExperience}><Plus size={14} aria-hidden="true" /> Add Experience</button>
                 </div>
               )}
 
@@ -422,41 +433,41 @@ const ResumeForm = () => {
                     <div key={edu.id || i} className="repeater-item">
                       <div className="repeater-header">
                         <span className="repeater-title">{edu.institution || `Education ${i + 1}`}</span>
-                        <button className="btn btn-ghost btn-sm" onClick={() => removeEducation(i)}><Trash2 size={14} /></button>
+                        <button type="button" className="btn btn-ghost btn-sm" aria-label={`Remove ${edu.institution || `education ${i + 1}`}`} onClick={() => removeEducation(i)}><Trash2 size={14} aria-hidden="true" /></button>
                       </div>
                       <div className="form-row">
                         <div className="form-group">
-                          <label className="form-label">Institution</label>
-                          <input className="form-input" value={edu.institution || ''} onChange={(e) => updateEducation(i, 'institution', e.target.value)} placeholder="University of Michigan" />
+                          <label className="form-label" htmlFor={`edu-${i}-institution`}>Institution</label>
+                          <input id={`edu-${i}-institution`} className="form-input" value={edu.institution || ''} onChange={(e) => updateEducation(i, 'institution', e.target.value)} placeholder="University of Michigan" />
                         </div>
                         <div className="form-group">
-                          <label className="form-label">Degree</label>
-                          <input className="form-input" value={edu.degree || ''} onChange={(e) => updateEducation(i, 'degree', e.target.value)} placeholder="B.A. Business Administration" />
-                        </div>
-                      </div>
-                      <div className="form-row">
-                        <div className="form-group">
-                          <label className="form-label">Field of Study</label>
-                          <input className="form-input" value={edu.field_of_study || ''} onChange={(e) => updateEducation(i, 'field_of_study', e.target.value)} placeholder="Business Administration" />
-                        </div>
-                        <div className="form-group">
-                          <label className="form-label">GPA</label>
-                          <input className="form-input" value={edu.gpa || ''} onChange={(e) => updateEducation(i, 'gpa', e.target.value)} placeholder="3.8" />
+                          <label className="form-label" htmlFor={`edu-${i}-degree`}>Degree</label>
+                          <input id={`edu-${i}-degree`} className="form-input" value={edu.degree || ''} onChange={(e) => updateEducation(i, 'degree', e.target.value)} placeholder="B.A. Business Administration" />
                         </div>
                       </div>
                       <div className="form-row">
                         <div className="form-group">
-                          <label className="form-label">Start Date</label>
-                          <input className="form-input" type="month" value={edu.start_date || ''} onChange={(e) => updateEducation(i, 'start_date', e.target.value)} />
+                          <label className="form-label" htmlFor={`edu-${i}-field-of-study`}>Field of Study</label>
+                          <input id={`edu-${i}-field-of-study`} className="form-input" value={edu.field_of_study || ''} onChange={(e) => updateEducation(i, 'field_of_study', e.target.value)} placeholder="Business Administration" />
                         </div>
                         <div className="form-group">
-                          <label className="form-label">End Date</label>
-                          <input className="form-input" type="month" value={edu.end_date || ''} onChange={(e) => updateEducation(i, 'end_date', e.target.value)} />
+                          <label className="form-label" htmlFor={`edu-${i}-gpa`}>GPA</label>
+                          <input id={`edu-${i}-gpa`} className="form-input" value={edu.gpa || ''} onChange={(e) => updateEducation(i, 'gpa', e.target.value)} placeholder="3.8" />
+                        </div>
+                      </div>
+                      <div className="form-row">
+                        <div className="form-group">
+                          <label className="form-label" htmlFor={`edu-${i}-start-date`}>Start Date</label>
+                          <input id={`edu-${i}-start-date`} className="form-input" type="month" value={edu.start_date || ''} onChange={(e) => updateEducation(i, 'start_date', e.target.value)} />
+                        </div>
+                        <div className="form-group">
+                          <label className="form-label" htmlFor={`edu-${i}-end-date`}>End Date</label>
+                          <input id={`edu-${i}-end-date`} className="form-input" type="month" value={edu.end_date || ''} onChange={(e) => updateEducation(i, 'end_date', e.target.value)} />
                         </div>
                       </div>
                     </div>
                   ))}
-                  <button className="btn btn-secondary btn-sm" onClick={addEducation}><Plus size={14} /> Add Education</button>
+                  <button type="button" className="btn btn-secondary btn-sm" onClick={addEducation}><Plus size={14} aria-hidden="true" /> Add Education</button>
                 </div>
               )}
 
@@ -466,13 +477,13 @@ const ResumeForm = () => {
                   <div className="skills-grid">
                     {(resumeData.skills || []).map((skill, i) => (
                       <div key={i} className="skill-tag-input">
-                        <input className="form-input" value={skill} onChange={(e) => updateSkill(i, e.target.value)} placeholder="Communication, Leadership, etc." />
-                        <button className="btn btn-ghost btn-icon btn-sm" onClick={() => removeSkill(i)}><Trash2 size={12} /></button>
+                        <input className="form-input" aria-label={`Skill ${i + 1}`} value={skill} onChange={(e) => updateSkill(i, e.target.value)} placeholder="Communication, Leadership, etc." />
+                        <button type="button" className="btn btn-ghost btn-icon btn-sm" aria-label={`Remove skill ${i + 1}`} onClick={() => removeSkill(i)}><Trash2 size={12} aria-hidden="true" /></button>
                       </div>
                     ))}
                   </div>
                   <div className="skills-actions">
-                    <button className="btn btn-secondary btn-sm" onClick={addSkill}><Plus size={14} /> Add Skill</button>
+                    <button type="button" className="btn btn-secondary btn-sm" onClick={addSkill}><Plus size={14} aria-hidden="true" /> Add Skill</button>
                     <button
                       className="btn btn-ai btn-sm"
                       onClick={handleAISkills}
@@ -491,29 +502,29 @@ const ResumeForm = () => {
                     <div key={proj.id || i} className="repeater-item">
                       <div className="repeater-header">
                         <span className="repeater-title">{proj.name || `Project ${i + 1}`}</span>
-                        <button className="btn btn-ghost btn-sm" onClick={() => removeProject(i)}><Trash2 size={14} /></button>
+                        <button type="button" className="btn btn-ghost btn-sm" aria-label={`Remove ${proj.name || `project ${i + 1}`}`} onClick={() => removeProject(i)}><Trash2 size={14} aria-hidden="true" /></button>
                       </div>
                       <div className="form-group">
-                        <label className="form-label">Project Name</label>
-                        <input className="form-input" value={proj.name || ''} onChange={(e) => updateProject(i, 'name', e.target.value)} placeholder="My Project" />
+                        <label className="form-label" htmlFor={`proj-${i}-project-name`}>Project Name</label>
+                        <input id={`proj-${i}-project-name`} className="form-input" value={proj.name || ''} onChange={(e) => updateProject(i, 'name', e.target.value)} placeholder="My Project" />
                       </div>
                       <div className="form-group">
-                        <label className="form-label">Description</label>
-                        <textarea className="form-textarea" rows={2} value={proj.description || ''} onChange={(e) => updateProject(i, 'description', e.target.value)} placeholder="Led an initiative that delivered..." />
+                        <label className="form-label" htmlFor={`proj-${i}-description`}>Description</label>
+                        <textarea id={`proj-${i}-description`} className="form-textarea" rows={2} value={proj.description || ''} onChange={(e) => updateProject(i, 'description', e.target.value)} placeholder="Led an initiative that delivered..." />
                       </div>
                       <div className="form-row">
                         <div className="form-group">
-                          <label className="form-label">Technologies</label>
-                          <input className="form-input" value={proj.technologies || ''} onChange={(e) => updateProject(i, 'technologies', e.target.value)} placeholder="Tools, methods, or skills used" />
+                          <label className="form-label" htmlFor={`proj-${i}-technologies`}>Technologies</label>
+                          <input id={`proj-${i}-technologies`} className="form-input" value={proj.technologies || ''} onChange={(e) => updateProject(i, 'technologies', e.target.value)} placeholder="Tools, methods, or skills used" />
                         </div>
                         <div className="form-group">
-                          <label className="form-label">URL</label>
-                          <input className="form-input" value={proj.url || ''} onChange={(e) => updateProject(i, 'url', e.target.value)} placeholder="github.com/..." />
+                          <label className="form-label" htmlFor={`proj-${i}-url`}>URL</label>
+                          <input id={`proj-${i}-url`} className="form-input" value={proj.url || ''} onChange={(e) => updateProject(i, 'url', e.target.value)} placeholder="github.com/..." />
                         </div>
                       </div>
                     </div>
                   ))}
-                  <button className="btn btn-secondary btn-sm" onClick={addProject}><Plus size={14} /> Add Project</button>
+                  <button type="button" className="btn btn-secondary btn-sm" onClick={addProject}><Plus size={14} aria-hidden="true" /> Add Project</button>
                 </div>
               )}
 
@@ -524,31 +535,31 @@ const ResumeForm = () => {
                     <div key={cert.id || i} className="repeater-item">
                       <div className="repeater-header">
                         <span className="repeater-title">{cert.name || `Certification ${i + 1}`}</span>
-                        <button className="btn btn-ghost btn-sm" onClick={() => removeCertification(i)}><Trash2 size={14} /></button>
+                        <button type="button" className="btn btn-ghost btn-sm" aria-label={`Remove ${cert.name || `certification ${i + 1}`}`} onClick={() => removeCertification(i)}><Trash2 size={14} aria-hidden="true" /></button>
                       </div>
                       <div className="form-row">
                         <div className="form-group">
-                          <label className="form-label">Name</label>
-                          <input className="form-input" value={cert.name || ''} onChange={(e) => updateCertification(i, 'name', e.target.value)} placeholder="Project Management Professional (PMP)" />
+                          <label className="form-label" htmlFor={`cert-${i}-name`}>Name</label>
+                          <input id={`cert-${i}-name`} className="form-input" value={cert.name || ''} onChange={(e) => updateCertification(i, 'name', e.target.value)} placeholder="Project Management Professional (PMP)" />
                         </div>
                         <div className="form-group">
-                          <label className="form-label">Issuer</label>
-                          <input className="form-input" value={cert.issuer || ''} onChange={(e) => updateCertification(i, 'issuer', e.target.value)} placeholder="Issuing organization" />
+                          <label className="form-label" htmlFor={`cert-${i}-issuer`}>Issuer</label>
+                          <input id={`cert-${i}-issuer`} className="form-input" value={cert.issuer || ''} onChange={(e) => updateCertification(i, 'issuer', e.target.value)} placeholder="Issuing organization" />
                         </div>
                       </div>
                       <div className="form-row">
                         <div className="form-group">
-                          <label className="form-label">Date</label>
-                          <input className="form-input" type="month" value={cert.date || ''} onChange={(e) => updateCertification(i, 'date', e.target.value)} />
+                          <label className="form-label" htmlFor={`cert-${i}-date`}>Date</label>
+                          <input id={`cert-${i}-date`} className="form-input" type="month" value={cert.date || ''} onChange={(e) => updateCertification(i, 'date', e.target.value)} />
                         </div>
                         <div className="form-group">
-                          <label className="form-label">URL</label>
-                          <input className="form-input" value={cert.url || ''} onChange={(e) => updateCertification(i, 'url', e.target.value)} placeholder="credential URL" />
+                          <label className="form-label" htmlFor={`cert-${i}-url`}>URL</label>
+                          <input id={`cert-${i}-url`} className="form-input" value={cert.url || ''} onChange={(e) => updateCertification(i, 'url', e.target.value)} placeholder="credential URL" />
                         </div>
                       </div>
                     </div>
                   ))}
-                  <button className="btn btn-secondary btn-sm" onClick={addCertification}><Plus size={14} /> Add Certification</button>
+                  <button type="button" className="btn btn-secondary btn-sm" onClick={addCertification}><Plus size={14} aria-hidden="true" /> Add Certification</button>
                 </div>
               )}
 
@@ -565,10 +576,10 @@ const ResumeForm = () => {
                         <option value="Intermediate">Intermediate</option>
                         <option value="Basic">Basic</option>
                       </select>
-                      <button className="btn btn-ghost btn-icon btn-sm" onClick={() => removeLanguage(i)}><Trash2 size={12} /></button>
+                      <button type="button" className="btn btn-ghost btn-icon btn-sm" aria-label={`Remove language ${i + 1}`} onClick={() => removeLanguage(i)}><Trash2 size={12} aria-hidden="true" /></button>
                     </div>
                   ))}
-                  <button className="btn btn-secondary btn-sm" onClick={addLanguage}><Plus size={14} /> Add Language</button>
+                  <button type="button" className="btn btn-secondary btn-sm" onClick={addLanguage}><Plus size={14} aria-hidden="true" /> Add Language</button>
                 </div>
               )}
             </div>

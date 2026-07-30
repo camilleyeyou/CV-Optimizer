@@ -36,6 +36,13 @@ const initialState = {
   loading: false,
   saving: false,
   error: null,
+  /* Autosave outcome, so the builder can say what is actually true.
+     'idle' nothing written yet | 'saving' | 'saved' | 'error' write failed.
+     Previously a failed write flipped `saving` back to false and the toolbar
+     went straight back to a green "Saved" — the toast was the only evidence,
+     and it disappeared after three seconds. */
+  saveStatus: 'idle',
+  savedAt: null,
 };
 
 // The columns saveResume() actually writes. The dirty check compares exactly
@@ -70,7 +77,11 @@ const reducer = (state, action) => {
     case 'SET_LOADING':
       return { ...state, loading: action.payload };
     case 'SET_SAVING':
-      return { ...state, saving: action.payload };
+      return { ...state, saving: action.payload, saveStatus: action.payload ? 'saving' : state.saveStatus };
+    case 'SAVE_OK':
+      return { ...state, saving: false, saveStatus: 'saved', savedAt: action.payload };
+    case 'SAVE_FAILED':
+      return { ...state, saving: false, saveStatus: 'error' };
     case 'SET_ERROR':
       return { ...state, error: action.payload };
     case 'SET_RESUMES':
@@ -236,11 +247,12 @@ export const ResumeProvider = ({ children }) => {
           .eq('id', resumeData.id);
 
         if (error) throw error;
-      } catch (err) {
+        dispatch({ type: 'SAVE_OK', payload: Date.now() });
+      } catch {
         toast.error('Failed to save changes');
+        // Clearing the signature is what lets the next edit retry the write.
         lastSavedRef.current = null;
-      } finally {
-        dispatch({ type: 'SET_SAVING', payload: false });
+        dispatch({ type: 'SAVE_FAILED' });
       }
     }, 1000);
   }, []);
@@ -340,6 +352,8 @@ export const ResumeProvider = ({ children }) => {
     resumes: state.resumes,
     loading: state.loading,
     saving: state.saving,
+    saveStatus: state.saveStatus,
+    savedAt: state.savedAt,
     error: state.error,
 
     // Actions

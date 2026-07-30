@@ -1,319 +1,234 @@
-/* Builder - Dark glassmorphic split-pane editor */
-.builder {
+/* Builder — two-pane editor. Composes the design system; owns no raw values. */
+
+.bd {
   display: flex;
   flex-direction: column;
-  height: calc(100vh - var(--header-height));
+  /* dvh so an iOS URL bar sliding away cannot push the toolbar off-screen. */
   height: calc(100dvh - var(--header-height));
   overflow: hidden;
 }
 
-.builder-loading {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
+.bd-error {
+  min-height: calc(100dvh - var(--header-height));
   justify-content: center;
-  gap: var(--space-4);
-  height: calc(100vh - var(--header-height));
-  color: var(--text-muted);
-  font-size: var(--text-sm);
 }
 
-/* Toolbar */
-.builder-toolbar {
+/* --- Toolbar -------------------------------------------------------------- */
+
+.bd-bar {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: var(--space-3) var(--space-6);
-  border-bottom: 1px solid var(--glass-border);
-  background: rgba(8, 8, 10, 0.75);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
+  gap: var(--space-4);
   flex-shrink: 0;
+  padding: var(--space-3) var(--gutter);
+  background: var(--surface-base);
+  border-bottom: 1px solid var(--border-subtle);
 }
 
-.toolbar-left {
+.bd-bar-main {
   display: flex;
   align-items: center;
-  gap: var(--space-4);
+  gap: var(--space-3);
+  min-width: 0;
 }
 
-.toolbar-title {
-  font-size: var(--text-base);
-  font-weight: 700;
-  margin: 0;
-  letter-spacing: -0.01em;
+.bd-back {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  flex-shrink: 0;
+  color: var(--text-tertiary);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  transition: var(--transition-colors);
 }
 
-.toolbar-status {
+.bd-back:hover {
+  color: var(--text-primary);
+  background: var(--surface-hover);
+  border-color: var(--border-default);
+}
+
+.bd-titles { min-width: 0; }
+
+.bd-title {
+  font-family: var(--font-display);
+  font-size: var(--text-md);
+  font-weight: var(--weight-bold);
+  letter-spacing: var(--tracking-heading);
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* --- Save state ----------------------------------------------------------- */
+
+.bd-save {
   display: inline-flex;
   align-items: center;
   gap: var(--space-1);
-  font-size: var(--text-xs);
-  color: var(--text-muted);
-  font-weight: 500;
+  margin-top: 1px;
+  font-size: var(--text-2xs);
+  color: var(--text-tertiary);
+  white-space: nowrap;
 }
 
-.toolbar-status svg {
-  color: var(--success);
+.bd-save[data-state='saved'] { color: var(--success-fg); }
+.bd-save[data-state='error'] { color: var(--error-fg); }
+.bd-save-time { color: var(--text-disabled); }
+
+.bd-save-retry {
+  margin-left: var(--space-1);
+  padding: 0 var(--space-1);
+  font-size: inherit;
+  font-weight: var(--weight-semibold);
+  color: var(--error-fg);
+  background: none;
+  border: 0;
+  border-bottom: 1px solid currentColor;
+  cursor: pointer;
 }
 
-.toolbar-actions {
+.bd-save-retry:hover { color: var(--text-primary); }
+
+/* --- Toolbar actions ------------------------------------------------------ */
+
+.bd-bar-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-shrink: 0;
+}
+
+/* Grouped so the eye reads three clusters — change the document, change the
+   view, take the document away — rather than seven equal buttons. */
+.bd-tools,
+.bd-exports {
   display: flex;
   align-items: center;
   gap: var(--space-2);
 }
 
-.toolbar-mobile-toggle {
-  display: none;
+.bd-tools { padding-right: var(--space-2); border-right: 1px solid var(--border-subtle); }
+
+/* A locked action is still a button. It reads as unavailable but opens and
+   explains itself — a disabled control just leaves people guessing. */
+.btn[data-locked] { color: var(--text-tertiary); }
+.btn[data-locked] > svg:first-child { color: var(--warning-fg); }
+.btn[data-locked]:hover:not(:disabled) { color: var(--text-primary); }
+
+/* The edit/preview switch only earns its space where the panes cannot both
+   fit; above that the panel toggle does the job. */
+.bd-switch { display: none; }
+
+@media (max-width: 900px) {
+  .bd-switch { display: inline-flex; }
+  .bd-panel-toggle { display: none; }
 }
 
-/* Layout */
-.builder-layout {
+/* --- Panes ---------------------------------------------------------------- */
+
+.bd-panes {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   flex: 1;
-  overflow: hidden;
+  min-height: 0;
 }
 
-.builder-layout.preview-collapsed {
-  grid-template-columns: 1fr;
-}
+.bd-panes.is-collapsed { grid-template-columns: minmax(0, 1fr); }
 
-/* Form Panel */
-.builder-form-panel {
+.bd-pane {
+  min-width: 0;
+  min-height: 0;
   overflow-y: auto;
-  padding: var(--space-6);
-  background: rgba(8, 8, 10, 0.3);
+  overscroll-behavior: contain;
 }
 
-/* Preview Panel */
-.builder-preview-panel {
-  overflow-y: auto;
-  background: rgba(10, 10, 12, 0.4);
-  border-left: 1px solid var(--glass-border);
-  padding: var(--space-6);
+.bd-pane-edit { background: var(--surface-canvas); }
+
+.bd-pane-inner {
+  max-width: 720px;
+  margin-inline: auto;
+  padding: var(--space-6) var(--gutter) var(--space-16);
 }
 
-.preview-container {
+.bd-pane-preview {
+  background: var(--surface-inset);
+  border-left: 1px solid var(--border-subtle);
+}
+
+.bd-preview-scroll {
   display: flex;
   justify-content: center;
+  padding: var(--space-6) var(--space-4) var(--space-16);
 }
 
-/* ATS Score Widget */
-.ats-widget {
-  background: var(--glass-bg);
-  border: 1px solid rgba(129, 140, 248, 0.2);
-  border-radius: var(--radius-xl);
-  overflow: hidden;
-  margin-bottom: var(--space-4);
-  backdrop-filter: var(--glass-blur);
-  -webkit-backdrop-filter: var(--glass-blur);
+/* --- Below 900px: one pane at a time -------------------------------------- */
+
+@media (max-width: 900px) {
+  .bd-panes,
+  .bd-panes.is-collapsed { grid-template-columns: minmax(0, 1fr); }
+
+  .bd-panes[data-view='edit'] .bd-pane-preview,
+  .bd-panes[data-view='preview'] .bd-pane-edit { display: none; }
+
+  .bd-pane-preview { border-left: 0; }
+  .bd-preview-scroll { padding-inline: var(--space-3); }
 }
 
-.ats-widget-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  width: 100%;
-  padding: 0.85rem 1rem;
-  background: none;
-  border: none;
-  cursor: pointer;
-  font-family: inherit;
-  color: var(--text-secondary);
-}
+/* --- Narrow toolbar ------------------------------------------------------- */
 
-.ats-widget-header:hover {
-  background: rgba(129, 140, 248, 0.06);
-}
-
-.ats-widget-title {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  font-size: var(--text-sm);
-  font-weight: 700;
-  color: var(--primary);
-}
-
-.ats-widget-title svg {
-  color: var(--primary);
-}
-
-.ats-widget-badge {
-  font-size: 0.65rem;
-  font-weight: 700;
-  color: white;
-  padding: 2px 7px;
-  border-radius: var(--radius-full);
-  line-height: 1;
-}
-
-.ats-widget-body {
-  padding: 0.75rem 1rem 1rem;
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-  background: rgba(10, 10, 12, 0.4);
-  border-top: 1px solid rgba(129, 140, 248, 0.1);
-}
-
-.ats-widget-field input,
-.ats-widget-field textarea {
-  font-size: var(--text-xs);
-}
-
-.ats-widget-btn {
-  width: 100%;
-}
-
-.ats-widget-result {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.75rem;
-  padding-top: 0.75rem;
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-.ats-widget-score-ring {
-  position: relative;
-  width: 80px;
-  height: 80px;
-}
-
-.ats-widget-score-num {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  font-size: 1.25rem;
-  font-weight: 800;
-}
-
-.ats-widget-section {
-  width: 100%;
-}
-
-.ats-widget-section h4 {
-  display: flex;
-  align-items: center;
-  gap: 0.3rem;
-  font-size: 0.7rem;
-  font-weight: 600;
-  color: var(--text-secondary);
-  margin: 0 0 0.35rem;
-  text-transform: uppercase;
-  letter-spacing: 0.03em;
-}
-
-.ats-widget-tags {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.25rem;
-}
-
-.ats-widget-tag {
-  font-size: 0.65rem;
-  padding: 2px 8px;
-  border-radius: var(--radius-full);
-  font-weight: 500;
-}
-
-.ats-widget-tag.missing {
-  background: var(--error-light);
-  color: #fca5a5;
-}
-
-.ats-widget-tips {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-}
-
-.ats-widget-tips li {
-  font-size: var(--text-xs);
-  color: var(--text-secondary);
-  padding: 0.2rem 0;
-  line-height: 1.5;
-}
-
-.ats-widget-tips li::before {
-  content: '\2192 ';
-  color: var(--primary);
-  font-weight: 600;
-}
-
-/* Mobile — the split pane collapses to a single column that the page scrolls
-   naturally. Edit/Preview are toggled by hiding the inactive panel (mobile-hidden),
-   so neither is ever positioned off-screen. */
-@media (max-width: 768px) {
-  /* Let the page grow and scroll instead of trapping content in a fixed-height,
-     overflow:hidden box (which previously clipped the toolbar's export buttons). */
-  .builder {
-    height: auto;
-    min-height: calc(100dvh - var(--header-height));
-    overflow: visible;
-  }
-
-  /* Toolbar stacks: title row, then a full-width Edit/Preview toggle, then the
-     action buttons wrapping into a 2-up grid so PDF/DOCX are always reachable. */
-  .builder-toolbar {
-    flex-direction: column;
-    align-items: stretch;
-    gap: var(--space-2);
-    padding: var(--space-3) var(--space-4);
-    position: sticky;
-    top: var(--header-height);
-    z-index: 30;
-  }
-
-  .toolbar-left {
-    justify-content: space-between;
-  }
-
-  .toolbar-actions {
-    width: 100%;
+/* Below the tablet break the labels go and the buttons become icons. Each one
+   keeps its accessible name from the sibling <span>, hidden visually rather
+   than removed. */
+@media (max-width: 720px) {
+  .bd-bar {
     flex-wrap: wrap;
-    gap: var(--space-2);
+    gap: var(--space-3);
+    padding-inline: var(--space-4);
   }
 
-  .toolbar-mobile-toggle {
-    display: flex;
+  .bd-bar-main { flex: 1 1 100%; }
+
+  .bd-bar-actions {
     flex: 1 1 100%;
+    justify-content: space-between;
     gap: var(--space-2);
   }
 
-  .toolbar-mobile-toggle .btn {
-    flex: 1;
+  .bd-label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
   }
 
-  /* Action buttons (Tailor / Translate / DOCX / PDF) share two columns. */
-  .toolbar-actions > .btn {
-    flex: 1 1 calc(50% - var(--space-2));
+  .bd-tools { padding-right: 0; border-right: 0; }
+  .bd-switch .segmented-item { padding-inline: var(--space-3); }
+}
+
+/* Seven controls will not sit on one 390px line. Rather than let the export
+   buttons slide off the right edge under .bd's overflow:hidden — which is
+   exactly how they became unreachable before — the view switch takes its own
+   full-width row and the two action clusters share the next one. */
+@media (max-width: 560px) {
+  .bd-bar-actions { flex-wrap: wrap; }
+
+  .bd-switch {
+    flex: 1 1 100%;
+    order: -1;
   }
 
-  .desktop-only {
-    display: none;
-  }
+  .bd-switch .segmented-item { flex: 1; justify-content: center; }
 
-  /* Single-column flow; both panels are normal blocks and the page scrolls. */
-  .builder-layout {
-    display: block;
-    overflow: visible;
-  }
-
-  .builder-form-panel,
-  .builder-preview-panel {
-    overflow: visible;
-    padding: var(--space-4);
-  }
-
-  .builder-preview-panel {
-    border-left: none;
-  }
-
-  .mobile-hidden {
-    display: none;
-  }
+  .bd-tools,
+  .bd-exports { flex: 0 1 auto; }
 }

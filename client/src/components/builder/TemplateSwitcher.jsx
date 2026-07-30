@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useState } from 'react';
-import { Check, Crown, LayoutTemplate, Loader, Lock, X } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { ArrowRight, Check, Crown, LayoutTemplate, Loader, Lock, X } from 'lucide-react';
 import { TEMPLATES } from '../../config/templates';
 import { useResume } from '../../context/ResumeContext';
-import { getCredits, startCheckout } from '../../services/api';
+import { usePlan } from '../../hooks/usePlan';
 import TemplateThumbnail from './TemplateThumbnail';
 import toast from 'react-hot-toast';
 import './TemplateSwitcher.css';
@@ -10,24 +11,6 @@ import './TemplateSwitcher.css';
 // Mirrors the server's TEMPLATE_PAYWALL_ENABLED. Off until billing is live, in
 // which case nothing is locked and there is no plan to look up.
 const PAYWALL_ENABLED = import.meta.env.VITE_TEMPLATE_PAYWALL_ENABLED === 'true';
-
-// Cached for the page session so re-opening the switcher doesn't re-fetch the
-// plan - and premium cards don't flash a "checking" state every time.
-let planPromise = null;
-const fetchPlan = () => {
-  if (!planPromise) {
-    planPromise = getCredits()
-      .then((d) => d?.plan || 'free')
-      .catch(() => {
-        planPromise = null; // let a later open retry
-        // Fail open, exactly like the server's enforceTemplateAccess: a
-        // transient profile lookup must not lock a paying user out of the
-        // templates they bought. Export stays enforced server-side.
-        return 'unknown';
-      });
-  }
-  return planPromise;
-};
 
 /**
  * Switch the resume's template without touching its content.
@@ -42,18 +25,10 @@ const fetchPlan = () => {
  */
 const TemplateSwitcher = ({ open, onClose }) => {
   const { resumeData, updateResume } = useResume();
-  const [plan, setPlan] = useState(null);
+  const { isPro, loading: planLoading } = usePlan();
   const [upgradeFor, setUpgradeFor] = useState(null);
-  const [checkoutBusy, setCheckoutBusy] = useState(false);
 
   const currentId = resumeData?.template || 'modern';
-
-  useEffect(() => {
-    if (!open || !PAYWALL_ENABLED) return undefined;
-    let cancelled = false;
-    fetchPlan().then((p) => { if (!cancelled) setPlan(p); });
-    return () => { cancelled = true; };
-  }, [open]);
 
   // Close on Escape - the upgrade prompt steps back to the grid first.
   useEffect(() => {
@@ -72,9 +47,6 @@ const TemplateSwitcher = ({ open, onClose }) => {
     if (!open) setUpgradeFor(null);
   }, [open]);
 
-  // 'unknown' means the plan lookup failed - treated as entitled, see fetchPlan.
-  const isPremiumUser = plan === 'pro' || plan === 'premium' || plan === 'unknown';
-
   /**
    * One mutually exclusive status per template, so a card can never be in two
    * states at once - in particular it can't show a lock while the plan is still
@@ -84,9 +56,9 @@ const TemplateSwitcher = ({ open, onClose }) => {
    */
   const statusOf = useCallback((template) => {
     if (!PAYWALL_ENABLED || !template.premium) return 'available';
-    if (plan === null) return 'pending';
-    return isPremiumUser ? 'available' : 'locked';
-  }, [plan, isPremiumUser]);
+    if (planLoading) return 'pending';
+    return isPro ? 'available' : 'locked';
+  }, [planLoading, isPro]);
 
   const handleSelect = (template) => {
     if (template.id === currentId) {
@@ -103,18 +75,6 @@ const TemplateSwitcher = ({ open, onClose }) => {
     updateResume({ template: template.id });
     toast.success(`Switched to ${template.name}`);
     onClose();
-  };
-
-  const handleUpgrade = async () => {
-    setCheckoutBusy(true);
-    try {
-      const { url } = await startCheckout('pro');
-      if (url) window.location.href = url;
-      else throw new Error('No checkout URL');
-    } catch (err) {
-      toast.error(err.response?.data?.error || 'Could not start checkout. Please try again.');
-      setCheckoutBusy(false);
-    }
   };
 
   if (!open) return null;
@@ -150,14 +110,12 @@ const TemplateSwitcher = ({ open, onClose }) => {
               and premium exports. Your resume content stays exactly as it is.
             </p>
             <div className="tplsw-upgrade-actions">
-              <button className="btn btn-ghost" onClick={() => setUpgradeFor(null)} disabled={checkoutBusy}>
+              <button type="button" className="btn btn-secondary" onClick={() => setUpgradeFor(null)}>
                 Back to templates
               </button>
-              <button className="btn btn-primary" onClick={handleUpgrade} disabled={checkoutBusy}>
-                {checkoutBusy
-                  ? <><Loader size={14} className="spin" /> Starting…</>
-                  : <><Crown size={14} /> Upgrade to Pro</>}
-              </button>
+              <Link to="/pricing" className="btn btn-primary">
+                See what Pro includes <ArrowRight size={14} aria-hidden="true" />
+              </Link>
             </div>
           </div>
         ) : (

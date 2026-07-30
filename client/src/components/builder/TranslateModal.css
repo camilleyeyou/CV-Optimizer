@@ -1,180 +1,84 @@
-/* Translate Modal - Dark glassmorphic */
-.translate-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.6);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  z-index: 300;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: var(--space-4);
-}
+/* Translate dialog contents. The shell comes from the shared Modal, so this
+   only styles what sits inside it. */
 
-.translate-modal {
-  background: rgba(10, 10, 12, 0.95);
-  border: 1px solid var(--glass-border);
-  border-radius: var(--radius-xl);
-  box-shadow: var(--shadow-xl);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  width: 100%;
-  max-width: 520px;
-  max-height: 80vh;
+.tr-body {
   display: flex;
   flex-direction: column;
-  overflow: hidden;
+  gap: var(--space-5);
 }
 
-.translate-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 1rem 1.25rem;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-  flex-shrink: 0;
-}
-
-.translate-header-title {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  font-size: var(--text-base);
-  font-weight: 700;
-  color: var(--primary);
-}
-
-.translate-body {
-  padding: 1.25rem;
+.tr-loading {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
-}
-
-.translate-desc {
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-10) var(--space-4);
+  text-align: center;
   font-size: var(--text-sm);
   color: var(--text-secondary);
-  line-height: 1.5;
-  margin: 0;
 }
 
-.translate-field label {
-  display: block;
-  font-size: var(--text-xs);
-  font-weight: 600;
-  color: var(--text-secondary);
-  margin-bottom: 0.25rem;
-}
+.tr-loading-hint { font-size: var(--text-xs); color: var(--text-tertiary); }
 
-.translate-btn {
-  width: 100%;
-}
+/* --- Result review -------------------------------------------------------- */
 
-.translate-loading {
+.tr-result {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 1rem;
-  padding: 3rem;
-  color: var(--text-muted);
+  gap: var(--space-5);
 }
 
-.translate-loading p {
+.tr-result-lead {
   font-size: var(--text-sm);
-  margin: 0;
+  color: var(--text-tertiary);
 }
 
-/* Result */
-.translate-result {
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-  flex: 1;
+.tr-section {
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--border-subtle);
 }
 
-.translate-preview {
-  padding: 1.25rem;
-  overflow-y: auto;
-  flex: 1;
-}
+.tr-section:first-of-type { padding-top: 0; border-top: 0; }
 
-.translate-preview h4 {
-  font-size: var(--text-sm);
-  font-weight: 700;
-  margin: 0 0 1rem;
-  color: var(--primary);
-}
-
-.translate-preview-section {
-  margin-bottom: 1rem;
-}
-
-.translate-preview-label {
-  display: block;
-  font-size: 0.65rem;
-  font-weight: 700;
+.tr-section-title {
+  margin-bottom: var(--space-2);
+  font-size: var(--text-2xs);
+  font-weight: var(--weight-semibold);
+  letter-spacing: var(--tracking-caps);
   text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: var(--text-muted);
-  margin-bottom: 0.35rem;
+  color: var(--text-tertiary);
 }
 
-.translate-preview-section p {
+.tr-section p {
   font-size: var(--text-sm);
+  line-height: var(--leading-body);
   color: var(--text-secondary);
-  line-height: 1.6;
-  margin: 0.15rem 0;
 }
 
-.translate-preview-tags {
+.tr-tags {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.25rem;
+  gap: var(--space-2);
 }
 
-.translate-tag {
-  font-size: 0.7rem;
-  padding: 2px 8px;
-  background: var(--primary-light);
-  color: var(--primary);
-  border-radius: var(--radius-full);
-  font-weight: 500;
-}
+.tr-exp + .tr-exp { margin-top: var(--space-4); }
 
-.translate-tag.more {
-  background: rgba(255, 255, 255, 0.1);
-  color: var(--text-muted);
-}
-
-.translate-preview-exp {
-  margin-bottom: 0.5rem;
-}
-
-.translate-preview-exp strong {
+.tr-exp strong {
   font-size: var(--text-sm);
+  font-weight: var(--weight-semibold);
   color: var(--text-primary);
 }
 
-.translate-footer {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 1rem 1.25rem;
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
-  flex-shrink: 0;
+.tr-exp ul {
+  margin-top: var(--space-2);
+  padding-left: var(--space-5);
+  list-style: disc;
 }
 
-@media (max-width: 768px) {
-  .translate-overlay {
-    padding: 0;
-    align-items: flex-end;
-  }
-
-  .translate-modal {
-    max-width: 100%;
-    max-height: 90vh;
-    border-radius: var(--radius-xl) var(--radius-xl) 0 0;
-  }
+.tr-exp li {
+  font-size: var(--text-sm);
+  line-height: var(--leading-body);
+  color: var(--text-secondary);
 }
+
+.tr-exp li + li { margin-top: var(--space-1); }
