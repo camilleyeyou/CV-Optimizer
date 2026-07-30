@@ -46,7 +46,7 @@ const ATSScoreWidget = () => {
   }, [resumeData, jobTitle, jobDescription]);
 
   const score = result?.score ?? null;
-  const color = score >= 80 ? 'var(--success)' : score >= 60 ? 'var(--warning)' : score !== null ? 'var(--error)' : 'var(--text-muted)';
+  const color = score >= 80 ? 'var(--success-fg)' : score >= 60 ? 'var(--warning-fg)' : score !== null ? 'var(--error-fg)' : 'var(--text-tertiary)';
 
   return (
     <div className="ats-widget">

@@ -19,7 +19,7 @@
   align-items: center;
   gap: 4px;
   font-size: var(--text-sm);
-  color: var(--text-muted);
+  color: var(--text-tertiary);
   text-decoration: none;
 }
 
@@ -58,8 +58,8 @@
   letter-spacing: 0.08em;
   padding: 4px 9px;
   border-radius: var(--radius-full);
-  background: var(--primary-light, rgba(129, 140, 248, 0.12));
-  color: var(--primary);
+  background: var(--accent-bg);
+  color: var(--accent-fg);
   border: 1px solid rgba(255, 255, 255, 0.12);
 }
 
@@ -103,7 +103,7 @@
 }
 
 .tpl-detail-list svg {
-  color: var(--primary);
+  color: var(--accent-fg);
   flex-shrink: 0;
   margin-top: 3px;
 }
@@ -121,7 +121,7 @@
   width: 100%;
   height: auto;
   border-radius: var(--radius-lg);
-  border: 1px solid var(--glass-border);
+  border: 1px solid var(--border-default);
   box-shadow: var(--shadow-xl);
   background: #ffffff;
 }
@@ -132,7 +132,7 @@
   justify-content: center;
   gap: 5px;
   font-size: var(--text-xs);
-  color: var(--text-muted);
+  color: var(--text-tertiary);
   margin: var(--space-2) 0 0;
 }
 
@@ -150,9 +150,9 @@
 
 .tpl-detail-specs > div {
   padding: var(--space-3) var(--space-4);
-  border: 1px solid var(--glass-border);
+  border: 1px solid var(--border-default);
   border-radius: var(--radius-lg);
-  background: var(--glass-bg);
+  background: var(--surface-raised);
 }
 
 .tpl-detail-specs dt {
@@ -160,7 +160,7 @@
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.07em;
-  color: var(--text-muted);
+  color: var(--text-tertiary);
   margin-bottom: 4px;
 }
 
@@ -178,9 +178,9 @@
 }
 
 .tpl-detail-faq {
-  border: 1px solid var(--glass-border);
+  border: 1px solid var(--border-default);
   border-radius: var(--radius-lg);
-  background: var(--glass-bg);
+  background: var(--surface-raised);
   overflow: hidden;
 }
 
@@ -197,7 +197,7 @@
 .tpl-detail-faq summary::after {
   content: '+';
   float: right;
-  color: var(--text-muted);
+  color: var(--text-tertiary);
   font-weight: 400;
 }
 
@@ -233,9 +233,9 @@
   width: 100%;
   height: auto;
   border-radius: var(--radius-md);
-  border: 1px solid var(--glass-border);
+  border: 1px solid var(--border-default);
   background: #ffffff;
-  transition: border-color var(--transition-base), transform var(--transition-base);
+  transition: border-color var(--duration-base) var(--ease-standard), transform var(--duration-base) var(--ease-standard);
 }
 
 .tpl-detail-related a:hover img {
@@ -254,9 +254,9 @@
 .tpl-detail-cta {
   text-align: center;
   padding: var(--space-8) var(--space-4);
-  border: 1px solid var(--glass-border);
+  border: 1px solid var(--border-default);
   border-radius: var(--radius-xl);
-  background: var(--glass-bg);
+  background: var(--surface-raised);
 }
 
 .tpl-detail-cta h2 {

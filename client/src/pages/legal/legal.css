@@ -11,7 +11,7 @@
 }
 
 .legal-updated {
-  color: var(--text-muted);
+  color: var(--text-tertiary);
   font-size: var(--text-sm);
   margin-bottom: var(--space-8);
 }
@@ -50,7 +50,7 @@
 }
 
 .legal-prose a {
-  color: var(--primary);
+  color: var(--accent-fg);
 }
 
 .legal-prose strong {
@@ -59,11 +59,11 @@
 
 .legal-prose hr {
   border: none;
-  border-top: 1px solid var(--border);
+  border-top: 1px solid var(--border-default);
   margin: var(--space-8) 0 var(--space-4);
 }
 
 .legal-nav {
   font-size: var(--text-sm);
-  color: var(--text-muted);
+  color: var(--text-tertiary);
 }

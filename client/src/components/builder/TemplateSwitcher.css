@@ -14,7 +14,7 @@
 
 .tplsw-modal {
   background: rgba(10, 10, 12, 0.95);
-  border: 1px solid var(--glass-border);
+  border: 1px solid var(--border-default);
   border-radius: var(--radius-xl);
   box-shadow: var(--shadow-xl);
   backdrop-filter: blur(20px);
@@ -42,7 +42,7 @@
   gap: 0.5rem;
   font-size: var(--text-base);
   font-weight: 700;
-  color: var(--primary);
+  color: var(--accent-fg);
 }
 
 .tplsw-close {
@@ -51,11 +51,11 @@
   justify-content: center;
   background: none;
   border: none;
-  color: var(--text-muted);
+  color: var(--text-tertiary);
   cursor: pointer;
   padding: 0.25rem;
   border-radius: var(--radius-md);
-  transition: color var(--transition-base), background var(--transition-base);
+  transition: color var(--duration-base) var(--ease-standard), background var(--duration-base) var(--ease-standard);
 }
 
 .tplsw-close:hover {
@@ -84,15 +84,15 @@
 
 .tplsw-card {
   position: relative;
-  background: var(--glass-bg);
-  border: 2px solid var(--glass-border);
+  background: var(--surface-raised);
+  border: 2px solid var(--border-default);
   border-radius: var(--radius-lg);
   overflow: hidden;
   cursor: pointer;
   padding: 0;
   text-align: left;
-  transition: border-color var(--transition-base), transform var(--transition-base),
-    box-shadow var(--transition-base);
+  transition: border-color var(--duration-base) var(--ease-standard), transform var(--duration-base) var(--ease-standard),
+    box-shadow var(--duration-base) var(--ease-standard);
 }
 
 .tplsw-card:hover:not(:disabled) {
@@ -102,12 +102,12 @@
 }
 
 .tplsw-card:focus-visible {
-  outline: 2px solid var(--primary);
+  outline: 2px solid var(--accent-fg);
   outline-offset: 2px;
 }
 
 .tplsw-card.is-current {
-  border-color: var(--primary);
+  border-color: var(--accent-fg);
   box-shadow: 0 0 0 3px rgba(129, 140, 248, 0.2);
 }
 
@@ -153,13 +153,13 @@
 }
 
 .tplsw-current-badge {
-  background: var(--primary);
+  background: var(--accent-fg);
   color: #08080a;
 }
 
 .tplsw-lock-badge {
   background: rgba(8, 8, 10, 0.85);
-  color: var(--primary);
+  color: var(--accent-fg);
   border: 1px solid rgba(255, 255, 255, 0.12);
 }
 
@@ -177,7 +177,7 @@
 }
 
 .tplsw-crown {
-  color: var(--primary);
+  color: var(--accent-fg);
   flex-shrink: 0;
 }
 
@@ -197,7 +197,7 @@
   width: 170px;
   border-radius: var(--radius-lg);
   overflow: hidden;
-  border: 1px solid var(--glass-border);
+  border: 1px solid var(--border-default);
   background: #ffffff;
 }
 
@@ -215,7 +215,7 @@
   padding: 3px 7px;
   border-radius: var(--radius-full);
   background: rgba(8, 8, 10, 0.85);
-  color: var(--primary);
+  color: var(--accent-fg);
   border: 1px solid rgba(255, 255, 255, 0.12);
 }
 

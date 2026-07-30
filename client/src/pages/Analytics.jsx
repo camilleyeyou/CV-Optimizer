@@ -123,7 +123,7 @@ const Analytics = () => {
                     className="chart-bar"
                     style={{
                       height: `${(s.score / (maxBarScore || 100)) * 100}%`,
-                      background: s.score >= 80 ? 'var(--success)' : s.score >= 60 ? 'var(--warning)' : 'var(--error)',
+                      background: s.score >= 80 ? 'var(--success-fg)' : s.score >= 60 ? 'var(--warning-fg)' : 'var(--error-fg)',
                     }}
                   />
                   <div className="chart-bar-date">
@@ -184,7 +184,7 @@ const Analytics = () => {
                             className="resume-stat-score-fill"
                             style={{
                               width: `${avg}%`,
-                              background: avg >= 80 ? 'var(--success)' : avg >= 60 ? 'var(--warning)' : 'var(--error)',
+                              background: avg >= 80 ? 'var(--success-fg)' : avg >= 60 ? 'var(--warning-fg)' : 'var(--error-fg)',
                             }}
                           />
                         </div>

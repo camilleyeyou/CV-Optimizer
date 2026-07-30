@@ -13,7 +13,7 @@
   justify-content: center;
   gap: var(--space-4);
   min-height: 60vh;
-  color: var(--text-muted);
+  color: var(--text-tertiary);
   font-size: var(--text-sm);
 }
 
@@ -27,19 +27,19 @@
 }
 
 .shared-resume-card {
-  background: var(--glass-bg);
-  border: 1px solid var(--glass-border);
+  background: var(--surface-raised);
+  border: 1px solid var(--border-default);
   border-radius: var(--radius-2xl);
   padding: var(--space-10);
-  backdrop-filter: var(--glass-blur);
-  -webkit-backdrop-filter: var(--glass-blur);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
 }
 
 .shared-resume-header {
   text-align: center;
   margin-bottom: var(--space-6);
   padding-bottom: var(--space-6);
-  border-bottom: 1px solid var(--glass-border);
+  border-bottom: 1px solid var(--border-default);
 }
 
 .shared-resume-name {
@@ -55,7 +55,7 @@
 
 .shared-resume-contact {
   font-size: var(--text-sm);
-  color: var(--text-muted);
+  color: var(--text-tertiary);
 }
 
 .shared-resume-section {
@@ -64,7 +64,7 @@
 
 .shared-resume-section h3 {
   font-size: var(--text-base);
-  color: var(--primary);
+  color: var(--accent-fg);
   text-transform: uppercase;
   letter-spacing: 0.04em;
   margin-bottom: var(--space-3);
@@ -89,7 +89,7 @@
 
 .shared-resume-entry-sub {
   font-size: var(--text-xs);
-  color: var(--text-muted);
+  color: var(--text-tertiary);
   margin-top: 2px;
 }
 
@@ -115,11 +115,11 @@
   text-align: center;
   margin-top: var(--space-8);
   font-size: var(--text-xs);
-  color: var(--text-muted);
+  color: var(--text-tertiary);
 }
 
 .shared-resume-watermark a {
-  color: var(--primary);
+  color: var(--accent-fg);
 }
 
 @media (max-width: 768px) {

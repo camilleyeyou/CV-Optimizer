@@ -69,7 +69,7 @@
 .tour-tooltip-step {
   font-size: var(--text-xs);
   font-weight: 700;
-  color: var(--primary);
+  color: var(--accent-fg);
   letter-spacing: 0.02em;
 }
 
@@ -82,9 +82,9 @@
   border-radius: var(--radius-md);
   background: none;
   border: none;
-  color: var(--text-muted);
+  color: var(--text-tertiary);
   cursor: pointer;
-  transition: all var(--transition-fast);
+  transition: all var(--duration-fast) var(--ease-standard);
 }
 
 .tour-tooltip-close:hover {
@@ -94,7 +94,7 @@
 
 /* Content */
 .tour-tooltip-title {
-  font-family: var(--font-heading);
+  font-family: var(--font-display);
   font-size: var(--text-base);
   font-weight: 700;
   color: var(--text-primary);
@@ -121,11 +121,11 @@
   height: 6px;
   border-radius: var(--radius-full);
   background: rgba(255, 255, 255, 0.2);
-  transition: all var(--transition-fast);
+  transition: all var(--duration-fast) var(--ease-standard);
 }
 
 .tour-tooltip-dot.active {
-  background: var(--primary);
+  background: var(--accent-fg);
   width: 18px;
 }
 

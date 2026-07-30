@@ -158,7 +158,7 @@ const TailorModal = ({ open, onClose }) => {
                 <span className="tailor-score-label">ATS Match Score</span>
                 <span
                   className="tailor-score-value"
-                  style={{ color: result.score >= 80 ? 'var(--success)' : result.score >= 60 ? 'var(--warning)' : 'var(--error)' }}
+                  style={{ color: result.score >= 80 ? 'var(--success-fg)' : result.score >= 60 ? 'var(--warning-fg)' : 'var(--error-fg)' }}
                 >
                   {result.score}/100
                 </span>
@@ -168,7 +168,7 @@ const TailorModal = ({ open, onClose }) => {
                   className="tailor-score-fill"
                   style={{
                     width: `${result.score}%`,
-                    background: result.score >= 80 ? 'var(--success)' : result.score >= 60 ? 'var(--warning)' : 'var(--error)',
+                    background: result.score >= 80 ? 'var(--success-fg)' : result.score >= 60 ? 'var(--warning-fg)' : 'var(--error-fg)',
                   }}
                 />
               </div>

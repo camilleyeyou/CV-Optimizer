@@ -8,13 +8,13 @@
 
 /* Section Accordion */
 .form-section {
-  background: var(--glass-bg);
-  border: 1px solid var(--glass-border);
+  background: var(--surface-raised);
+  border: 1px solid var(--border-default);
   border-radius: var(--radius-xl);
   overflow: hidden;
-  transition: border-color var(--transition-fast);
-  backdrop-filter: var(--glass-blur);
-  -webkit-backdrop-filter: var(--glass-blur);
+  transition: border-color var(--duration-fast) var(--ease-standard);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
 }
 
 .form-section.is-open {
@@ -32,7 +32,7 @@
   font-weight: 600;
   color: var(--text-secondary);
   cursor: pointer;
-  transition: background var(--transition-fast);
+  transition: background var(--duration-fast) var(--ease-standard);
 }
 
 .section-header:hover {
@@ -46,17 +46,17 @@
 }
 
 .section-header-left svg {
-  color: var(--text-muted);
+  color: var(--text-tertiary);
 }
 
 .form-section.is-open .section-header-left svg {
-  color: var(--primary);
+  color: var(--accent-fg);
 }
 
 .section-count {
   font-size: 10px;
   font-weight: 600;
-  color: var(--text-muted);
+  color: var(--text-tertiary);
   background: rgba(255, 255, 255, 0.1);
   padding: 1px 6px;
   border-radius: var(--radius-full);
@@ -75,7 +75,7 @@
 /* Repeater Items */
 .repeater-item {
   padding: var(--space-4);
-  border: 1px solid var(--glass-border);
+  border: 1px solid var(--border-default);
   border-radius: var(--radius-lg);
   margin-bottom: var(--space-3);
   background: rgba(10, 10, 12, 0.4);
@@ -121,7 +121,7 @@
   width: 4px;
   height: 4px;
   border-radius: var(--radius-full);
-  background: var(--text-muted);
+  background: var(--text-tertiary);
   flex-shrink: 0;
 }
 
@@ -161,7 +161,7 @@
 .checkbox-label input[type="checkbox"] {
   width: 14px;
   height: 14px;
-  accent-color: var(--primary);
+  accent-color: var(--accent-fg);
 }
 
 /* AI Button */
@@ -177,7 +177,7 @@
   border: 1px solid rgba(192, 132, 252, 0.2);
   border-radius: var(--radius-sm);
   cursor: pointer;
-  transition: all var(--transition-fast);
+  transition: all var(--duration-fast) var(--ease-standard);
 }
 
 .btn-ai:hover:not(:disabled) {

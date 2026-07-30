@@ -20,7 +20,7 @@ const NotFound = () => (
       description="The page you were looking for doesn't exist."
       noindex
     />
-    <FileQuestion size={56} style={{ color: 'var(--primary)' }} aria-hidden="true" />
+    <FileQuestion size={56} style={{ color: 'var(--accent-fg)' }} aria-hidden="true" />
     <h1 style={{ fontSize: '2rem' }}>Page not found</h1>
     <p style={{ color: 'var(--text-secondary)', maxWidth: 420 }}>
       The page you&apos;re looking for doesn&apos;t exist or may have moved.
