@@ -106,10 +106,13 @@ export const verifyStudent = () => api.post('/api/student/verify').then((r) => r
 export const getCredits = () => api.get('/api/credits').then((r) => r.data);
 
 // Billing (Stripe)
-export const startCheckout = (plan) =>
-  api.post('/api/billing/checkout', { plan }).then((r) => r.data);
+export const startCheckout = (plan, interval = 'monthly') =>
+  api.post('/api/billing/checkout', { plan, interval }).then((r) => r.data);
 export const openBillingPortal = () =>
   api.post('/api/billing/portal').then((r) => r.data);
+/** Which billing periods actually have a Stripe price behind them. Public. */
+export const getBillingPlans = () =>
+  api.get('/api/billing/plans').then((r) => r.data);
 
 // Account (data rights)
 export const exportMyData = () =>

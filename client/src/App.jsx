@@ -18,6 +18,7 @@ import './styles.css';
 const Dashboard = lazy(() => import('./pages/Dashboard'));
 const Builder = lazy(() => import('./pages/Builder'));
 const Templates = lazy(() => import('./pages/Templates'));
+const Pricing = lazy(() => import('./pages/Pricing'));
 const TemplateDetail = lazy(() => import('./pages/TemplateDetail'));
 const Login = lazy(() => import('./pages/Login'));
 const Register = lazy(() => import('./pages/Register'));
@@ -38,8 +39,26 @@ const NotFound = lazy(() => import('./pages/NotFound'));
 // it costs nothing on the main bundle but stays reachable on deploy previews.
 const UiShowcase = lazy(() => import('./pages/dev/UiShowcase'));
 
+/**
+ * Fallback for a code-split route.
+ *
+ * Holds the viewport height on purpose. A short fallback parks the footer
+ * mid-screen and the real page then shoves it thousands of pixels down, which
+ * is a large layout shift on every lazy route — the same defect the auth
+ * loading state had. Reserving the height keeps the footer below the fold, so
+ * the swap costs nothing.
+ */
 const PageFallback = () => (
-  <div style={{ maxWidth: 960, margin: '0 auto', padding: '2rem 1rem' }}>
+  <div
+    style={{
+      flex: 1,
+      minHeight: 'calc(100vh - var(--header-height))',
+      maxWidth: 960,
+      width: '100%',
+      margin: '0 auto',
+      padding: '2rem 1rem',
+    }}
+  >
     <Skeleton width="40%" height="2rem" />
     <div style={{ height: '1rem' }} />
     <SkeletonCard />
@@ -73,6 +92,7 @@ function App() {
                     {/* Public and indexable: the template gallery is a top-of-funnel
                         SEO surface, not an app screen. */}
                     <Route path="/templates" element={<Templates />} />
+                    <Route path="/pricing" element={<Pricing />} />
                     <Route path="/templates/:slug" element={<TemplateDetail />} />
 
                     {/* Protected */}

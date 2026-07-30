@@ -10,6 +10,7 @@ import Seo from '../components/common/Seo';
 import api, { startCheckout } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import HeroProductVisual from '../components/landing/HeroProductVisual';
+import { INTERVALS, FREE_PLAN, PRO_PLAN, DEFAULT_INTERVAL } from '../config/pricing';
 import './LandingPage.css';
 
 /* ---------------------------------------------------------------------------
@@ -19,7 +20,6 @@ import './LandingPage.css';
    derive two integers is not a trade worth making.
    ------------------------------------------------------------------------ */
 const TEMPLATE_COUNT = __TEMPLATE_COUNT__;
-const FREE_TEMPLATE_COUNT = __FREE_TEMPLATE_COUNT__;
 
 /* ---------------------------------------------------------------------------
    SOCIAL PROOF — intentionally empty.
@@ -80,50 +80,10 @@ const STEPS = [
   },
 ];
 
-/* Feature lists reflect what the server actually gates. See requirePlan and
-   templateAccess middleware — anything not enforced there does not belong here. */
-const PLANS = [
-  {
-    name: 'Free',
-    price: '$0',
-    period: '',
-    desc: 'Enough to build and export a real resume.',
-    features: [
-      '5 AI credits every month',
-      `${FREE_TEMPLATE_COUNT} templates`,
-      'ATS score checker',
-      'Job tracker and score history',
-      'PDF and DOCX export',
-    ],
-    cta: 'Create free account',
-    ctaLink: '/register',
-  },
-  {
-    name: 'Pro',
-    price: '$12',
-    period: '/month',
-    desc: 'For an active search, where you tailor every application.',
-    features: [
-      'Unlimited AI credits',
-      `All ${TEMPLATE_COUNT} templates`,
-      'Cover letter PDF and DOCX export',
-      'Shareable resume links',
-      'Everything in Free',
-    ],
-    cta: 'Upgrade to Pro',
-    plan: 'pro',
-    popular: true,
-  },
-  {
-    name: 'Premium',
-    price: '$24',
-    period: '/month',
-    desc: 'For applying across languages and markets.',
-    features: ['Resume translation into any language', 'Everything in Pro'],
-    cta: 'Get Premium',
-    plan: 'premium',
-  },
-];
+/* Plans come from config/pricing.js so this teaser and /pricing can never
+   disagree. The quarterly rate is quoted here because it is the period most
+   job searches actually run. */
+const QUARTERLY = INTERVALS.find((i) => i.id === 'quarterly') ?? INTERVALS[0];
 
 const scoreBand = (score) => {
   if (score >= 70) return 'is-high';
@@ -143,12 +103,13 @@ const LandingPage = () => {
 
   const handleUpgrade = async (plan) => {
     if (!isAuthenticated) {
-      navigate(`/register?plan=${plan}`);
+      navigate(`/register?plan=${plan}&interval=${DEFAULT_INTERVAL}`);
       return;
     }
     setCheckoutPlan(plan);
     try {
-      const { url } = await startCheckout(plan);
+      // The teaser quotes the quarterly rate, so it must check out at that rate.
+      const { url } = await startCheckout(plan, DEFAULT_INTERVAL);
       if (url) window.location.href = url;
       else throw new Error('No checkout URL');
     } catch (err) {
@@ -444,50 +405,61 @@ const LandingPage = () => {
       <section className="lp-section" id="pricing">
         <header className="lp-section-head">
           <span className="eyebrow">Pricing</span>
-          <h2 className="display-3">Start free, upgrade when it pays for itself</h2>
+          <h2 className="display-3">Free to build. Pro when you are applying.</h2>
           <p className="lead">
-            Every plan exports unlimited PDFs and DOCX files. Cancel at any time.
+            Unlimited PDF and DOCX export on every plan, including free. Cancel any time.
           </p>
         </header>
 
-        <div className="lp-plans">
-          {PLANS.map((plan) => (
-            <div key={plan.name} className={`lp-plan card ${plan.popular ? 'card-featured' : ''}`}>
-              {plan.popular && <span className="lp-plan-flag">Most popular</span>}
+        <div className="lp-plans lp-plans-two">
+          <div className="lp-plan card">
+            <h3 className="lp-plan-name">{FREE_PLAN.name}</h3>
+            <p className="lp-plan-price">
+              <span className="lp-plan-amount">{FREE_PLAN.price}</span>
+            </p>
+            <p className="lp-plan-desc">{FREE_PLAN.tagline}</p>
 
-              <h3 className="lp-plan-name">{plan.name}</h3>
-              <p className="lp-plan-price">
-                <span className="lp-plan-amount">{plan.price}</span>
-                <span className="lp-plan-period">{plan.period}</span>
-              </p>
-              <p className="lp-plan-desc">{plan.desc}</p>
+            <ul className="lp-plan-features">
+              {FREE_PLAN.features.map((f) => (
+                <li key={f}><Check size={15} aria-hidden="true" /> {f}</li>
+              ))}
+            </ul>
 
-              <ul className="lp-plan-features">
-                {plan.features.map((f) => (
-                  <li key={f}>
-                    <Check size={15} aria-hidden="true" /> {f}
-                  </li>
-                ))}
-              </ul>
+            <Link to={FREE_PLAN.ctaLink} className="btn btn-secondary btn-lg btn-block">
+              {FREE_PLAN.cta}
+            </Link>
+          </div>
 
-              {plan.ctaLink ? (
-                <Link to={plan.ctaLink} className="btn btn-secondary btn-lg btn-block">
-                  {plan.cta}
-                </Link>
-              ) : (
-                <button
-                  type="button"
-                  className={`btn btn-lg btn-block ${plan.popular ? 'btn-primary' : 'btn-secondary'}`}
-                  onClick={() => handleUpgrade(plan.plan)}
-                  data-loading={checkoutPlan === plan.plan || undefined}
-                  disabled={checkoutPlan === plan.plan}
-                >
-                  {plan.cta}
-                </button>
-              )}
-            </div>
-          ))}
+          <div className="lp-plan card card-featured">
+            <span className="lp-plan-flag">Most popular</span>
+            <h3 className="lp-plan-name">{PRO_PLAN.name}</h3>
+            <p className="lp-plan-price">
+              <span className="lp-plan-amount">{QUARTERLY.price}</span>
+              <span className="lp-plan-period">{QUARTERLY.unit}</span>
+            </p>
+            <p className="lp-plan-desc">{PRO_PLAN.tagline}</p>
+
+            <ul className="lp-plan-features">
+              {PRO_PLAN.features.map((f) => (
+                <li key={f}><Check size={15} aria-hidden="true" /> {f}</li>
+              ))}
+            </ul>
+
+            <button
+              type="button"
+              className="btn btn-primary btn-lg btn-block"
+              onClick={() => handleUpgrade('pro')}
+              data-loading={checkoutPlan === 'pro' || undefined}
+              disabled={checkoutPlan === 'pro'}
+            >
+              {PRO_PLAN.cta} <ArrowRight size={15} aria-hidden="true" />
+            </button>
+          </div>
         </div>
+
+        <p className="lp-plans-more">
+          <Link to="/pricing">Compare plans in full, and see weekly and monthly rates</Link>
+        </p>
 
         <div className="lp-student">
           <span className="lp-student-icon">

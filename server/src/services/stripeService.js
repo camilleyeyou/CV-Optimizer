@@ -12,19 +12,46 @@ function getClient() {
   return client;
 }
 
-const PRICE_BY_PLAN = () => ({
-  pro: process.env.STRIPE_PRICE_PRO,
-  premium: process.env.STRIPE_PRICE_PREMIUM,
+/**
+ * Price lookup, keyed by plan and billing interval.
+ *
+ * A job search is bursty and finite, so Pro is sold monthly, quarterly and
+ * weekly rather than monthly alone. Read from the environment on every call so
+ * a key added after boot is picked up without a restart.
+ *
+ * `premium` is legacy: it is no longer sold, but existing subscriptions still
+ * resolve through planForPrice() so their webhooks keep working.
+ */
+const PRICE_MAP = () => ({
+  pro: {
+    monthly: process.env.STRIPE_PRICE_PRO,
+    quarterly: process.env.STRIPE_PRICE_PRO_QUARTERLY,
+    weekly: process.env.STRIPE_PRICE_PRO_WEEKLY,
+  },
+  premium: {
+    monthly: process.env.STRIPE_PRICE_PREMIUM,
+  },
 });
 
-function priceForPlan(plan) {
-  return PRICE_BY_PLAN()[plan] || null;
+const DEFAULT_INTERVAL = 'monthly';
+const INTERVALS = ['monthly', 'quarterly', 'weekly'];
+
+function priceForPlan(plan, interval = DEFAULT_INTERVAL) {
+  return PRICE_MAP()[plan]?.[interval] || null;
+}
+
+/** Which intervals actually have a price configured, for the pricing UI. */
+function availableIntervals(plan) {
+  const forPlan = PRICE_MAP()[plan] || {};
+  return INTERVALS.filter((i) => Boolean(forPlan[i]));
 }
 
 function planForPrice(priceId) {
-  const map = PRICE_BY_PLAN();
-  if (priceId && priceId === map.premium) return 'premium';
-  if (priceId && priceId === map.pro) return 'pro';
+  if (!priceId) return null;
+  const map = PRICE_MAP();
+  for (const [plan, byInterval] of Object.entries(map)) {
+    if (Object.values(byInterval).includes(priceId)) return plan;
+  }
   return null;
 }
 
@@ -33,9 +60,11 @@ function planForPrice(priceId) {
  * userId/plan are stored on the session AND the subscription metadata so the
  * webhook can resolve them on later subscription.updated/deleted events.
  */
-async function createCheckoutSession({ userId, email, plan, customerId, successUrl, cancelUrl }) {
-  const price = priceForPlan(plan);
-  if (!price) throw new Error(`No Stripe price configured for plan "${plan}"`);
+async function createCheckoutSession({
+  userId, email, plan, interval = DEFAULT_INTERVAL, customerId, successUrl, cancelUrl,
+}) {
+  const price = priceForPlan(plan, interval);
+  if (!price) throw new Error(`No Stripe price configured for plan "${plan}" (${interval})`);
 
   return getClient().checkout.sessions.create({
     mode: 'subscription',
@@ -44,8 +73,8 @@ async function createCheckoutSession({ userId, email, plan, customerId, successU
     cancel_url: cancelUrl,
     client_reference_id: userId,
     ...(customerId ? { customer: customerId } : { customer_email: email }),
-    metadata: { userId, plan },
-    subscription_data: { metadata: { userId, plan } },
+    metadata: { userId, plan, interval },
+    subscription_data: { metadata: { userId, plan, interval } },
     allow_promotion_codes: true,
   });
 }
@@ -78,6 +107,9 @@ module.exports = {
   getClient,
   priceForPlan,
   planForPrice,
+  availableIntervals,
+  INTERVALS,
+  DEFAULT_INTERVAL,
   createCheckoutSession,
   createPortalSession,
   constructEvent,

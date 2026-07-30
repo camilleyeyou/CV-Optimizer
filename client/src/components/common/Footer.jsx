@@ -26,7 +26,7 @@ const PUBLIC_COLUMNS = [
     links: [
       { href: '/#features', label: 'Features' },
       { to: '/templates', label: 'Templates' },
-      { href: '/#pricing', label: 'Pricing' },
+      { to: '/pricing', label: 'Pricing' },
       { href: '/#ats-checker', label: 'Free ATS check' },
     ],
   },
@@ -119,7 +119,7 @@ const Footer = () => {
               <h2 className="ft-heading">Support</h2>
               <ul>
                 <li><a href={`mailto:${LEGAL.supportEmail}`}>Contact us</a></li>
-                {isAuthenticated && <li><a href="/#pricing">Plans</a></li>}
+                {isAuthenticated && <li><Link to="/pricing">Plans</Link></li>}
               </ul>
             </div>
           </nav>

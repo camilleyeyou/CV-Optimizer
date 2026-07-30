@@ -69,6 +69,24 @@ const routes = [
       </section>`,
   },
   {
+    out: ['pricing.html', 'pricing/index.html'],
+    path: '/pricing',
+    title: 'Pricing — CV Optimizer',
+    description:
+      'Start free with 5 AI credits a month, 8 templates and unlimited PDF and DOCX export. '
+      + 'Pro unlocks unlimited AI, every template and resume translation.',
+    hero: `
+      <section class="pr-head">
+        <h1>One plan, priced for a job search</h1>
+        <p>Everything you need to build and export a resume is free. Pro is for when you are applying often enough that tailoring each one matters.</p>
+        <div class="pr-plans">
+          <div class="pr-plan"><h2>Free</h2><p>$0 — 5 AI credits a month, ${TEMPLATES.filter((t) => !t.premium).length} templates, ATS score checker, job tracker, unlimited PDF and DOCX export.</p></div>
+          <div class="pr-plan"><h2>Pro</h2><p>$54 per quarter, $24 monthly or $9 weekly — unlimited AI credits, all ${TEMPLATES.length} templates, cover letter export, shareable links and resume translation.</p></div>
+        </div>
+        <a class="btn btn-primary btn-lg" href="/register">Create a free account</a>
+      </section>`,
+  },
+  {
     out: ['login.html', 'login/index.html'],
     path: '/login',
     title: 'Sign In — CV Optimizer',

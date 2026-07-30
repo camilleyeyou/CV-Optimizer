@@ -31,6 +31,10 @@ router.post('/interview-questions', validateInterviewQuestions, requireCredits, 
 router.post('/evaluate-answer', validateEvaluateAnswer, requireCredits, aiController.evaluateAnswer);
 router.post('/generate-email', validateGenerateEmail, requireCredits, aiController.generateEmail);
 // Resume translation is a Premium feature.
-router.post('/translate-resume', requirePlan(['premium']), validateTranslateResume, requireCredits, aiController.translateResume);
+// Translation moved from premium-only to pro-and-above when the plans
+// collapsed to two tiers. Existing premium subscribers keep access — the
+// allow-list still contains 'premium', and effectivePlan() honours an explicit
+// premium plan, so no grandfathering logic is needed.
+router.post('/translate-resume', requirePlan(['pro', 'premium']), validateTranslateResume, requireCredits, aiController.translateResume);
 
 module.exports = router;

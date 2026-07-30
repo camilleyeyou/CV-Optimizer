@@ -496,6 +496,20 @@
   align-items: stretch;
 }
 
+/* Two cards would stretch to half the container each and look bloated, so the
+   teaser is capped narrower than the full-width three-up grid it replaced. */
+.lp-plans-two {
+  max-width: 860px;
+  margin-inline: auto;
+}
+
+.lp-plans-more {
+  margin-top: var(--space-5);
+  text-align: center;
+  font-size: var(--text-sm);
+  color: var(--text-tertiary);
+}
+
 .lp-plan {
   position: relative;
   display: flex;

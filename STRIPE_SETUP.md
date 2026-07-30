@@ -13,14 +13,33 @@ This app uses **Stripe Checkout** (hosted) for subscriptions and the **Stripe Cu
 ## 2. Create the two products + prices
 Dashboard → **Product catalog** → **Add product**. Create two:
 
-| Product | Price | Billing | Notes |
-|---|---|---|---|
-| CV Optimizer Pro | $12.00 USD | Recurring · Monthly | |
-| CV Optimizer Premium | $24.00 USD | Recurring · Monthly | |
+Create **one product, Pro**, with three recurring prices on it. A job search is
+bursty and finite, so the same plan is sold by the month, the quarter and the week.
 
-After saving each, open the price and copy its **Price ID** (looks like `price_1Q...`). You need both:
-- Pro price ID → `STRIPE_PRICE_PRO`
-- Premium price ID → `STRIPE_PRICE_PREMIUM`
+| Product | Price | Billing | Env var |
+|---|---|---|---|
+| CV Optimizer Pro | $24.00 USD | Recurring · Monthly | `STRIPE_PRICE_PRO` |
+| CV Optimizer Pro | $54.00 USD | Recurring · Every 3 months | `STRIPE_PRICE_PRO_QUARTERLY` |
+| CV Optimizer Pro | $9.00 USD | Recurring · Weekly | `STRIPE_PRICE_PRO_WEEKLY` |
+
+After saving each, open the price and copy its **Price ID** (looks like `price_1Q...`).
+
+Only the monthly price is required. The pricing page reads
+`GET /api/billing/plans` and offers **only the periods that have a price id
+configured**, so you can ship monthly first and add the others later without a
+code change.
+
+### Premium is retired
+
+Premium is no longer sold — it differed from Pro by a single feature at double
+the price. Translation now sits in Pro.
+
+Keep `STRIPE_PRICE_PREMIUM` set for as long as anyone is still subscribed to it:
+the webhook resolves a subscription's plan from its price id, and an unmapped
+price would drop that customer to free. Existing Premium subscribers keep every
+feature — `requirePlan` still allows `premium`, and translation moved *down* a
+tier rather than up. Once the last Premium subscription has ended, the variable
+can be removed.
 
 ## 3. Get your API secret key
 Dashboard → **Developers → API keys** → copy the **Secret key** (`sk_test_...` in test mode).
@@ -57,8 +76,10 @@ Add these to `server/.env` (local) and to the **Vercel project env vars** (produ
 ```
 STRIPE_SECRET_KEY=sk_test_...
 STRIPE_WEBHOOK_SECRET=whsec_...
-STRIPE_PRICE_PRO=price_...        # $12/mo price ID
-STRIPE_PRICE_PREMIUM=price_...    # $24/mo price ID
+STRIPE_PRICE_PRO=price_...            # $24 / month  (required)
+STRIPE_PRICE_PRO_QUARTERLY=price_...  # $54 / 3 months (optional)
+STRIPE_PRICE_PRO_WEEKLY=price_...     # $9 / week      (optional)
+STRIPE_PRICE_PREMIUM=price_...        # legacy — keep while anyone is still subscribed
 CLIENT_URL=https://YOUR_DOMAIN    # used for Checkout success/cancel redirects
 ```
 

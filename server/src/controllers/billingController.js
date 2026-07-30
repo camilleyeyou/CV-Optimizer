@@ -7,7 +7,13 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY || ''
 );
 
+/**
+ * `pro` is the only plan on sale. `premium` stays valid so an existing
+ * subscriber's webhooks and portal flows keep resolving, but it is not
+ * offered at checkout — SELLABLE_PLANS is what the checkout endpoint accepts.
+ */
 const VALID_PLANS = ['pro', 'premium'];
+const SELLABLE_PLANS = ['pro'];
 const ACTIVE_STATUSES = ['active', 'trialing'];
 
 // Resolve the app's base URL for Stripe redirects (Vercel is same-origin).
@@ -29,9 +35,17 @@ async function getProfile(userId) {
 /** POST /api/billing/checkout  { plan } -> { url } */
 const createCheckout = async (req, res) => {
   try {
-    const { plan } = req.body || {};
-    if (!VALID_PLANS.includes(plan)) {
+    const { plan, interval = stripeService.DEFAULT_INTERVAL } = req.body || {};
+    if (!SELLABLE_PLANS.includes(plan)) {
       return res.status(400).json({ error: 'Invalid plan' });
+    }
+    if (!stripeService.INTERVALS.includes(interval)) {
+      return res.status(400).json({ error: 'Invalid billing interval' });
+    }
+    // A price only exists once it has been created in Stripe and wired to an
+    // env var. Fail with a clear message rather than a 500 from the API call.
+    if (!stripeService.priceForPlan(plan, interval)) {
+      return res.status(400).json({ error: 'That billing option is not available yet.' });
     }
     if (!req.user?.id) return res.status(401).json({ error: 'Authentication required' });
 
@@ -42,9 +56,10 @@ const createCheckout = async (req, res) => {
       userId: req.user.id,
       email: req.user.email,
       plan,
+      interval,
       customerId: profile?.stripe_customer_id || null,
       successUrl: `${root}/dashboard?upgrade=success`,
-      cancelUrl: `${root}/?upgrade=cancelled`,
+      cancelUrl: `${root}/pricing?upgrade=cancelled`,
     });
 
     res.json({ url: session.url });
@@ -188,4 +203,20 @@ const webhook = async (req, res) => {
   }
 };
 
-module.exports = { createCheckout, createPortal, webhook };
+/**
+ * GET /api/billing/plans -> { plans: [{ id, intervals: [...] }] }
+ *
+ * The pricing page renders only the billing options that have a Stripe price
+ * behind them, so a period we have not created yet is never offered and then
+ * rejected at checkout.
+ */
+const getPlans = async (_req, res) => {
+  res.json({
+    plans: SELLABLE_PLANS.map((id) => ({
+      id,
+      intervals: stripeService.availableIntervals(id),
+    })),
+  });
+};
+
+module.exports = { createCheckout, createPortal, webhook, getPlans };
