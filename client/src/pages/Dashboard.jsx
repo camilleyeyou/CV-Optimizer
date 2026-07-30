@@ -1,40 +1,52 @@
-import { useNavigate } from 'react-router-dom';
+import { useState, useEffect, useRef, useCallback } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import {
+  Plus, FileText, Clock, Trash2, Edit3, Copy, MoreVertical,
+  Upload, Sparkles, Settings, ArrowRight, Linkedin,
+} from 'lucide-react';
+import toast from 'react-hot-toast';
 import { useResume } from '../context/ResumeContext';
 import { useAuth } from '../context/AuthContext';
-import {
-  Plus,
-  FileText,
-  Clock,
-  Trash2,
-  Edit3,
-  Copy,
-  MoreVertical,
-  AlertTriangle,
-  Upload,
-  Loader,
-  Crown,
-  Settings,
-} from 'lucide-react';
-import { useState, useEffect, useRef, useCallback } from 'react';
-import toast from 'react-hot-toast';
-import api, { getCredits, startCheckout, openBillingPortal } from '../services/api';
+import api, { getCredits, openBillingPortal } from '../services/api';
 import Spotlight from '../components/onboarding/Spotlight';
 import { tours } from '../components/onboarding/tourSteps';
 import TemplateThumbnail from '../components/builder/TemplateThumbnail';
+import Modal from '../components/ui/Modal';
 import './Dashboard.css';
+
+// Injected at build time from template-registry.json (see vite.config.js) so a
+// newly shipped template cannot leave this page quoting a stale number.
+const TEMPLATE_COUNT = __TEMPLATE_COUNT__;
+
+const COMPLETENESS_CHECKS = [
+  (r) => r.personal_info?.first_name,
+  (r) => r.personal_info?.email,
+  (r) => r.personal_info?.phone,
+  (r) => r.summary?.length > 20,
+  (r) => r.work_experience?.length > 0,
+  (r) => r.education?.length > 0,
+  (r) => r.skills?.length > 0,
+];
 
 const Dashboard = () => {
   const navigate = useNavigate();
-  const { resumes, loading, deleteResume, duplicateResume, createResume, updateResume } = useResume();
+  const {
+    resumes, loading, deleteResume, duplicateResume, createResume, updateResume,
+  } = useResume();
   const { user } = useAuth();
   const [menuOpen, setMenuOpen] = useState(null);
   const [deleteTarget, setDeleteTarget] = useState(null);
+  const [deleting, setDeleting] = useState(false);
   const [importing, setImporting] = useState(false);
   const [importSource, setImportSource] = useState('resume');
   const [billing, setBilling] = useState(null); // { plan, credits, max_credits }
   const [billingBusy, setBillingBusy] = useState(false);
   const menuRef = useRef(null);
   const importInputRef = useRef(null);
+  // The delete dialog is opened from a menu item that unmounts as it opens, so
+  // there is nothing left to hand focus back to. Keep the card's own trigger.
+  const triggerRefs = useRef({});
+  const restoreFocusRef = useRef(null);
 
   const displayName =
     user?.user_metadata?.first_name || user?.email?.split('@')[0] || 'there';
@@ -48,25 +60,13 @@ const Dashboard = () => {
     // Surface the result of a Stripe Checkout redirect.
     const params = new URLSearchParams(window.location.search);
     if (params.get('upgrade') === 'success') {
-      toast.success('Welcome to Pro! Your plan is now active.');
+      toast.success('Welcome to Pro. Your plan is now active.');
       // Plan sync happens via webhook; poll briefly so the banner updates.
       setTimeout(refreshBilling, 1500);
       setTimeout(refreshBilling, 4000);
       window.history.replaceState({}, '', '/dashboard');
     }
   }, [refreshBilling]);
-
-  const handleUpgrade = async (plan = 'pro') => {
-    setBillingBusy(true);
-    try {
-      const { url } = await startCheckout(plan);
-      if (url) window.location.href = url;
-      else throw new Error('No checkout URL');
-    } catch (err) {
-      toast.error(err.response?.data?.error || 'Could not start checkout. Please try again.');
-      setBillingBusy(false);
-    }
-  };
 
   const handleManageBilling = async () => {
     setBillingBusy(true);
@@ -86,7 +86,7 @@ const Dashboard = () => {
   const closeMenu = useCallback(() => setMenuOpen(null), []);
 
   useEffect(() => {
-    if (!menuOpen) return;
+    if (!menuOpen) return undefined;
     const handleClickOutside = (e) => {
       if (menuRef.current && !menuRef.current.contains(e.target)) closeMenu();
     };
@@ -99,21 +99,17 @@ const Dashboard = () => {
     };
   }, [menuOpen, closeMenu]);
 
-  // Close confirm dialog on Escape
-  useEffect(() => {
-    if (!deleteTarget) return;
-    const handleEscape = (e) => { if (e.key === 'Escape') setDeleteTarget(null); };
-    document.addEventListener('keydown', handleEscape);
-    return () => document.removeEventListener('keydown', handleEscape);
-  }, [deleteTarget]);
-
   const handleCreate = () => navigate('/templates');
-  const handleEdit = (id) => navigate(`/builder/${id}`);
 
   const handleDeleteConfirm = async () => {
     if (!deleteTarget) return;
-    await deleteResume(deleteTarget.id);
-    setDeleteTarget(null);
+    setDeleting(true);
+    try {
+      await deleteResume(deleteTarget.id);
+      setDeleteTarget(null);
+    } finally {
+      setDeleting(false);
+    }
   };
 
   const handleDuplicate = async (id) => {
@@ -125,7 +121,7 @@ const Dashboard = () => {
     const file = e.target.files?.[0];
     if (!file) return;
     if (file.type !== 'application/pdf') {
-      toast.error('Please upload a PDF file');
+      toast.error('Please upload a PDF file.');
       return;
     }
 
@@ -145,28 +141,27 @@ const Dashboard = () => {
       const newResume = await createResume('modern');
 
       if (newResume) {
-        updateResume({
-          title: name || 'Imported Resume',
-          ...parsed,
-        });
-        toast.success('Resume imported! Redirecting to builder...');
+        updateResume({ title: name || 'Imported Resume', ...parsed });
+        toast.success('Resume imported. Opening the builder.');
         navigate(`/builder/${newResume.id}`);
       }
     } catch (err) {
-      const message = err.response?.data?.error || 'Failed to import resume';
-      toast.error(message);
+      toast.error(err.response?.data?.error || 'Failed to import resume.');
     } finally {
       setImporting(false);
       if (importInputRef.current) importInputRef.current.value = '';
     }
   };
 
+  const pickFile = (source) => {
+    setImportSource(source);
+    importInputRef.current?.click();
+  };
+
   const formatDate = (dateStr) => {
     if (!dateStr) return '';
     const date = new Date(dateStr);
-    const now = new Date();
-    const diffMs = now - date;
-    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+    const diffDays = Math.floor((new Date() - date) / (1000 * 60 * 60 * 24));
 
     if (diffDays === 0) return 'Today';
     if (diffDays === 1) return 'Yesterday';
@@ -179,194 +174,256 @@ const Dashboard = () => {
     const first = resume.personal_info?.first_name || '';
     const last = resume.personal_info?.last_name || '';
     if (first || last) return `${first} ${last}`.trim();
-    return 'Untitled Resume';
+    return 'Untitled resume';
   };
 
-  const getCompleteness = (resume) => {
-    let score = 0;
-    const checks = [
-      resume.personal_info?.first_name,
-      resume.personal_info?.email,
-      resume.personal_info?.phone,
-      resume.summary?.length > 20,
-      resume.work_experience?.length > 0,
-      resume.education?.length > 0,
-      resume.skills?.length > 0,
-    ];
-    checks.forEach((c) => { if (c) score++; });
-    return Math.round((score / checks.length) * 100);
-  };
+  const getCompleteness = (resume) => Math.round(
+    (COMPLETENESS_CHECKS.filter((check) => check(resume)).length
+      / COMPLETENESS_CHECKS.length) * 100
+  );
+
+  const creditsLeft = billing?.credits ?? 0;
+  const creditsMax = billing?.max_credits ?? 5;
 
   return (
-    <div className="dashboard">
-      <div className="dashboard-container">
-        {/* Header */}
-        <div className="dashboard-header" data-tour="dashboard-welcome">
-          <div>
-            <h1>Hi, {displayName}</h1>
-            <p className="dashboard-subtitle">
-              {resumes.length === 0
-                ? 'Create your first resume to get started.'
-                : `You have ${resumes.length} resume${resumes.length !== 1 ? 's' : ''}.`}
+    <div className="db">
+      <div className="db-container">
+        {/* ------------------------------------------------ page header --- */}
+        <header className="db-head" data-tour="dashboard-welcome">
+          <div className="db-head-copy">
+            <h1 className="db-title">Your resumes</h1>
+            <p className="db-sub">
+              {loading
+                ? 'Loading your resumes…'
+                : resumes.length === 0
+                  ? `Hi ${displayName}. Pick a template to build your first one.`
+                  : `${resumes.length} resume${resumes.length === 1 ? '' : 's'}. Pick one up where you left off, or start another.`}
             </p>
           </div>
-          <div className="dashboard-header-actions">
+
+          <div className="db-head-actions">
             <input
               ref={importInputRef}
               type="file"
               accept=".pdf"
               onChange={handleImport}
-              hidden
+              className="sr-only"
+              tabIndex={-1}
+              aria-hidden="true"
             />
             <button
-              className="btn btn-secondary btn-lg"
-              onClick={() => { setImportSource('resume'); importInputRef.current?.click(); }}
+              type="button"
+              className="btn btn-secondary"
+              onClick={() => pickFile('resume')}
               disabled={importing}
+              data-loading={(importing && importSource === 'resume') || undefined}
               data-tour="dashboard-import"
             >
-              {importing && importSource === 'resume' ? (
-                <><Loader size={16} className="spin" /> Importing...</>
-              ) : (
-                <><Upload size={16} aria-hidden="true" /> Import PDF</>
-              )}
+              <Upload size={15} aria-hidden="true" /> Import PDF
             </button>
             <button
-              className="btn btn-secondary btn-lg"
-              onClick={() => { setImportSource('linkedin'); importInputRef.current?.click(); }}
+              type="button"
+              className="btn btn-secondary"
+              onClick={() => pickFile('linkedin')}
               disabled={importing}
+              data-loading={(importing && importSource === 'linkedin') || undefined}
             >
-              {importing && importSource === 'linkedin' ? (
-                <><Loader size={16} className="spin" /> Importing...</>
-              ) : (
-                <><Upload size={16} aria-hidden="true" /> LinkedIn PDF</>
-              )}
+              <Linkedin size={15} aria-hidden="true" /> LinkedIn PDF
             </button>
-            <button className="btn btn-primary btn-lg" onClick={handleCreate} data-tour="dashboard-create">
-              <Plus size={18} aria-hidden="true" />
-              New Resume
+            <button
+              type="button"
+              className="btn btn-primary"
+              onClick={handleCreate}
+              data-tour="dashboard-create"
+            >
+              <Plus size={16} aria-hidden="true" /> New resume
             </button>
           </div>
-        </div>
+        </header>
 
-        {/* Plan / billing banner */}
+        {/* ------------------------------------------------- plan strip --- */}
         {billing && (
-          <div className={`plan-banner ${isPaid ? 'plan-banner-paid' : ''}`}>
-            <div className="plan-banner-info">
-              <Crown size={18} aria-hidden="true" />
+          <section className={`db-plan${isPaid ? ' db-plan-paid' : ''}`} aria-label="Your plan">
+            <span className="db-plan-icon">
+              <Sparkles size={16} aria-hidden="true" />
+            </span>
+
+            <div className="db-plan-copy">
               {isPaid ? (
-                <span>You're on <strong>{billing.plan === 'premium' ? 'Premium' : 'Pro'}</strong> — unlimited AI credits and all 16 templates.</span>
+                <>
+                  <p className="db-plan-title">
+                    {billing.plan === 'premium' ? 'Premium' : 'Pro'}
+                  </p>
+                  <p className="db-plan-desc">
+                    Unlimited AI credits and all {TEMPLATE_COUNT} templates.
+                  </p>
+                </>
               ) : (
-                <span>
-                  <strong>Free plan</strong> · {billing.credits ?? 0} of {billing.max_credits ?? 5} AI credits left this month. Upgrade for unlimited AI and all 16 templates.
-                </span>
+                <>
+                  <p className="db-plan-title">
+                    Free plan — {creditsLeft} of {creditsMax} AI credits left this month
+                  </p>
+                  <p className="db-plan-desc">
+                    Pro removes the cap and unlocks all {TEMPLATE_COUNT} templates.
+                  </p>
+                </>
               )}
             </div>
+
             {isPaid ? (
-              <button className="btn btn-secondary" onClick={handleManageBilling} disabled={billingBusy}>
-                {billingBusy ? <span className="spinner" /> : <><Settings size={14} aria-hidden="true" /> Manage subscription</>}
+              <button
+                type="button"
+                className="btn btn-secondary btn-sm"
+                onClick={handleManageBilling}
+                data-loading={billingBusy || undefined}
+                disabled={billingBusy}
+              >
+                <Settings size={14} aria-hidden="true" /> Manage
               </button>
             ) : (
-              <button className="btn btn-primary" onClick={() => handleUpgrade('pro')} disabled={billingBusy}>
-                {billingBusy ? <span className="spinner" /> : <><Crown size={14} aria-hidden="true" /> Upgrade to Pro</>}
-              </button>
+              /* Goes to /pricing rather than straight into Checkout: the plan
+                 is sold by the week, month and quarter, and that page is also
+                 the one that degrades honestly when no price is configured. */
+              <Link to="/pricing" className="btn btn-primary btn-sm">
+                See Pro <ArrowRight size={14} aria-hidden="true" />
+              </Link>
             )}
-          </div>
+
+            {!isPaid && creditsMax > 0 && (
+              <div
+                className="db-plan-meter"
+                role="progressbar"
+                aria-valuenow={creditsLeft}
+                aria-valuemin={0}
+                aria-valuemax={creditsMax}
+                aria-label="AI credits remaining this month"
+              >
+                <span style={{ width: `${Math.max(0, Math.min(100, (creditsLeft / creditsMax) * 100))}%` }} />
+              </div>
+            )}
+          </section>
         )}
 
-        {/* Content */}
+        {/* ---------------------------------------------------- content --- */}
         {loading ? (
-          <div className="dashboard-grid">
+          <ul className="db-grid" aria-busy="true">
             {[1, 2, 3].map((i) => (
-              <div key={i} className="resume-card-skeleton">
-                <div className="skeleton" style={{ height: 140 }} />
-                <div style={{ padding: 20 }}>
-                  <div className="skeleton" style={{ height: 20, width: '60%', marginBottom: 8 }} />
-                  <div className="skeleton" style={{ height: 14, width: '40%' }} />
+              <li key={i} className="db-card db-card-loading">
+                <div className="skeleton db-card-shot" />
+                <div className="db-card-body">
+                  <div className="skeleton" style={{ height: 16, width: '62%' }} />
+                  <div className="skeleton" style={{ height: 12, width: '38%', marginTop: 10 }} />
+                  <div className="skeleton" style={{ height: 4, width: '100%', marginTop: 20 }} />
                 </div>
-              </div>
+              </li>
             ))}
-          </div>
+          </ul>
         ) : resumes.length === 0 ? (
-          <div className="empty-state">
-            <div className="empty-state-icon">
-              <FileText size={48} strokeWidth={1} aria-hidden="true" />
+          <div className="empty-state db-empty">
+            <span className="empty-state-icon">
+              <FileText size={22} aria-hidden="true" />
+            </span>
+            <h2 className="empty-state-title">Nothing here yet</h2>
+            <p className="empty-state-description">
+              Start from one of {TEMPLATE_COUNT} templates, or import a PDF you already
+              have and we will pull the content across.
+            </p>
+            <div className="empty-state-actions">
+              <button type="button" className="btn btn-primary btn-lg" onClick={handleCreate}>
+                <Plus size={16} aria-hidden="true" /> Browse templates
+              </button>
+              <button
+                type="button"
+                className="btn btn-secondary btn-lg"
+                onClick={() => pickFile('resume')}
+                disabled={importing}
+                data-loading={importing || undefined}
+              >
+                <Upload size={16} aria-hidden="true" /> Import a PDF
+              </button>
             </div>
-            <h3>No resumes yet</h3>
-            <p>Create your first resume and start applying to jobs with confidence.</p>
-            <button className="btn btn-primary btn-lg" onClick={handleCreate}>
-              <Plus size={18} aria-hidden="true" />
-              Create Resume
-            </button>
           </div>
         ) : (
-          <div className="dashboard-grid">
+          <ul className="db-grid">
             {resumes.map((resume) => {
+              const title = getResumeTitle(resume);
               const completeness = getCompleteness(resume);
+              const open = menuOpen === resume.id;
+
               return (
-                <div
-                  key={resume.id}
-                  className="resume-card"
-                  onClick={() => handleEdit(resume.id)}
-                >
-                  {/* Preview — real, scaled-down render of the resume */}
-                  <div className="resume-card-preview">
-                    <TemplateThumbnail templateId={resume.template} data={resume} height={180} />
-                    <div className="resume-card-template">
-                      {resume.template || 'modern'}
-                    </div>
+                <li key={resume.id} className="db-card">
+                  <div className="db-card-shot">
+                    <TemplateThumbnail templateId={resume.template} data={resume} height={188} />
+                    <span className="db-card-tpl">{resume.template || 'modern'}</span>
                   </div>
 
-                  {/* Info */}
-                  <div className="resume-card-body">
-                    <div className="resume-card-info">
-                      <h3 className="resume-card-title">{getResumeTitle(resume)}</h3>
-                      <span className="resume-card-date">
-                        <Clock size={12} aria-hidden="true" />
-                        {formatDate(resume.updated_at)}
-                      </span>
-                    </div>
+                  <div className="db-card-body">
+                    {/* The link covers the card via ::after, so the whole tile
+                        is clickable while remaining one real, keyboard-
+                        reachable target with a sensible accessible name. */}
+                    <h2 className="db-card-title">
+                      <Link to={`/builder/${resume.id}`} className="db-card-link">{title}</Link>
+                    </h2>
 
-                    {/* Completeness */}
-                    <div className="resume-card-progress">
-                      <div className="progress-bar" role="progressbar" aria-valuenow={completeness} aria-valuemin={0} aria-valuemax={100}>
-                        <div
-                          className="progress-fill"
-                          style={{ width: `${completeness}%` }}
-                        />
+                    <p className="db-card-meta">
+                      <Clock size={12} aria-hidden="true" />
+                      Edited {formatDate(resume.updated_at).toLowerCase()}
+                    </p>
+
+                    <div className="db-card-progress">
+                      <div
+                        className="db-meter"
+                        role="progressbar"
+                        aria-valuenow={completeness}
+                        aria-valuemin={0}
+                        aria-valuemax={100}
+                        aria-label={`${title} is ${completeness}% complete`}
+                      >
+                        <span style={{ width: `${completeness}%` }} data-full={completeness === 100 || undefined} />
                       </div>
-                      <span className="progress-label">{completeness}% complete</span>
+                      <span className="db-card-pct">{completeness}%</span>
                     </div>
                   </div>
 
-                  {/* Actions */}
-                  <div className="resume-card-actions" ref={menuOpen === resume.id ? menuRef : null}>
+                  <div className="db-card-menu" ref={open ? menuRef : null}>
                     <button
-                      className="btn btn-ghost btn-icon"
-                      aria-label={`Actions for ${getResumeTitle(resume)}`}
-                      aria-expanded={menuOpen === resume.id}
-                      aria-haspopup="true"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setMenuOpen(menuOpen === resume.id ? null : resume.id);
-                      }}
+                      type="button"
+                      className="btn btn-ghost btn-icon btn-sm"
+                      ref={(el) => { triggerRefs.current[resume.id] = el; }}
+                      aria-label={`Actions for ${title}`}
+                      aria-expanded={open}
+                      aria-haspopup="menu"
+                      onClick={() => setMenuOpen(open ? null : resume.id)}
                     >
-                      <MoreVertical size={16} />
+                      <MoreVertical size={16} aria-hidden="true" />
                     </button>
 
-                    {menuOpen === resume.id && (
-                      <div className="card-menu" role="menu" onClick={(e) => e.stopPropagation()}>
-                        <button className="card-menu-item" role="menuitem" onClick={() => { closeMenu(); handleEdit(resume.id); }}>
+                    {open && (
+                      <div className="db-menu" role="menu" aria-label={`Actions for ${title}`}>
+                        <button
+                          type="button"
+                          className="db-menu-item"
+                          role="menuitem"
+                          onClick={() => { closeMenu(); navigate(`/builder/${resume.id}`); }}
+                        >
                           <Edit3 size={14} aria-hidden="true" /> Edit
                         </button>
-                        <button className="card-menu-item" role="menuitem" onClick={() => handleDuplicate(resume.id)}>
+                        <button
+                          type="button"
+                          className="db-menu-item"
+                          role="menuitem"
+                          onClick={() => handleDuplicate(resume.id)}
+                        >
                           <Copy size={14} aria-hidden="true" /> Duplicate
                         </button>
                         <button
-                          className="card-menu-item card-menu-danger"
+                          type="button"
+                          className="db-menu-item db-menu-danger"
                           role="menuitem"
                           onClick={() => {
+                            restoreFocusRef.current = triggerRefs.current[resume.id];
                             closeMenu();
-                            setDeleteTarget({ id: resume.id, title: getResumeTitle(resume) });
+                            setDeleteTarget({ id: resume.id, title });
                           }}
                         >
                           <Trash2 size={14} aria-hidden="true" /> Delete
@@ -374,43 +431,58 @@ const Dashboard = () => {
                       </div>
                     )}
                   </div>
-                </div>
+                </li>
               );
             })}
 
-            {/* Add card */}
-            <button className="resume-card resume-card-add" onClick={handleCreate}>
-              <Plus size={32} strokeWidth={1.5} aria-hidden="true" />
-              <span>New Resume</span>
-            </button>
-          </div>
+            <li className="db-card db-card-new">
+              <button type="button" className="db-new" onClick={handleCreate}>
+                <span className="db-new-icon"><Plus size={20} aria-hidden="true" /></span>
+                <span className="db-new-label">New resume</span>
+                <span className="db-new-hint">{TEMPLATE_COUNT} templates to start from</span>
+              </button>
+            </li>
+          </ul>
         )}
       </div>
 
       <Spotlight tour={tours.dashboard} />
 
-      {/* Delete confirmation dialog */}
-      {deleteTarget && (
-        <div className="confirm-overlay" onClick={() => setDeleteTarget(null)}>
-          <div className="confirm-dialog" role="alertdialog" aria-labelledby="confirm-title" onClick={(e) => e.stopPropagation()}>
-            <h3 id="confirm-title">
-              <AlertTriangle size={18} style={{ color: 'var(--error)', verticalAlign: 'text-bottom' }} aria-hidden="true" />{' '}
-              Delete resume?
-            </h3>
-            <p>
-              Are you sure you want to delete <strong>{deleteTarget.title}</strong>? This action cannot be undone.
-            </p>
-            <div className="confirm-actions">
-              <button className="btn btn-secondary" onClick={() => setDeleteTarget(null)}>
-                Cancel
-              </button>
-              <button className="btn btn-danger" onClick={handleDeleteConfirm}>
-                <Trash2 size={14} aria-hidden="true" /> Delete
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Replaces a hand-rolled overlay that handled Escape but not focus.
+          Modal traps Tab, restores focus to the trigger, and locks scroll. */}
+      <Modal
+        open={!!deleteTarget}
+        onClose={() => setDeleteTarget(null)}
+        title="Delete this resume?"
+        description={
+          deleteTarget
+            ? `“${deleteTarget.title}” and its content will be removed. This cannot be undone.`
+            : undefined
+        }
+        size="sm"
+        restoreFocusRef={restoreFocusRef}
+        footer={
+          <>
+            <button
+              type="button"
+              className="btn btn-secondary"
+              onClick={() => setDeleteTarget(null)}
+              disabled={deleting}
+            >
+              Keep it
+            </button>
+            <button
+              type="button"
+              className="btn btn-danger-solid"
+              onClick={handleDeleteConfirm}
+              data-loading={deleting || undefined}
+              disabled={deleting}
+            >
+              <Trash2 size={14} aria-hidden="true" /> Delete resume
+            </button>
+          </>
+        }
+      />
     </div>
   );
 };

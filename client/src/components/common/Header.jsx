@@ -2,14 +2,38 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { getCredits } from '../../services/api';
-import { Menu, X, LogOut, User, ChevronDown, LayoutDashboard, FileSearch, Sparkles, PenTool, Layout, Mail, Zap, Briefcase, MessageSquare, BarChart3, Settings } from 'lucide-react';
+import { Menu, X, LogOut, User, ChevronDown, LayoutDashboard, FileSearch, Sparkles, PenTool, Layout, Mail, Zap, Briefcase, MessageSquare, BarChart3, Settings, Send } from 'lucide-react';
 import Logo from './Logo';
 import './Header.css';
+
+/**
+ * Nav is split into the three places you live and one menu of single-purpose
+ * tools. Nine equal-weight links across the bar gave no hierarchy and had to
+ * scroll horizontally to fit.
+ */
+const PRIMARY_LINKS = [
+  { to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+  { to: '/templates', label: 'Templates', icon: Layout },
+  { to: '/tracker', label: 'Tracker', icon: Briefcase },
+];
+
+const TOOL_LINKS = [
+  // Named for what it does: visiting /builder with no id creates a resume, so
+  // "Builder" was a nav link with an invisible side effect.
+  { to: '/builder', label: 'New blank resume', icon: PenTool },
+  { to: '/ai-creator', label: 'AI Creator', icon: Sparkles },
+  { to: '/ats-checker', label: 'ATS Checker', icon: FileSearch },
+  { to: '/cover-letter', label: 'Cover Letter', icon: Mail },
+  { to: '/emails', label: 'Emails', icon: Send },
+  { to: '/interview-prep', label: 'Interview Prep', icon: MessageSquare },
+];
 
 const Header = () => {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [toolsOpen, setToolsOpen] = useState(false);
   const dropdownRef = useRef(null);
+  const toolsRef = useRef(null);
   const { user, signOut, isAuthenticated } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
@@ -18,6 +42,7 @@ const Header = () => {
 
   const closeDropdown = useCallback(() => setDropdownOpen(false), []);
   const closeMobile = useCallback(() => setMobileOpen(false), []);
+  const closeTools = useCallback(() => setToolsOpen(false), []);
 
   // Fetch credits
   useEffect(() => {
@@ -29,7 +54,8 @@ const Header = () => {
   useEffect(() => {
     closeMobile();
     closeDropdown();
-  }, [location.pathname, closeMobile, closeDropdown]);
+    closeTools();
+  }, [location.pathname, closeMobile, closeDropdown, closeTools]);
 
   // Lock body scroll when mobile menu is open
   useEffect(() => {
@@ -41,29 +67,37 @@ const Header = () => {
     return () => { document.body.style.overflow = ''; };
   }, [mobileOpen]);
 
-  // Close dropdown on click outside
+  // Close open menus on a click outside them
   useEffect(() => {
-    if (!dropdownOpen) return;
+    if (!dropdownOpen && !toolsOpen) return undefined;
     const handleClickOutside = (e) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
+      if (dropdownOpen && dropdownRef.current && !dropdownRef.current.contains(e.target)) {
         closeDropdown();
+      }
+      if (toolsOpen && toolsRef.current && !toolsRef.current.contains(e.target)) {
+        closeTools();
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [dropdownOpen, closeDropdown]);
+  }, [dropdownOpen, toolsOpen, closeDropdown, closeTools]);
 
   // Escape key handler
   useEffect(() => {
     const handleEscape = (e) => {
-      if (e.key === 'Escape') {
-        if (dropdownOpen) closeDropdown();
-        if (mobileOpen) closeMobile();
+      if (e.key !== 'Escape') return;
+      if (dropdownOpen) closeDropdown();
+      if (toolsOpen) {
+        closeTools();
+        // Escape should leave focus on the control that opened the menu, not
+        // wherever it happened to be inside it.
+        toolsRef.current?.querySelector('button')?.focus();
       }
+      if (mobileOpen) closeMobile();
     };
     document.addEventListener('keydown', handleEscape);
     return () => document.removeEventListener('keydown', handleEscape);
-  }, [dropdownOpen, mobileOpen, closeDropdown, closeMobile]);
+  }, [dropdownOpen, toolsOpen, mobileOpen, closeDropdown, closeTools, closeMobile]);
 
   const handleSignOut = async () => {
     await signOut();
@@ -83,17 +117,7 @@ const Header = () => {
   const isAuthPage = ['/login', '/register'].includes(location.pathname);
   const showNav = !isAuthPage && isAuthenticated;
 
-  const navLinks = [
-    { to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
-    { to: '/templates', label: 'Templates', icon: Layout },
-    { to: '/builder', label: 'Builder', icon: PenTool },
-    { to: '/ai-creator', label: 'AI Creator', icon: Sparkles },
-    { to: '/ats-checker', label: 'ATS Checker', icon: FileSearch },
-    { to: '/cover-letter', label: 'Cover Letter', icon: Mail },
-    { to: '/emails', label: 'Emails', icon: Mail },
-    { to: '/tracker', label: 'Tracker', icon: Briefcase },
-    { to: '/interview-prep', label: 'Interview', icon: MessageSquare },
-  ];
+  const toolsActive = TOOL_LINKS.some(({ to }) => location.pathname.startsWith(to));
 
   return (
     <>
@@ -108,11 +132,40 @@ const Header = () => {
             <>
               {/* Desktop nav */}
               <nav className="header-nav-desktop" aria-label="Main navigation" data-tour="dashboard-nav">
-                {navLinks.map(({ to, label }) => (
+                {PRIMARY_LINKS.map(({ to, label }) => (
                   <Link key={to} to={to} className={`nav-link ${isActive(to) ? 'active' : ''}`}>
                     {label}
                   </Link>
                 ))}
+
+                <div className="nav-menu" ref={toolsRef}>
+                  <button
+                    type="button"
+                    className={`nav-link nav-menu-trigger ${toolsActive ? 'active' : ''}`}
+                    onClick={() => setToolsOpen((o) => !o)}
+                    aria-expanded={toolsOpen}
+                    aria-haspopup="menu"
+                  >
+                    Tools
+                    <ChevronDown size={13} aria-hidden="true" />
+                  </button>
+
+                  {toolsOpen && (
+                    <div className="nav-dropdown" role="menu" aria-label="Tools">
+                      {TOOL_LINKS.map(({ to, label, icon: Icon }) => (
+                        <Link
+                          key={to}
+                          to={to}
+                          role="menuitem"
+                          className={`dropdown-item ${isActive(to) ? 'active' : ''}`}
+                          onClick={closeTools}
+                        >
+                          <Icon size={15} aria-hidden="true" /> {label}
+                        </Link>
+                      ))}
+                    </div>
+                  )}
+                </div>
               </nav>
 
               {/* Desktop user dropdown */}
@@ -190,15 +243,33 @@ const Header = () => {
       {showNav && (
         <>
           <div className="mobile-drawer-clip">
-            <div className={`mobile-drawer ${mobileOpen ? 'is-open' : ''}`} aria-label="Mobile navigation">
-              <nav className="mobile-drawer-nav">
-                {navLinks.map(({ to, label, icon: Icon }) => (
+            {/* A <nav>, not a labelled <div>: aria-label on a plain div names
+                nothing, which left the drawer's footer (user details, sign out)
+                outside every landmark. */}
+            <nav
+              className={`mobile-drawer ${mobileOpen ? 'is-open' : ''}`}
+              aria-label="Mobile navigation"
+            >
+              {/* Flat on mobile, but grouped — vertical space scrolls, so the
+                  headings cost nothing and the same split still reads. */}
+              <div className="mobile-drawer-nav">
+                {PRIMARY_LINKS.map(({ to, label, icon: Icon }) => (
                   <Link key={to} to={to} className={`mobile-nav-link ${isActive(to) ? 'active' : ''}`}>
                     <Icon size={18} aria-hidden="true" />
                     {label}
                   </Link>
                 ))}
-              </nav>
+
+                <p className="mobile-nav-heading" id="mobile-tools-heading">Tools</p>
+                <div role="group" aria-labelledby="mobile-tools-heading">
+                  {TOOL_LINKS.map(({ to, label, icon: Icon }) => (
+                    <Link key={to} to={to} className={`mobile-nav-link ${isActive(to) ? 'active' : ''}`}>
+                      <Icon size={18} aria-hidden="true" />
+                      {label}
+                    </Link>
+                  ))}
+                </div>
+              </div>
 
               <div className="mobile-drawer-footer">
                 <div className="mobile-user-info">
@@ -213,7 +284,7 @@ const Header = () => {
                   Sign out
                 </button>
               </div>
-            </div>
+            </nav>
           </div>
 
           {mobileOpen && (

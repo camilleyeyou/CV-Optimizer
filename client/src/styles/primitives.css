@@ -782,6 +782,9 @@ a.btn-ghost:hover { color: var(--text-primary); }
   animation: modalIn var(--duration-slow) var(--ease-out);
 }
 
+/* Confirms and single-question dialogs. Narrower than the 480px default so a
+   one-line question does not arrive in a box sized for a form. */
+.modal-sm { max-width: 420px; }
 .modal-lg { max-width: 640px; }
 .modal-xl { max-width: 860px; }
 

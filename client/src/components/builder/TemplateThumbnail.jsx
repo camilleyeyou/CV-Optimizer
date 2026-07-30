@@ -29,7 +29,12 @@ const TemplateThumbnail = ({ templateId, data, height = 200 }) => {
   }, [measure]);
 
   return (
-    <div className="tpl-thumb" ref={ref} style={{ height }} aria-hidden="true">
+    /* inert, not aria-hidden: the rendered resume contains real links (email,
+       phone, profile URLs) and aria-hidden alone leaves them in the tab order
+       while hiding them from screen readers — axe's aria-hidden-focus. inert
+       removes them from both. Must be `inert={true}`; React renders inert=""
+       as falsy. */
+    <div className="tpl-thumb" ref={ref} style={{ height }} inert={true}>
       <div
         className="tpl-thumb-page"
         style={{ width: PAGE_WIDTH, transform: `scale(${scale})` }}

@@ -34,6 +34,9 @@ const Modal = ({
   size = 'md',
   closeOnOverlayClick = true,
   labelledBy,
+  /* Ref to focus on close when the element that opened the dialog is gone by
+     then — a menu item, a row that was deleted, a step that advanced. */
+  restoreFocusRef,
 }) => {
   const dialogRef = useRef(null);
   const previouslyFocused = useRef(null);
@@ -103,9 +106,15 @@ const Modal = ({
     (firstField ?? node)?.focus({ preventScroll: true });
 
     return () => {
-      previouslyFocused.current?.focus?.({ preventScroll: true });
+      // The trigger is often inside a menu that closed as the dialog opened, so
+      // by the time this effect reads activeElement it can already be <body>
+      // (or a node that has since detached). Either way focus would be dropped
+      // to the top of the page — callers pass restoreFocusRef for that case.
+      const stored = previouslyFocused.current;
+      const usable = stored && stored !== document.body && stored.isConnected;
+      (usable ? stored : restoreFocusRef?.current)?.focus?.({ preventScroll: true });
     };
-  }, [open]);
+  }, [open, restoreFocusRef]);
 
   if (!open) return null;
 
@@ -120,7 +129,7 @@ const Modal = ({
     >
       <div
         ref={dialogRef}
-        className={`modal ${size === 'lg' ? 'modal-lg' : ''} ${size === 'xl' ? 'modal-xl' : ''}`}
+        className={`modal${size && size !== 'md' ? ` modal-${size}` : ''}`}
         role="dialog"
         aria-modal="true"
         aria-labelledby={labelledBy ?? (title ? titleId.current : undefined)}
