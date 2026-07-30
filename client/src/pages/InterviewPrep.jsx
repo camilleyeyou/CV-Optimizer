@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useResume } from '../context/ResumeContext';
 import { generateInterviewQuestions, evaluateAnswer } from '../services/api';
-import { MessageSquare, Sparkles, Loader, ChevronRight, Star, CheckCircle, AlertTriangle, ArrowLeft } from 'lucide-react';
+import { MessageSquare, Sparkles, ChevronRight, Star, CheckCircle, AlertTriangle, ArrowLeft } from 'lucide-react';
 import toast from 'react-hot-toast';
 import './InterviewPrep.css';
 
@@ -82,25 +82,29 @@ const InterviewPrep = () => {
     : null;
 
   return (
-    <div className="interview-prep">
+    <div className="iv">
       {/* Setup Step */}
       {step === STEP.SETUP && (
-        <div className="interview-setup">
-          <div className="interview-setup-header">
-            <MessageSquare size={28} className="interview-icon" />
-            <h1>AI Interview Prep</h1>
-            <p>Practice with AI-generated questions tailored to your resume and target job.</p>
-          </div>
+        <div className="iv-setup">
+          <header className="iv-setup-head">
+            <span className="iv-icon"><MessageSquare size={22} aria-hidden="true" /></span>
+            <h1 className="iv-title">Interview practice</h1>
+            <p className="iv-sub">
+              Questions generated from your own resume and the role you are going
+              for, with written feedback on each answer.
+            </p>
+          </header>
 
-          <div className="interview-setup-form">
-            <div className="interview-field">
-              <label>Select Resume</label>
+          <div className="iv-form">
+            <div className="form-group">
+              <label className="form-label" htmlFor="iv-resume">Which resume?</label>
               <select
-                className="form-input"
+                id="iv-resume"
+                className="form-select"
                 value={selectedResume}
                 onChange={(e) => setSelectedResume(e.target.value)}
               >
-                <option value="">Choose a resume...</option>
+                <option value="">Select a resume…</option>
                 {(resumes || []).map((r) => (
                   <option key={r.id} value={r.id}>
                     {r.title || `${r.personal_info?.first_name || 'Untitled'}'s Resume`}
@@ -109,23 +113,27 @@ const InterviewPrep = () => {
               </select>
             </div>
 
-            <div className="interview-field">
-              <label>Job Description</label>
+            <div className="form-group">
+              <label className="form-label" htmlFor="iv-jd">Job description</label>
               <textarea
+                id="iv-jd"
                 className="form-textarea"
                 value={jobDescription}
                 onChange={(e) => setJobDescription(e.target.value)}
-                placeholder="Paste the full job description here..."
+                placeholder="Paste the posting here"
                 rows={8}
               />
             </div>
 
             <button
-              className="btn btn-primary btn-lg interview-start-btn"
+              type="button"
+              className="btn btn-primary btn-lg btn-block"
               onClick={handleGenerate}
               disabled={loading || !selectedResume || jobDescription.trim().length < 10}
+              data-loading={loading || undefined}
             >
-              {loading ? <><Loader size={18} className="spin" /> Generating Questions...</> : <><Sparkles size={18} /> Start Practice</>}
+              <Sparkles size={16} aria-hidden="true" />
+              {loading ? 'Writing your questions…' : 'Start practising'}
             </button>
           </div>
         </div>
@@ -134,67 +142,78 @@ const InterviewPrep = () => {
       {/* Practice Step — guard on the current item so a drifted index or a
           short/malformed questions array can't crash the page. */}
       {step === STEP.PRACTICE && questions[currentQ] && (
-        <div className="interview-practice">
-          <div className="interview-progress-bar">
-            <div className="interview-progress-fill" style={{ width: `${((currentQ + 1) / questions.length) * 100}%` }} />
+        <div className="iv-practice">
+          <h1 className="sr-only">Interview practice</h1>
+
+          <div
+            className="iv-progress"
+            role="progressbar"
+            aria-valuenow={currentQ + 1}
+            aria-valuemin={1}
+            aria-valuemax={questions.length}
+            aria-label={`Question ${currentQ + 1} of ${questions.length}`}
+          >
+            <span style={{ width: `${((currentQ + 1) / questions.length) * 100}%` }} />
           </div>
 
-          <div className="interview-practice-header">
-            <button className="btn btn-ghost btn-sm" onClick={() => setStep(STEP.SETUP)}>
-              <ArrowLeft size={14} /> Back
+          <div className="iv-practice-bar">
+            <button type="button" className="btn btn-ghost btn-sm" onClick={() => setStep(STEP.SETUP)}>
+              <ArrowLeft size={14} aria-hidden="true" /> Start over
             </button>
-            <span className="interview-counter">Question {currentQ + 1} of {questions.length}</span>
-            <button
-              className="btn btn-ghost btn-sm"
-              onClick={() => setStep(STEP.REVIEW)}
-            >
-              Review All
+            <span className="iv-counter">Question {currentQ + 1} of {questions.length}</span>
+            <button type="button" className="btn btn-ghost btn-sm" onClick={() => setStep(STEP.REVIEW)}>
+              Review all
             </button>
           </div>
 
-          <div className="interview-question-card">
-            <div className="interview-q-type">
-              <span className={`interview-type-badge ${questions[currentQ].type}`}>
-                {questions[currentQ].type}
-              </span>
-            </div>
-            <h2 className="interview-question-text">{questions[currentQ].question}</h2>
-            <p className="interview-tip">Tip: {questions[currentQ].tip}</p>
+          <div className="iv-card">
+            <span className="iv-type" data-type={questions[currentQ].type}>
+              {questions[currentQ].type}
+            </span>
+            <h2 className="iv-question">{questions[currentQ].question}</h2>
+            {questions[currentQ].tip && <p className="iv-tip">{questions[currentQ].tip}</p>}
           </div>
 
-          <div className="interview-answer-section">
+          <div className="form-group iv-answer">
+            <label className="form-label" htmlFor="iv-answer">Your answer</label>
             <textarea
-              className="interview-answer-input"
+              id="iv-answer"
+              className="form-textarea"
               value={answers[questions[currentQ].id] || ''}
               onChange={(e) => setAnswers({ ...answers, [questions[currentQ].id]: e.target.value })}
-              placeholder="Type your answer here... Speak as you would in a real interview."
+              placeholder="Answer as you would out loud."
               rows={6}
             />
 
-            <div className="interview-answer-actions">
+            <div className="iv-answer-actions">
               <button
-                className="btn btn-accent"
+                type="button"
+                className="btn btn-secondary"
                 onClick={handleEvaluate}
                 disabled={evaluating || !answers[questions[currentQ].id]?.trim()}
+                data-loading={evaluating || undefined}
               >
-                {evaluating ? <><Loader size={14} className="spin" /> Evaluating...</> : <><Star size={14} /> Get Feedback</>}
+                <Star size={14} aria-hidden="true" />
+                {evaluating ? 'Reading it…' : 'Get feedback'}
               </button>
             </div>
           </div>
 
           {/* Evaluation Result */}
           {evaluations[questions[currentQ].id] && (
-            <div className="interview-evaluation">
-              <div className="interview-eval-score">
-                <div className="interview-score-circle" data-score={evaluations[questions[currentQ].id].score >= 7 ? 'good' : evaluations[questions[currentQ].id].score >= 5 ? 'ok' : 'low'}>
-                  {evaluations[questions[currentQ].id].score}/10
-                </div>
+            <div className="iv-eval">
+              <div
+                className="iv-eval-score"
+                data-band={evaluations[questions[currentQ].id].score >= 7 ? 'good' : evaluations[questions[currentQ].id].score >= 5 ? 'fair' : 'poor'}
+              >
+                <span className="iv-eval-num">{evaluations[questions[currentQ].id].score}</span>
+                <span className="iv-eval-max">out of 10</span>
               </div>
 
-              <div className="interview-eval-details">
+              <div className="iv-eval-body">
                 {evaluations[questions[currentQ].id].strengths?.length > 0 && (
-                  <div className="interview-eval-section">
-                    <h4><CheckCircle size={14} /> Strengths</h4>
+                  <div className="iv-eval-part" data-kind="good">
+                    <h3><CheckCircle size={14} aria-hidden="true" /> What worked</h3>
                     <ul>
                       {evaluations[questions[currentQ].id].strengths.map((s, i) => <li key={i}>{s}</li>)}
                     </ul>
@@ -202,8 +221,8 @@ const InterviewPrep = () => {
                 )}
 
                 {evaluations[questions[currentQ].id].improvements?.length > 0 && (
-                  <div className="interview-eval-section">
-                    <h4><AlertTriangle size={14} /> Improvements</h4>
+                  <div className="iv-eval-part" data-kind="fix">
+                    <h3><AlertTriangle size={14} aria-hidden="true" /> What to sharpen</h3>
                     <ul>
                       {evaluations[questions[currentQ].id].improvements.map((s, i) => <li key={i}>{s}</li>)}
                     </ul>
@@ -211,8 +230,8 @@ const InterviewPrep = () => {
                 )}
 
                 {evaluations[questions[currentQ].id].sample_answer && (
-                  <div className="interview-eval-section sample">
-                    <h4>Sample Strong Answer</h4>
+                  <div className="iv-eval-part" data-kind="sample">
+                    <h3>A stronger version</h3>
                     <p>{evaluations[questions[currentQ].id].sample_answer}</p>
                   </div>
                 )}
@@ -220,10 +239,14 @@ const InterviewPrep = () => {
             </div>
           )}
 
-          <div className="interview-nav">
-            <button className="btn btn-ghost" onClick={goPrev} disabled={currentQ === 0}>Previous</button>
-            <button className="btn btn-primary" onClick={goNext}>
-              {currentQ === questions.length - 1 ? 'Finish & Review' : <>Next <ChevronRight size={14} /></>}
+          <div className="iv-nav">
+            <button type="button" className="btn btn-secondary" onClick={goPrev} disabled={currentQ === 0}>
+              Previous
+            </button>
+            <button type="button" className="btn btn-primary" onClick={goNext}>
+              {currentQ === questions.length - 1
+                ? 'Finish and review'
+                : <>Next <ChevronRight size={14} aria-hidden="true" /></>}
             </button>
           </div>
         </div>
@@ -231,60 +254,62 @@ const InterviewPrep = () => {
 
       {/* Review Step */}
       {step === STEP.REVIEW && (
-        <div className="interview-review">
-          <div className="interview-review-header">
-            <h1>Practice Summary</h1>
-            <div className="interview-review-stats">
-              <div className="interview-stat">
-                <span className="interview-stat-num">{answeredCount}/{questions.length}</span>
-                <span className="interview-stat-label">Answered</span>
+        <div className="iv-review">
+          <header className="iv-review-head">
+            <h1 className="iv-title">How that went</h1>
+            <dl className="iv-stats">
+              <div className="iv-stat">
+                <dt>Answered</dt>
+                <dd>{answeredCount}/{questions.length}</dd>
               </div>
-              <div className="interview-stat">
-                <span className="interview-stat-num">{evaluatedCount}/{questions.length}</span>
-                <span className="interview-stat-label">Evaluated</span>
+              <div className="iv-stat">
+                <dt>Reviewed</dt>
+                <dd>{evaluatedCount}/{questions.length}</dd>
               </div>
               {avgScore !== null && (
-                <div className="interview-stat">
-                  <span className="interview-stat-num">{avgScore}/10</span>
-                  <span className="interview-stat-label">Avg Score</span>
+                <div className="iv-stat">
+                  <dt>Average</dt>
+                  <dd>{avgScore}/10</dd>
                 </div>
               )}
-            </div>
-          </div>
+            </dl>
+          </header>
 
-          <div className="interview-review-list">
+          <div className="iv-review-list">
             {questions.map((q, i) => (
-              <div key={q.id} className="interview-review-item">
-                <div className="interview-review-q">
-                  <span className="interview-review-num">{i + 1}</span>
-                  <div>
-                    <span className={`interview-type-badge ${q.type} small`}>{q.type}</span>
-                    <p className="interview-review-question">{q.question}</p>
+              <article key={q.id} className="iv-review-item">
+                <div className="iv-review-q">
+                  <span className="iv-review-num">{i + 1}</span>
+                  <div className="iv-review-copy">
+                    <span className="iv-type" data-type={q.type} data-small="">{q.type}</span>
+                    <p className="iv-review-question">{q.question}</p>
                   </div>
                   {evaluations[q.id] && (
-                    <span className={`interview-review-score ${evaluations[q.id].score >= 7 ? 'good' : evaluations[q.id].score >= 5 ? 'ok' : 'low'}`}>
+                    <span
+                      className="iv-review-score"
+                      data-band={evaluations[q.id].score >= 7 ? 'good' : evaluations[q.id].score >= 5 ? 'fair' : 'poor'}
+                    >
                       {evaluations[q.id].score}/10
                     </span>
                   )}
                 </div>
-                {answers[q.id] && (
-                  <div className="interview-review-answer">
-                    <strong>Your answer:</strong> {answers[q.id]}
-                  </div>
-                )}
-                {!answers[q.id] && (
-                  <div className="interview-review-skipped">Skipped</div>
-                )}
-              </div>
+                {answers[q.id]
+                  ? <p className="iv-review-answer">{answers[q.id]}</p>
+                  : <p className="iv-review-skipped">Not answered</p>}
+              </article>
             ))}
           </div>
 
-          <div className="interview-review-actions">
-            <button className="btn btn-ghost" onClick={() => { setStep(STEP.PRACTICE); setCurrentQ(0); }}>
-              <ArrowLeft size={14} /> Back to Practice
+          <div className="iv-nav">
+            <button
+              type="button"
+              className="btn btn-secondary"
+              onClick={() => { setStep(STEP.PRACTICE); setCurrentQ(0); }}
+            >
+              <ArrowLeft size={14} aria-hidden="true" /> Back to the questions
             </button>
-            <button className="btn btn-primary" onClick={() => setStep(STEP.SETUP)}>
-              <Sparkles size={14} /> New Session
+            <button type="button" className="btn btn-primary" onClick={() => setStep(STEP.SETUP)}>
+              <Sparkles size={14} aria-hidden="true" /> New session
             </button>
           </div>
         </div>

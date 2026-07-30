@@ -67,43 +67,55 @@ const EmailGenerator = () => {
   const showStartDate = type === 'accept';
 
   return (
-    <div className="email-gen">
-      <div className="email-gen-header">
-        <Mail size={28} className="email-gen-icon" />
-        <h1>Email Generator</h1>
-        <p>Generate professional job-related emails in seconds.</p>
-      </div>
+    <div className="em">
+      <header className="em-head">
+        <h1 className="em-title">Follow-up emails</h1>
+        <p className="em-sub">
+          Thank-you notes, nudges and replies, written from the details of the
+          role. You edit the draft before it goes anywhere.
+        </p>
+      </header>
 
-      <div className="email-gen-layout">
-        {/* Left: Form */}
-        <div className="email-gen-form">
-          <div className="email-type-selector">
+      <div className="em-layout">
+        <div className="em-form">
+          <fieldset className="em-types">
+            <legend className="form-label">What kind of email?</legend>
             {EMAIL_TYPES.map((t) => (
               <button
                 key={t.id}
-                className={`email-type-btn ${type === t.id ? 'active' : ''}`}
+                type="button"
+                className="em-type"
+                aria-pressed={type === t.id}
                 onClick={() => { setType(t.id); setResult(null); }}
               >
-                <span className="email-type-label">{t.label}</span>
-                <span className="email-type-desc">{t.desc}</span>
+                <span className="em-type-label">{t.label}</span>
+                <span className="em-type-desc">{t.desc}</span>
               </button>
             ))}
-          </div>
+          </fieldset>
 
-          <div className="email-fields">
-            <div className="email-field-row">
-              <div className="email-field">
-                <label>Company *</label>
+          <div className="em-fields">
+            <div className="form-row">
+              <div className="form-group">
+                <label className="form-label" htmlFor="em-company">
+                  Company <span className="form-required" aria-hidden="true">*</span>
+                </label>
                 <input
+                  id="em-company"
+                  required
                   className="form-input"
                   value={context.company}
                   onChange={(e) => setContext({ ...context, company: e.target.value })}
                   placeholder="Google"
                 />
               </div>
-              <div className="email-field">
-                <label>Position *</label>
+              <div className="form-group">
+                <label className="form-label" htmlFor="em-position">
+                  Position <span className="form-required" aria-hidden="true">*</span>
+                </label>
                 <input
+                  id="em-position"
+                  required
                   className="form-input"
                   value={context.position}
                   onChange={(e) => setContext({ ...context, position: e.target.value })}
@@ -113,9 +125,10 @@ const EmailGenerator = () => {
             </div>
 
             {showInterviewer && (
-              <div className="email-field">
-                <label>Interviewer Name</label>
+              <div className="form-group">
+                <label className="form-label" htmlFor="em-interviewer">Interviewer name</label>
                 <input
+                  id="em-interviewer"
                   className="form-input"
                   value={context.interviewerName}
                   onChange={(e) => setContext({ ...context, interviewerName: e.target.value })}
@@ -125,9 +138,10 @@ const EmailGenerator = () => {
             )}
 
             {showAppliedDate && (
-              <div className="email-field">
-                <label>Applied Date</label>
+              <div className="form-group">
+                <label className="form-label" htmlFor="em-applied">Applied on</label>
                 <input
+                  id="em-applied"
                   className="form-input"
                   type="date"
                   value={context.appliedDate}
@@ -137,9 +151,10 @@ const EmailGenerator = () => {
             )}
 
             {showStartDate && (
-              <div className="email-field">
-                <label>Start Date</label>
+              <div className="form-group">
+                <label className="form-label" htmlFor="em-start">Start date</label>
                 <input
+                  id="em-start"
                   className="form-input"
                   type="date"
                   value={context.startDate}
@@ -148,67 +163,85 @@ const EmailGenerator = () => {
               </div>
             )}
 
-            <div className="email-field">
-              <label>Notes / Context</label>
+            <div className="form-group">
+              <label className="form-label" htmlFor="em-notes">
+                Anything to mention <span className="form-label-optional">optional</span>
+              </label>
               <textarea
+                id="em-notes"
                 className="form-textarea"
                 value={context.notes}
                 onChange={(e) => setContext({ ...context, notes: e.target.value })}
-                placeholder={type === 'thank-you' ? 'Topics discussed, things you want to mention...' : 'Any additional context...'}
+                placeholder={type === 'thank-you' ? 'What you discussed, anything you want to reinforce' : 'Anything that should shape the tone'}
                 rows={3}
               />
             </div>
 
             <button
-              className="btn btn-primary email-gen-btn"
+              type="button"
+              className="btn btn-primary btn-lg btn-block"
               onClick={handleGenerate}
               disabled={loading || !context.company.trim() || !context.position.trim()}
+              data-loading={loading || undefined}
             >
-              {loading ? <><Loader size={16} className="spin" /> Generating...</> : <><Mail size={16} /> Generate Email</>}
+              <Mail size={16} aria-hidden="true" />
+              {loading ? 'Writing…' : 'Write the email'}
             </button>
           </div>
         </div>
 
-        {/* Right: Result */}
-        <div className="email-gen-result">
+        <div className="em-result">
           {!result && !loading && (
-            <div className="email-gen-empty">
-              <Mail size={40} strokeWidth={1} />
-              <p>Your generated email will appear here</p>
+            <div className="empty-state em-empty">
+              <span className="empty-state-icon">
+                <Mail size={22} aria-hidden="true" />
+              </span>
+              <h2 className="empty-state-title">Nothing written yet</h2>
+              <p className="empty-state-description">
+                Fill in the company and role on the left. The draft lands here,
+                fully editable, before you send it anywhere.
+              </p>
             </div>
           )}
 
+          {/* Skeleton rather than a spinner, sized like the draft it replaces
+              so the panel does not resize when the text arrives. */}
           {loading && (
-            <div className="email-gen-loading">
-              <Loader size={28} className="spin" />
-              <p>Writing your email...</p>
+            <div className="em-output" aria-busy="true">
+              <div className="skeleton" style={{ height: 38 }} />
+              <div className="skeleton" style={{ height: 260, marginTop: 12 }} />
+              <p className="em-loading-note" role="status">Writing your email…</p>
             </div>
           )}
 
           {result && !loading && (
-            <div className="email-gen-output">
-              <div className="email-subject-line">
-                <span className="email-subject-label">Subject:</span>
-                <span className="email-subject-text">{result.subject}</span>
+            <div className="em-output">
+              <p className="em-subject">
+                <span className="em-subject-label">Subject</span>
+                <span className="em-subject-text">{result.subject}</span>
+              </p>
+
+              <div className="form-group">
+                <label className="form-label sr-only" htmlFor="em-body">Email body</label>
+                <textarea
+                  id="em-body"
+                  className="form-textarea em-body"
+                  value={editedBody}
+                  onChange={(e) => setEditedBody(e.target.value)}
+                  rows={12}
+                />
               </div>
 
-              <textarea
-                className="email-body-editor"
-                value={editedBody}
-                onChange={(e) => setEditedBody(e.target.value)}
-                rows={12}
-              />
-
-              <div className="email-gen-actions">
-                <button className="btn btn-ghost btn-sm" onClick={handleGenerate}>
-                  <RefreshCw size={14} /> Regenerate
+              <div className="em-actions">
+                <button type="button" className="btn btn-ghost btn-sm" onClick={handleGenerate}>
+                  <RefreshCw size={14} aria-hidden="true" /> Write another
                 </button>
-                <div className="email-gen-actions-right">
-                  <button className="btn btn-secondary btn-sm" onClick={handleDownload}>
-                    <Download size={14} /> Download
+                <div className="em-actions-right">
+                  <button type="button" className="btn btn-secondary btn-sm" onClick={handleDownload}>
+                    <Download size={14} aria-hidden="true" /> Download
                   </button>
-                  <button className="btn btn-primary btn-sm" onClick={handleCopy}>
-                    <Copy size={14} /> Copy
+                  <button type="button" className="btn btn-primary btn-sm" onClick={handleCopy}>
+                    <Copy size={14} aria-hidden="true" /> Copy
                   </button>
                 </div>
               </div>

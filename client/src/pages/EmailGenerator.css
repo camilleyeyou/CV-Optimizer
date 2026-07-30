@@ -1,217 +1,183 @@
-/* Email Generator - Dark glassmorphic */
-.email-gen {
-  max-width: var(--max-width);
-  margin: 0 auto;
-  padding: var(--space-6);
+/* Follow-up emails. Composes the design system; owns no raw colour values. */
+
+.em {
+  width: 100%;
+  max-width: var(--container-max);
+  min-height: calc(100vh - var(--header-height));
+  margin-inline: auto;
+  padding: var(--space-10) var(--gutter) var(--space-16);
 }
 
-.email-gen-header {
-  text-align: center;
-  margin-bottom: var(--space-6);
+.em-head { margin-bottom: var(--space-8); }
+
+.em-title {
+  font-family: var(--font-display);
+  font-size: var(--text-3xl);
+  font-weight: var(--weight-bold);
+  line-height: var(--leading-tight);
+  letter-spacing: var(--tracking-display);
+  color: var(--text-primary);
 }
 
-.email-gen-icon {
-  color: var(--primary);
-  margin-bottom: var(--space-2);
-}
-
-.email-gen-header h1 {
-  font-size: 1.5rem;
-  font-weight: 800;
-  margin: 0;
-  letter-spacing: -0.02em;
-}
-
-.email-gen-header p {
-  color: var(--text-secondary);
+.em-sub {
+  margin-top: var(--space-3);
+  max-width: var(--measure);
   font-size: var(--text-sm);
-  margin: 0.25rem 0 0;
+  line-height: var(--leading-body);
+  color: var(--text-tertiary);
 }
 
-/* Layout */
-.email-gen-layout {
+.em-layout {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: minmax(0, 420px) minmax(0, 1fr);
   gap: var(--space-6);
   align-items: start;
 }
 
-/* Form */
-.email-gen-form {
+@media (max-width: 900px) {
+  .em-layout { grid-template-columns: minmax(0, 1fr); }
+}
+
+/* --- Form ----------------------------------------------------------------- */
+
+.em-form,
+.em-result {
+  padding: var(--space-6);
+  background: var(--surface-raised);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-2xl);
+  box-shadow: var(--shadow-card);
+}
+
+.em-types {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: var(--space-2);
+  margin-bottom: var(--space-6);
+  padding: 0;
+  border: 0;
+}
+
+.em-types > legend { margin-bottom: var(--space-3); }
+
+.em-type {
   display: flex;
   flex-direction: column;
-  gap: var(--space-4);
-}
-
-.email-type-selector {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 0.5rem;
-}
-
-.email-type-btn {
-  padding: 0.75rem;
-  border: 1px solid var(--glass-border);
-  border-radius: var(--radius-lg);
-  background: var(--glass-bg);
-  cursor: pointer;
+  gap: 2px;
+  padding: var(--space-3);
+  min-height: 64px;
   text-align: left;
-  transition: all var(--transition-fast);
-  backdrop-filter: var(--glass-blur);
-  -webkit-backdrop-filter: var(--glass-blur);
+  background: var(--surface-inset);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  cursor: pointer;
+  transition: var(--transition-colors);
 }
 
-.email-type-btn:hover {
-  border-color: rgba(129, 140, 248, 0.3);
-  background: rgba(129, 140, 248, 0.08);
+.em-type:hover { border-color: var(--border-strong); background: var(--surface-hover); }
+
+/* aria-pressed carries the state, so the styling follows the semantics rather
+   than a parallel class that can drift out of step with it. */
+.em-type[aria-pressed='true'] {
+  color: var(--text-primary);
+  background: var(--accent-bg);
+  border-color: var(--accent-border);
 }
 
-.email-type-btn.active {
-  border-color: var(--primary);
-  background: var(--primary-light);
-  box-shadow: 0 0 0 1px var(--primary);
-}
-
-.email-type-label {
-  display: block;
+.em-type-label {
   font-size: var(--text-sm);
-  font-weight: 700;
+  font-weight: var(--weight-medium);
   color: var(--text-primary);
 }
 
-.email-type-desc {
-  display: block;
+.em-type-desc {
   font-size: var(--text-xs);
-  color: var(--text-muted);
-  margin-top: 2px;
+  line-height: var(--leading-snug);
+  color: var(--text-tertiary);
 }
 
-.email-fields {
+.em-fields {
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
+  gap: var(--space-5);
 }
 
-.email-field label {
-  display: block;
-  font-size: var(--text-xs);
-  font-weight: 600;
-  color: var(--text-secondary);
-  margin-bottom: 0.25rem;
-}
+.em-fields .form-group + .form-group { margin-top: 0; }
 
-.email-field-row {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 0.75rem;
-}
+/* --- Result --------------------------------------------------------------- */
 
-.email-gen-btn {
-  width: 100%;
-  margin-top: var(--space-2);
-}
+.em-result { min-height: 420px; display: flex; flex-direction: column; }
 
-/* Result panel */
-.email-gen-result {
-  min-height: 400px;
-  background: var(--glass-bg);
-  border: 1px solid var(--glass-border);
+.em-empty {
+  flex: 1;
+  border: 1px dashed var(--border-default);
   border-radius: var(--radius-xl);
-  overflow: hidden;
-  backdrop-filter: var(--glass-blur);
-  -webkit-backdrop-filter: var(--glass-blur);
+  background: var(--surface-inset);
 }
 
-.email-gen-empty,
-.email-gen-loading {
+.em-output { display: flex; flex-direction: column; flex: 1; }
+
+.em-subject {
   display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 0.75rem;
-  height: 400px;
-  color: var(--text-muted);
+  align-items: baseline;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  margin-bottom: var(--space-4);
+  background: var(--surface-inset);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
 }
 
-.email-gen-empty p,
-.email-gen-loading p {
-  font-size: var(--text-sm);
-  margin: 0;
-}
-
-.email-gen-output {
-  display: flex;
-  flex-direction: column;
-}
-
-.email-subject-line {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 1rem 1.25rem;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-  background: rgba(10, 10, 12, 0.4);
-}
-
-.email-subject-label {
-  font-size: var(--text-xs);
-  font-weight: 700;
-  color: var(--text-muted);
-  text-transform: uppercase;
+.em-subject-label {
   flex-shrink: 0;
+  font-size: var(--text-2xs);
+  font-weight: var(--weight-semibold);
+  letter-spacing: var(--tracking-caps);
+  text-transform: uppercase;
+  color: var(--text-tertiary);
 }
 
-.email-subject-text {
+.em-subject-text {
   font-size: var(--text-sm);
-  font-weight: 600;
+  font-weight: var(--weight-medium);
   color: var(--text-primary);
 }
 
-.email-body-editor {
-  width: 100%;
-  padding: 1.25rem;
-  border: none;
-  font-family: inherit;
+.em-body {
+  flex: 1;
+  min-height: 300px;
   font-size: var(--text-sm);
-  line-height: 1.7;
+  line-height: var(--leading-body);
   resize: vertical;
-  min-height: 250px;
-  background: transparent;
-  color: var(--text-primary);
 }
 
-.email-body-editor:focus {
-  outline: none;
+.em-loading-note {
+  margin-top: var(--space-4);
+  font-size: var(--text-sm);
+  color: var(--text-tertiary);
+  text-align: center;
 }
 
-.email-gen-actions {
+.em-actions {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0.75rem 1.25rem;
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  margin-top: var(--space-4);
 }
 
-.email-gen-actions-right {
+.em-actions-right {
   display: flex;
-  gap: 0.5rem;
+  gap: var(--space-2);
 }
 
-/* Mobile */
-@media (max-width: 768px) {
-  .email-gen {
-    padding: var(--space-4);
-  }
+@media (max-width: 520px) {
+  .em-actions,
+  .em-actions-right { width: 100%; }
 
-  .email-gen-layout {
-    grid-template-columns: 1fr;
-  }
+  .em-actions > .btn,
+  .em-actions-right { flex: 1; }
 
-  .email-type-selector {
-    grid-template-columns: 1fr 1fr;
-  }
-
-  .email-field-row {
-    grid-template-columns: 1fr;
-  }
+  .em-actions-right > .btn { flex: 1; }
 }

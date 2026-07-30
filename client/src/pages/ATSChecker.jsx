@@ -1,60 +1,86 @@
 import { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Upload, FileText, Briefcase, BarChart3, AlertTriangle, CheckCircle, XCircle, Loader, ChevronDown, ChevronUp, Sparkles } from 'lucide-react';
+import { Upload, FileText, Briefcase, BarChart3, AlertTriangle, CheckCircle, XCircle, ChevronDown, ChevronUp, Sparkles } from 'lucide-react';
 import toast from 'react-hot-toast';
 import api from '../services/api';
 import { useResume } from '../context/ResumeContext';
 import './ATSChecker.css';
 
+/** Band a score falls into. Drives colour everywhere, from one place. */
+const bandOf = (score) => (score >= 80 ? 'good' : score >= 60 ? 'fair' : 'poor');
+
+/**
+ * The score, as a ring.
+ *
+ * Colours come from the token layer via data-band rather than hex literals —
+ * the track used to be #e5e7eb, a light-mode grey, which read as a bright
+ * halo on a near-black page.
+ */
 const ScoreRing = ({ score }) => {
   const radius = 54;
   const circumference = 2 * Math.PI * radius;
   const offset = circumference - (score / 100) * circumference;
-  const color = score >= 80 ? '#16a34a' : score >= 60 ? '#d97706' : '#dc2626';
 
   return (
-    <div className="score-ring-container">
-      <svg width="140" height="140" viewBox="0 0 140 140">
-        <circle cx="70" cy="70" r={radius} fill="none" stroke="#e5e7eb" strokeWidth="8" />
+    <div className="ats-ring" data-band={bandOf(score)}>
+      <svg width="140" height="140" viewBox="0 0 140 140" aria-hidden="true">
+        <circle className="ats-ring-track" cx="70" cy="70" r={radius} fill="none" strokeWidth="8" />
         <circle
+          className="ats-ring-value"
           cx="70" cy="70" r={radius} fill="none"
-          stroke={color} strokeWidth="8" strokeLinecap="round"
+          strokeWidth="8" strokeLinecap="round"
           strokeDasharray={circumference} strokeDashoffset={offset}
           transform="rotate(-90 70 70)"
-          style={{ transition: 'stroke-dashoffset 1s ease' }}
         />
       </svg>
-      <div className="score-ring-value">
-        <span className="score-number" style={{ color }}>{score}</span>
-        <span className="score-label">/ 100</span>
-      </div>
+      <p className="ats-ring-label">
+        <span className="ats-ring-number">{score}</span>
+        <span className="ats-ring-max">/ 100</span>
+      </p>
     </div>
   );
 };
 
-const SectionScore = ({ name, data }) => {
+const SectionScore = ({ name, data, id }) => {
   const [expanded, setExpanded] = useState(false);
   const score = data?.score ?? 0;
   const weightPct = data?.weight != null ? Math.round(data.weight * 100) : null;
-  const color = score >= 80 ? 'green' : score >= 60 ? 'yellow' : 'red';
+  const hasFeedback = !!data?.feedback;
 
   return (
-    <div className={`section-score ${color}`}>
-      <button className="section-score-header" onClick={() => setExpanded(!expanded)}>
-        <div className="section-score-left">
-          <span className="section-score-name">
-            {name}
-            {weightPct != null && <span className="section-score-weight"> · {weightPct}% of score</span>}
-          </span>
-          <div className="section-score-bar">
-            <div className="section-score-fill" style={{ width: `${score}%` }} />
-          </div>
-          <span className="section-score-value">{score}</span>
-        </div>
-        {expanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+    <div className="ats-band" data-band={bandOf(score)}>
+      <button
+        type="button"
+        className="ats-band-head"
+        onClick={() => setExpanded((e) => !e)}
+        aria-expanded={expanded}
+        aria-controls={`${id}-feedback`}
+        disabled={!hasFeedback}
+      >
+        <span className="ats-band-name">
+          {name}
+          {weightPct != null && <span className="ats-band-weight">{weightPct}% of score</span>}
+        </span>
+
+        <span
+          className="ats-band-meter"
+          role="progressbar"
+          aria-valuenow={score}
+          aria-valuemin={0}
+          aria-valuemax={100}
+          aria-label={`${name} score`}
+        >
+          <span style={{ width: `${score}%` }} />
+        </span>
+
+        <span className="ats-band-value">{score}</span>
+        {hasFeedback && (expanded
+          ? <ChevronUp size={15} aria-hidden="true" />
+          : <ChevronDown size={15} aria-hidden="true" />)}
       </button>
-      {expanded && data?.feedback && (
-        <p className="section-score-feedback">{data.feedback}</p>
+
+      {expanded && hasFeedback && (
+        <p className="ats-band-feedback" id={`${id}-feedback`}>{data.feedback}</p>
       )}
     </div>
   );
@@ -175,18 +201,22 @@ const ATSChecker = () => {
   };
 
   return (
-    <div className="ats-page">
-      <div className="ats-header">
-        <h1>ATS Resume Checker</h1>
-        <p>Upload your resume and see how well it performs against Applicant Tracking Systems</p>
-      </div>
+    <div className="ats">
+      <header className="ats-head">
+        <h1 className="ats-title">ATS score checker</h1>
+        <p className="ats-sub">
+          Upload a resume and a job title. You get the same signals an applicant
+          tracking system reads: keyword overlap, parse-ability, and what is missing.
+        </p>
+      </header>
 
       <div className="ats-content">
         {/* Upload Panel */}
-        <div className="ats-upload-panel">
+        <div className="ats-panel">
           {/* File Upload */}
           <div
-            className={`ats-dropzone ${file ? 'has-file' : ''}`}
+            className="ats-drop"
+            data-has-file={!!file || undefined}
             role="button"
             tabIndex={0}
             aria-label={file ? `Selected file: ${file.name}. Click to change.` : 'Upload your resume PDF. Click or drag and drop.'}
@@ -195,30 +225,33 @@ const ATSChecker = () => {
             onClick={() => fileInputRef.current?.click()}
             onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); fileInputRef.current?.click(); } }}
           >
+            {/* The dropzone above is the labelled control; this is only the
+                mechanism. Named anyway so it is never an anonymous field. */}
             <input
               ref={fileInputRef}
               type="file"
               accept=".pdf"
               onChange={handleFileSelect}
+              aria-label="Choose a resume PDF"
               hidden
             />
             {file ? (
-              <div className="dropzone-file">
-                <FileText size={24} />
-                <span className="dropzone-filename">{file.name}</span>
-                <span className="dropzone-size">{(file.size / 1024).toFixed(0)} KB</span>
+              <div className="ats-drop-file">
+                <FileText size={22} aria-hidden="true" />
+                <span className="ats-drop-name">{file.name}</span>
+                <span className="ats-drop-size">{(file.size / 1024).toFixed(0)} KB · click to replace</span>
               </div>
             ) : (
-              <div className="dropzone-empty">
-                <Upload size={32} />
-                <span className="dropzone-title">Drop your resume here</span>
-                <span className="dropzone-subtitle">or click to browse (PDF only, max 5MB)</span>
+              <div className="ats-drop-empty">
+                <span className="ats-drop-icon"><Upload size={20} aria-hidden="true" /></span>
+                <span className="ats-drop-title">Drop a resume here</span>
+                <span className="ats-drop-hint">or click to browse — PDF, up to 5MB</span>
               </div>
             )}
           </div>
 
           {/* Job Details */}
-          <div className="ats-form">
+          <div className="ats-fields">
             <div className="form-group">
               <label className="form-label" htmlFor="ats-job-title">
                 <Briefcase size={14} /> Job title you're applying for
@@ -249,19 +282,18 @@ const ATSChecker = () => {
 
             <div className="ats-actions">
               <button
+                type="button"
                 className="btn btn-primary btn-lg"
                 onClick={handleAnalyze}
                 disabled={loading || !file || !jobTitle.trim()}
+                data-loading={loading || undefined}
               >
-                {loading ? (
-                  <><Loader size={16} className="spin" /> Analyzing...</>
-                ) : (
-                  <><BarChart3 size={16} /> Analyze Resume</>
-                )}
+                <BarChart3 size={16} aria-hidden="true" />
+                {loading ? 'Analysing…' : 'Check my score'}
               </button>
               {results && (
-                <button className="btn btn-secondary" onClick={handleReset}>
-                  Start Over
+                <button type="button" className="btn btn-secondary btn-lg" onClick={handleReset}>
+                  Start over
                 </button>
               )}
             </div>
@@ -269,11 +301,26 @@ const ATSChecker = () => {
         </div>
 
         {/* Results Panel */}
+        {/* A skeleton of the result, not a spinner: it reserves the space the
+            results will take, so nothing below jumps when they land. */}
         {loading && (
-          <div className="ats-loading">
-            <Loader size={32} className="spin" />
-            <p>Analyzing your resume with AI...</p>
-            <span>This may take a few seconds</span>
+          <div className="ats-results" aria-busy="true">
+            <div className="ats-score-card">
+              <div className="skeleton ats-skel-ring" />
+              <div className="ats-skel-lines">
+                <div className="skeleton" style={{ height: 22, width: '58%' }} />
+                <div className="skeleton" style={{ height: 13, width: '100%', marginTop: 14 }} />
+                <div className="skeleton" style={{ height: 13, width: '82%', marginTop: 8 }} />
+              </div>
+            </div>
+            <p className="ats-skel-note" role="status">
+              Reading your resume the way an ATS would. This takes a few seconds.
+            </p>
+            <div className="ats-block">
+              {[1, 2, 3, 4].map((i) => (
+                <div key={i} className="skeleton" style={{ height: 46, marginTop: i === 1 ? 0 : 10 }} />
+              ))}
+            </div>
           </div>
         )}
 
@@ -282,107 +329,109 @@ const ATSChecker = () => {
             {/* Overall Score */}
             <div className="ats-score-card">
               <ScoreRing score={results.overall_score} />
-              <div className="ats-score-summary">
-                <h2>
+              <div className="ats-score-copy">
+                <h2 className="ats-score-verdict">
                   {results.overall_score >= 80
-                    ? 'Great match!'
+                    ? 'Strong match for this role'
                     : results.overall_score >= 60
-                    ? 'Good, but room for improvement'
-                    : 'Needs significant improvement'}
+                      ? 'Workable, with gaps worth closing'
+                      : 'This will struggle to get through'}
                 </h2>
                 <p>{results.summary}</p>
               </div>
             </div>
 
             {/* Optimize CTA */}
-            <div className="ats-optimize-cta">
-              <div className="optimize-cta-text">
-                <h3>Want AI to fix this for you?</h3>
-                <p>We'll rewrite your resume to incorporate missing keywords, improve bullet points, and maximize your ATS score for this role.</p>
+            <div className="ats-cta">
+              <div>
+                <h3 className="ats-cta-title">Have AI close the gaps</h3>
+                <p className="ats-cta-desc">
+                  Rewrites your bullets to carry the missing keywords and opens the
+                  result in the builder as a new resume. The original is untouched.
+                </p>
               </div>
               <button
-                className="btn btn-primary btn-lg optimize-btn"
+                type="button"
+                className="btn btn-primary"
                 onClick={handleOptimize}
                 disabled={optimizing}
+                data-loading={optimizing || undefined}
               >
-                {optimizing ? (
-                  <><Loader size={16} className="spin" /> Optimizing...</>
-                ) : (
-                  <><Sparkles size={16} /> Optimize Resume with AI</>
-                )}
+                <Sparkles size={15} aria-hidden="true" />
+                {optimizing ? 'Rewriting…' : 'Optimise with AI'}
               </button>
             </div>
 
             {/* Section Breakdown — the engine's true rubric categories */}
             {results.sections && (
-              <div className="ats-sections">
-                <h3>Score Breakdown</h3>
-                <div className="sections-list">
-                  <SectionScore name="Keyword Match" data={results.sections.keywords} />
-                  <SectionScore name="Formatting & Parse-ability" data={results.sections.formatting} />
-                  <SectionScore name="Content Quality" data={results.sections.content} />
-                  <SectionScore name="Completeness" data={results.sections.completeness} />
+              <section className="ats-block">
+                <h3 className="ats-block-title">Score breakdown</h3>
+                <div className="ats-bands">
+                  <SectionScore id="ats-keywords" name="Keyword Match" data={results.sections.keywords} />
+                  <SectionScore id="ats-formatting" name="Formatting & Parse-ability" data={results.sections.formatting} />
+                  <SectionScore id="ats-content" name="Content Quality" data={results.sections.content} />
+                  <SectionScore id="ats-completeness" name="Completeness" data={results.sections.completeness} />
                 </div>
-              </div>
+              </section>
             )}
 
             {/* Keywords */}
             {results.keyword_match && (
-              <div className="ats-keywords">
-                <h3>Keyword Analysis</h3>
-                <div className="keywords-grid">
+              <section className="ats-block">
+                <h3 className="ats-block-title">Keywords</h3>
+                <div className="ats-kw-grid">
                   {results.keyword_match.found?.length > 0 && (
-                    <div className="keywords-group found">
-                      <h4><CheckCircle size={14} /> Found in Resume</h4>
-                      <div className="keywords-tags">
+                    <div className="ats-kw" data-kind="found">
+                      <h4><CheckCircle size={14} aria-hidden="true" /> In your resume</h4>
+                      <div className="ats-kw-tags">
                         {results.keyword_match.found.map((kw, i) => (
-                          <span key={i} className="keyword-tag found">{kw}</span>
+                          <span key={kw} className="ats-tag" data-kind="found">{kw}</span>
                         ))}
                       </div>
                     </div>
                   )}
                   {results.keyword_match.missing?.length > 0 && (
-                    <div className="keywords-group missing">
-                      <h4><XCircle size={14} /> Missing Keywords</h4>
-                      <div className="keywords-tags">
+                    <div className="ats-kw" data-kind="missing">
+                      <h4><XCircle size={14} aria-hidden="true" /> Missing</h4>
+                      <div className="ats-kw-tags">
                         {results.keyword_match.missing.map((kw, i) => (
-                          <span key={i} className="keyword-tag missing">{kw}</span>
+                          <span key={kw} className="ats-tag" data-kind="missing">{kw}</span>
                         ))}
                       </div>
                     </div>
                   )}
                 </div>
-              </div>
+              </section>
             )}
 
             {/* Improvements */}
             {results.improvements?.length > 0 && (
-              <div className="ats-improvements">
-                <h3>Recommended Improvements</h3>
-                <ul className="improvements-list">
+              <section className="ats-block">
+                <h3 className="ats-block-title">What to change</h3>
+                <ul className="ats-fixes">
                   {results.improvements.map((item, i) => (
-                    <li key={i} className={`improvement-item ${item.priority}`}>
-                      <AlertTriangle size={14} />
+                    <li key={item.suggestion} className="ats-fix" data-priority={item.priority}>
+                      <AlertTriangle size={14} aria-hidden="true" />
                       <div>
-                        <span className={`priority-badge ${item.priority}`}>{item.priority}</span>
-                        <span>{item.suggestion}</span>
+                        <span className="ats-priority">{item.priority} priority</span>
+                        <p>{item.suggestion}</p>
                       </div>
                     </li>
                   ))}
                 </ul>
-              </div>
+              </section>
             )}
 
             {/* Strengths */}
             {results.strengths?.length > 0 && (
-              <div className="ats-strengths">
-                <h3>Strengths</h3>
-                <ul className="strengths-list">
+              <section className="ats-block">
+                <h3 className="ats-block-title">Working well</h3>
+                <ul className="ats-strengths">
                   {results.strengths.map((s, i) => (
-                    <li key={i}><CheckCircle size={14} /> {s}</li>
+                    <li key={s}><CheckCircle size={14} aria-hidden="true" /> {s}</li>
                   ))}
                 </ul>
-              </div>
+              </section>
             )}
           </div>
         )}

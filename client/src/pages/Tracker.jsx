@@ -4,8 +4,9 @@ import { supabase } from '../config/supabase';
 import { useAuth } from '../context/AuthContext';
 import { useResume } from '../context/ResumeContext';
 import { tailorResume } from '../services/api';
-import { Briefcase, Plus, X, GripVertical, ExternalLink, Trash2, Edit3, Loader, Sparkles, FileText } from 'lucide-react';
+import { Briefcase, Plus, GripVertical, ExternalLink, Trash2, Edit3, Sparkles, AlertTriangle } from 'lucide-react';
 import toast from 'react-hot-toast';
+import Modal from '../components/ui/Modal';
 import './Tracker.css';
 
 const COLUMNS = [
@@ -30,6 +31,7 @@ const Tracker = () => {
   const [tailorApp, setTailorApp] = useState(null);
   const [tailorResumeId, setTailorResumeId] = useState('');
   const [tailoring, setTailoring] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState(null);
 
   const fetchApps = useCallback(async () => {
     const { data, error } = await supabase
@@ -183,217 +185,345 @@ const Tracker = () => {
 
   if (loading) {
     return (
-      <div className="tracker-loading">
-        <Loader size={24} className="spin" />
-        <span>Loading applications...</span>
+      <div className="tk">
+        <header className="tk-head">
+          <div>
+            <h1 className="tk-title">Applications</h1>
+            <p className="tk-sub">Loading…</p>
+          </div>
+        </header>
+        <div className="tk-board" aria-busy="true">
+          {COLUMNS.map((col) => (
+            <div key={col.id} className="tk-col">
+              <div className="tk-col-head">
+                <span className="tk-dot" style={{ background: col.color }} />
+                <span className="tk-col-label">{col.label}</span>
+              </div>
+              <div className="skeleton" style={{ height: 74 }} />
+              <div className="skeleton" style={{ height: 74, marginTop: 8 }} />
+            </div>
+          ))}
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="tracker">
-      <div className="tracker-header">
+    <div className="tk">
+      <header className="tk-head">
         <div>
-          <h1 className="tracker-title"><Briefcase size={22} /> Job Tracker</h1>
-          <p className="tracker-subtitle">{apps.length} application{apps.length !== 1 ? 's' : ''} tracked</p>
+          <h1 className="tk-title">Applications</h1>
+          <p className="tk-sub">
+            {apps.length === 0
+              ? 'Track where every application stands, from applied to offer.'
+              : `${apps.length} application${apps.length === 1 ? '' : 's'}. Drag a card to move it.`}
+          </p>
         </div>
-        <button className="btn btn-primary" onClick={() => openNew()}>
-          <Plus size={16} /> Add Application
+        <button type="button" className="btn btn-primary" onClick={() => openNew()}>
+          <Plus size={16} aria-hidden="true" /> Add application
         </button>
-      </div>
+      </header>
 
-      <div className="kanban">
+      {apps.length === 0 && (
+        <div className="empty-state tk-empty">
+          <span className="empty-state-icon">
+            <Briefcase size={22} aria-hidden="true" />
+          </span>
+          <h2 className="empty-state-title">No applications yet</h2>
+          <p className="empty-state-description">
+            Add the first one and it lands in Saved. Paste the job description with
+            it and you can tailor a resume to that role in one click.
+          </p>
+          <div className="empty-state-actions">
+            <button type="button" className="btn btn-primary btn-lg" onClick={() => openNew()}>
+              <Plus size={16} aria-hidden="true" /> Add your first application
+            </button>
+          </div>
+        </div>
+      )}
+
+      <div className="tk-board" data-empty={apps.length === 0 || undefined}>
         {COLUMNS.map((col) => (
           <div
             key={col.id}
-            className="kanban-column"
+            className="tk-col"
             onDragOver={(e) => e.preventDefault()}
             onDrop={() => handleDrop(col.id)}
           >
-            <div className="kanban-column-header">
-              <span className="kanban-column-dot" style={{ background: col.color }} />
-              <span className="kanban-column-label">{col.label}</span>
-              <span className="kanban-column-count">{countByStatus(col.id)}</span>
+            <div className="tk-col-head">
+              <span className="tk-dot" style={{ background: col.color }} />
+              <span className="tk-col-label">{col.label}</span>
+              <span className="tk-col-count">{countByStatus(col.id)}</span>
             </div>
 
-            <div className="kanban-cards">
+            <div className="tk-cards">
               {apps.filter((a) => a.status === col.id).map((app) => (
-                <div
+                <article
                   key={app.id}
-                  className="kanban-card"
+                  className="tk-card"
                   draggable
                   onDragStart={() => handleDragStart(app)}
                 >
-                  <div className="kanban-card-drag"><GripVertical size={12} /></div>
-                  <div className="kanban-card-body">
-                    <div className="kanban-card-company">{app.company}</div>
-                    <div className="kanban-card-position">{app.position}</div>
+                  <span className="tk-grip" aria-hidden="true"><GripVertical size={12} /></span>
+                  <div className="tk-card-body">
+                    <p className="tk-card-company">{app.company}</p>
+                    <p className="tk-card-role">{app.position}</p>
                     {app.applied_at && (
-                      <div className="kanban-card-date">Applied {app.applied_at}</div>
+                      <p className="tk-card-date">Applied {app.applied_at}</p>
                     )}
                   </div>
-                  <div className="kanban-card-actions">
-                    <button className="kanban-card-action" onClick={() => openTailorModal(app)} title="Tailor Resume">
-                      <Sparkles size={12} />
+                  {/* Named, not just titled: a title attribute is not an
+                      accessible name on a control with no text. */}
+                  <div className="tk-card-actions">
+                    <button
+                      type="button"
+                      className="tk-act"
+                      onClick={() => openTailorModal(app)}
+                      aria-label={`Tailor a resume for ${app.position} at ${app.company}`}
+                    >
+                      <Sparkles size={12} aria-hidden="true" />
                     </button>
                     {app.url && (
-                      <a href={app.url} target="_blank" rel="noopener noreferrer" className="kanban-card-action" title="Open URL">
-                        <ExternalLink size={12} />
+                      <a
+                        href={app.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="tk-act"
+                        aria-label={`Open the job posting for ${app.position} at ${app.company}`}
+                      >
+                        <ExternalLink size={12} aria-hidden="true" />
                       </a>
                     )}
-                    <button className="kanban-card-action" onClick={() => openEdit(app)} title="Edit">
-                      <Edit3 size={12} />
+                    <button
+                      type="button"
+                      className="tk-act"
+                      onClick={() => openEdit(app)}
+                      aria-label={`Edit ${app.position} at ${app.company}`}
+                    >
+                      <Edit3 size={12} aria-hidden="true" />
                     </button>
-                    <button className="kanban-card-action danger" onClick={() => handleDelete(app.id)} title="Delete">
-                      <Trash2 size={12} />
+                    <button
+                      type="button"
+                      className="tk-act tk-act-danger"
+                      onClick={() => setDeleteTarget(app)}
+                      aria-label={`Delete ${app.position} at ${app.company}`}
+                    >
+                      <Trash2 size={12} aria-hidden="true" />
                     </button>
                   </div>
-                </div>
+                </article>
               ))}
 
-              <button className="kanban-add-btn" onClick={() => openNew(col.id)}>
-                <Plus size={12} /> Add
+              <button
+                type="button"
+                className="tk-add"
+                onClick={() => openNew(col.id)}
+                aria-label={`Add an application to ${col.label}`}
+              >
+                <Plus size={12} aria-hidden="true" /> Add
               </button>
             </div>
           </div>
         ))}
       </div>
 
-      {/* Add/Edit Modal */}
-      {modalOpen && (
-        <div className="tracker-overlay" onClick={() => setModalOpen(false)}>
-          <div className="tracker-modal" onClick={(e) => e.stopPropagation()}>
-            <div className="tracker-modal-header">
-              <h3>{editing ? 'Edit Application' : 'New Application'}</h3>
-              <button className="tailor-close" onClick={() => setModalOpen(false)}><X size={18} /></button>
-            </div>
+      {/* Both dialogs use the shared Modal: the hand-rolled overlays they
+          replace had no focus trap, no Escape and no focus restore. */}
+      <Modal
+        open={modalOpen}
+        onClose={() => setModalOpen(false)}
+        title={editing ? 'Edit application' : 'New application'}
+        footer={
+          <>
+            <button type="button" className="btn btn-secondary" onClick={() => setModalOpen(false)}>
+              Cancel
+            </button>
+            <button type="button" className="btn btn-primary" onClick={handleSave}>
+              {editing ? 'Save changes' : 'Add application'}
+            </button>
+          </>
+        }
+      >
+        <div className="tk-form">
+          <div className="form-group">
+            <label className="form-label" htmlFor="tk-company">
+              Company <span className="form-required" aria-hidden="true">*</span>
+            </label>
+            <input
+              id="tk-company"
+              className="form-input"
+              required
+              value={form.company}
+              onChange={(e) => setForm({ ...form, company: e.target.value })}
+              placeholder="Acme Inc."
+            />
+          </div>
 
-            <div className="tracker-modal-body">
-              <div className="tracker-form-row">
-                <label>Company *</label>
-                <input
-                  className="form-input"
-                  value={form.company}
-                  onChange={(e) => setForm({ ...form, company: e.target.value })}
-                  placeholder="Google, Stripe, etc."
-                />
-              </div>
-              <div className="tracker-form-row">
-                <label>Position *</label>
-                <input
-                  className="form-input"
-                  value={form.position}
-                  onChange={(e) => setForm({ ...form, position: e.target.value })}
-                  placeholder="Frontend Engineer"
-                />
-              </div>
-              <div className="tracker-form-row">
-                <label>Job URL</label>
-                <input
-                  className="form-input"
-                  value={form.url}
-                  onChange={(e) => setForm({ ...form, url: e.target.value })}
-                  placeholder="https://..."
-                />
-              </div>
-              <div className="tracker-form-row-half">
-                <div className="tracker-form-row">
-                  <label>Status</label>
-                  <select
-                    className="form-input"
-                    value={form.status}
-                    onChange={(e) => setForm({ ...form, status: e.target.value })}
-                  >
-                    {COLUMNS.map((c) => <option key={c.id} value={c.id}>{c.label}</option>)}
-                  </select>
-                </div>
-                <div className="tracker-form-row">
-                  <label>Applied Date</label>
-                  <input
-                    className="form-input"
-                    type="date"
-                    value={form.applied_at}
-                    onChange={(e) => setForm({ ...form, applied_at: e.target.value })}
-                  />
-                </div>
-              </div>
-              <div className="tracker-form-row">
-                <label>Job Description</label>
-                <textarea
-                  className="form-textarea"
-                  value={form.job_description}
-                  onChange={(e) => setForm({ ...form, job_description: e.target.value })}
-                  placeholder="Paste the job description to enable AI resume tailoring..."
-                  rows={4}
-                />
-              </div>
-              <div className="tracker-form-row">
-                <label>Notes</label>
-                <textarea
-                  className="form-textarea"
-                  value={form.notes}
-                  onChange={(e) => setForm({ ...form, notes: e.target.value })}
-                  placeholder="Recruiter name, interview notes..."
-                  rows={3}
-                />
-              </div>
-            </div>
+          <div className="form-group">
+            <label className="form-label" htmlFor="tk-position">
+              Position <span className="form-required" aria-hidden="true">*</span>
+            </label>
+            <input
+              id="tk-position"
+              className="form-input"
+              required
+              value={form.position}
+              onChange={(e) => setForm({ ...form, position: e.target.value })}
+              placeholder="Frontend Engineer"
+            />
+          </div>
 
-            <div className="tracker-modal-footer">
-              <button className="btn btn-ghost" onClick={() => setModalOpen(false)}>Cancel</button>
-              <button className="btn btn-primary" onClick={handleSave}>
-                {editing ? 'Update' : 'Add Application'}
-              </button>
+          <div className="form-group">
+            <label className="form-label" htmlFor="tk-url">
+              Job URL <span className="form-label-optional">optional</span>
+            </label>
+            <input
+              id="tk-url"
+              type="url"
+              className="form-input"
+              value={form.url}
+              onChange={(e) => setForm({ ...form, url: e.target.value })}
+              placeholder="https://"
+            />
+          </div>
+
+          <div className="form-row">
+            <div className="form-group">
+              <label className="form-label" htmlFor="tk-status">Status</label>
+              <select
+                id="tk-status"
+                className="form-select"
+                value={form.status}
+                onChange={(e) => setForm({ ...form, status: e.target.value })}
+              >
+                {COLUMNS.map((c) => <option key={c.id} value={c.id}>{c.label}</option>)}
+              </select>
+            </div>
+            <div className="form-group">
+              <label className="form-label" htmlFor="tk-applied">Applied on</label>
+              <input
+                id="tk-applied"
+                className="form-input"
+                type="date"
+                value={form.applied_at}
+                onChange={(e) => setForm({ ...form, applied_at: e.target.value })}
+              />
             </div>
           </div>
-        </div>
-      )}
-      {/* Tailor Resume Modal */}
-      {tailorModalOpen && tailorApp && (
-        <div className="tracker-overlay" onClick={() => setTailorModalOpen(false)}>
-          <div className="tracker-modal" onClick={(e) => e.stopPropagation()}>
-            <div className="tracker-modal-header">
-              <h3><Sparkles size={16} /> Tailor Resume</h3>
-              <button className="tailor-close" onClick={() => setTailorModalOpen(false)}><X size={18} /></button>
-            </div>
 
-            <div className="tracker-modal-body">
-              <p style={{ fontSize: 'var(--text-sm)', color: 'var(--text-secondary)', margin: 0 }}>
-                Tailor a resume for <strong>{tailorApp.position}</strong> at <strong>{tailorApp.company}</strong>
-              </p>
+          <div className="form-group">
+            <label className="form-label" htmlFor="tk-jd">
+              Job description <span className="form-label-optional">optional</span>
+            </label>
+            <textarea
+              id="tk-jd"
+              className="form-textarea"
+              aria-describedby="tk-jd-hint"
+              value={form.job_description}
+              onChange={(e) => setForm({ ...form, job_description: e.target.value })}
+              placeholder="Paste the posting here"
+              rows={4}
+            />
+            <p className="form-hint" id="tk-jd-hint">
+              Needed to tailor a resume to this role.
+            </p>
+          </div>
 
-              <div className="tracker-form-row">
-                <label><FileText size={12} /> Select a resume to tailor</label>
-                <select
-                  className="form-input"
-                  value={tailorResumeId}
-                  onChange={(e) => setTailorResumeId(e.target.value)}
-                >
-                  <option value="">-- Select a resume --</option>
-                  {resumes.map((r) => (
-                    <option key={r.id} value={r.id}>
-                      {r.title || `${r.personal_info?.first_name || ''} ${r.personal_info?.last_name || ''}`.trim() || 'Untitled'}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              {!tailorApp.job_description && (
-                <div className="alert alert-warning" style={{ fontSize: 'var(--text-xs)' }}>
-                  No job description saved. Edit the application to add one for better results.
-                </div>
-              )}
-            </div>
-
-            <div className="tracker-modal-footer">
-              <button className="btn btn-ghost" onClick={() => setTailorModalOpen(false)}>Cancel</button>
-              <button className="btn btn-primary" onClick={handleTailor} disabled={tailoring || !tailorResumeId}>
-                {tailoring ? <><Loader size={14} className="spin" /> Tailoring...</> : <><Sparkles size={14} /> Tailor Resume</>}
-              </button>
-            </div>
+          <div className="form-group">
+            <label className="form-label" htmlFor="tk-notes">
+              Notes <span className="form-label-optional">optional</span>
+            </label>
+            <textarea
+              id="tk-notes"
+              className="form-textarea"
+              value={form.notes}
+              onChange={(e) => setForm({ ...form, notes: e.target.value })}
+              placeholder="Recruiter name, interview dates, anything worth remembering"
+              rows={3}
+            />
           </div>
         </div>
-      )}
+      </Modal>
+
+      <Modal
+        open={tailorModalOpen && !!tailorApp}
+        onClose={() => setTailorModalOpen(false)}
+        title="Tailor a resume"
+        description={
+          tailorApp ? `For ${tailorApp.position} at ${tailorApp.company}.` : undefined
+        }
+        footer={
+          <>
+            <button type="button" className="btn btn-secondary" onClick={() => setTailorModalOpen(false)}>
+              Cancel
+            </button>
+            <button
+              type="button"
+              className="btn btn-primary"
+              onClick={handleTailor}
+              disabled={tailoring || !tailorResumeId}
+              data-loading={tailoring || undefined}
+            >
+              <Sparkles size={14} aria-hidden="true" /> Tailor resume
+            </button>
+          </>
+        }
+      >
+        <div className="tk-form">
+          <div className="form-group">
+            <label className="form-label" htmlFor="tk-resume">Which resume?</label>
+            <select
+              id="tk-resume"
+              className="form-select"
+              value={tailorResumeId}
+              onChange={(e) => setTailorResumeId(e.target.value)}
+            >
+              <option value="">Select a resume…</option>
+              {resumes.map((r) => (
+                <option key={r.id} value={r.id}>
+                  {r.title || `${r.personal_info?.first_name || ''} ${r.personal_info?.last_name || ''}`.trim() || 'Untitled'}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {tailorApp && !tailorApp.job_description && (
+            <div className="alert alert-warning">
+              <AlertTriangle size={15} aria-hidden="true" />
+              <span>
+                This application has no job description saved, so the result will be
+                generic. Edit it and paste the posting for a real tailoring pass.
+              </span>
+            </div>
+          )}
+        </div>
+      </Modal>
+
+      <Modal
+        open={!!deleteTarget}
+        onClose={() => setDeleteTarget(null)}
+        title="Delete this application?"
+        description={
+          deleteTarget
+            ? `${deleteTarget.position} at ${deleteTarget.company}, and any notes on it, will be removed. This cannot be undone.`
+            : undefined
+        }
+        size="sm"
+        footer={
+          <>
+            <button type="button" className="btn btn-secondary" onClick={() => setDeleteTarget(null)}>
+              Keep it
+            </button>
+            <button
+              type="button"
+              className="btn btn-danger-solid"
+              onClick={async () => { await handleDelete(deleteTarget.id); setDeleteTarget(null); }}
+            >
+              <Trash2 size={14} aria-hidden="true" /> Delete
+            </button>
+          </>
+        }
+      />
     </div>
   );
 };
