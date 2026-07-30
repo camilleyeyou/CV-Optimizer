@@ -38,23 +38,29 @@ const Pricing = () => {
   const { isAuthenticated } = useAuth();
   const navigate = useNavigate();
 
-  /* Only offer periods that have a Stripe price configured. Until the check
-     resolves we show the full set optimistically — a period that turns out to
-     be unconfigured is filtered out rather than failing at checkout. */
+  /* Only offer periods that have a Stripe price configured.
+     `available` is null until the check resolves, an array once it has.
+     An empty array means billing is not set up yet — the page still explains
+     the plan, but it must not offer a checkout that would fail on click. */
   useEffect(() => {
     let cancelled = false;
     getBillingPlans()
       .then(({ plans }) => {
         if (cancelled) return;
-        const pro = plans?.find((p) => p.id === 'pro');
-        if (pro?.intervals?.length) setAvailable(pro.intervals);
+        setAvailable(plans?.find((p) => p.id === 'pro')?.intervals ?? []);
       })
-      .catch(() => { /* leave the default set in place */ });
+      .catch(() => {
+        // Endpoint unreachable: assume billing works rather than hiding the
+        // buy button on a transient network error. Checkout reports its own.
+        if (!cancelled) setAvailable(null);
+      });
     return () => { cancelled = true; };
   }, []);
 
+  const billingReady = available === null || available.length > 0;
+
   const intervals = useMemo(
-    () => (available ? INTERVALS.filter((i) => available.includes(i.id)) : INTERVALS),
+    () => (available?.length ? INTERVALS.filter((i) => available.includes(i.id)) : INTERVALS),
     [available]
   );
 
@@ -126,6 +132,9 @@ const Pricing = () => {
           are applying often enough that tailoring each one matters.
         </p>
 
+        {/* Always shown. Gating this on billingReady would collapse the header
+            when the check resolves and shift the whole page; and the rates are
+            worth reading even before checkout is open. */}
         {intervals.length > 1 && (
           <div className="segmented pr-toggle" role="tablist" aria-label="Billing period">
             {intervals.map((i) => (
@@ -182,18 +191,32 @@ const Pricing = () => {
             ))}
           </ul>
 
-          <button
-            type="button"
-            className="btn btn-primary btn-lg btn-block"
-            onClick={handleUpgrade}
-            data-loading={pending || undefined}
-            disabled={pending}
-          >
-            {PRO_PLAN.cta} <ArrowRight size={15} aria-hidden="true" />
-          </button>
-          <p className="pr-plan-fineprint">
-            <ShieldCheck size={13} aria-hidden="true" /> Cancel any time from your account.
-          </p>
+          {billingReady ? (
+            <>
+              <button
+                type="button"
+                className="btn btn-primary btn-lg btn-block"
+                onClick={handleUpgrade}
+                data-loading={pending || undefined}
+                disabled={pending}
+              >
+                {PRO_PLAN.cta} <ArrowRight size={15} aria-hidden="true" />
+              </button>
+              <p className="pr-plan-fineprint">
+                <ShieldCheck size={13} aria-hidden="true" /> Cancel any time from your account.
+              </p>
+            </>
+          ) : (
+            /* No Stripe price is configured yet. Send people to the free plan
+               rather than a checkout that would fail, and say why plainly —
+               a dead upgrade button costs more trust than an honest note. */
+            <>
+              <Link to="/register" className="btn btn-secondary btn-lg btn-block">
+                Start on the free plan
+              </Link>
+              <p className="pr-plan-fineprint">Pro checkout is not open yet.</p>
+            </>
+          )}
         </div>
       </section>
 
