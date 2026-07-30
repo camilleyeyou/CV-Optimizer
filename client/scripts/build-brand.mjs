@@ -6,6 +6,24 @@
 import { writeFileSync, readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { chromium } from 'playwright';
+import { resolveSiteOrigin } from './site-origin.mjs';
+
+/* The card used to have a hostname painted into it. It said
+   cv-optimizer.vercel.app, which is a different site — and because the card is
+   a baked PNG, a wrong URL there survives every code fix and every redeploy.
+
+   Only an explicitly configured domain is printed. Set VITE_SITE_URL and
+   re-run this script once the real domain exists; until then the card carries
+   no address rather than an address that goes somewhere else. */
+const EXPLICIT_HOST = process.env.VITE_SITE_URL
+  ? new URL(resolveSiteOrigin()).host
+  : null;
+
+/* The chip said "21 templates". Read it, so shipping a template cannot leave
+   the share card claiming a number the site no longer matches. */
+const TEMPLATE_COUNT = JSON.parse(
+  readFileSync(fileURLToPath(new URL('../../template-registry.json', import.meta.url)), 'utf8')
+).templates.length;
 
 const PUB = fileURLToPath(new URL('../public', import.meta.url));
 const MARK = readFileSync(new URL('./mark-path.txt', import.meta.url), 'utf8').trim();
@@ -96,8 +114,8 @@ p{font-size:25px;line-height:1.5;color:#b6bcc8;max-width:34ch;margin-top:20px}
     <p>Score it against applicant tracking systems, fix what they flag, export a clean PDF.</p>
   </div>
   <div class="foot">
-    <div class="chips"><span class="chip">11 AI tools</span><span class="chip">21 templates</span><span class="chip">Free to start</span></div>
-    <span class="url">cv-optimizer.vercel.app</span>
+    <div class="chips"><span class="chip">11 AI tools</span><span class="chip">${TEMPLATE_COUNT} templates</span><span class="chip">Free to start</span></div>
+    ${EXPLICIT_HOST ? `<span class="url">${EXPLICIT_HOST}</span>` : ''}
   </div>
 </div>
 <div class="score">
