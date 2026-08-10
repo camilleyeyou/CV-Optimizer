@@ -163,6 +163,15 @@
   color: var(--text-primary);
 }
 
+/* A real picture fills the same 28px circle the initial occupies. It needs the
+   accent background dropped — that colour is the backdrop for a letter, and it
+   would show through any transparency in a photo — and cropping, since the
+   source is rarely exactly square. */
+img.user-avatar {
+  background: var(--surface-inset);
+  object-fit: cover;
+}
+
 .user-avatar {
   display: inline-flex;
   align-items: center;

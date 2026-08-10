@@ -3,6 +3,7 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Mail, ArrowRight, AlertCircle } from 'lucide-react';
 import Seo from '../components/common/Seo';
 import AuthShell from '../components/auth/AuthShell';
+import GoogleButton from '../components/auth/GoogleButton';
 import PasswordField from '../components/auth/PasswordField';
 import { useAuth } from '../context/AuthContext';
 
@@ -50,6 +51,12 @@ const Login = () => {
             <span>{error}</span>
           </div>
         )}
+
+        {/* Carries `from` through the round-trip so a user bounced here by
+            PrivateRoute lands back where they were headed, exactly as the email
+            form below does. */}
+        <GoogleButton next={from} label="Sign in with Google" onError={setError} />
+        <div className="au-divider">or</div>
 
         <form className="au-form" onSubmit={handleSubmit} noValidate={false}>
           <div className="form-group">

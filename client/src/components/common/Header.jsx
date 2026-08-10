@@ -3,6 +3,7 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { getCredits } from '../../services/api';
 import { Menu, X, LogOut, User, ChevronDown, LayoutDashboard, FileSearch, Sparkles, PenTool, Layout, Mail, Zap, Briefcase, MessageSquare, BarChart3, Settings, Send } from 'lucide-react';
+import Avatar from './Avatar';
 import Logo from './Logo';
 import './Header.css';
 
@@ -34,7 +35,7 @@ const Header = () => {
   const [toolsOpen, setToolsOpen] = useState(false);
   const dropdownRef = useRef(null);
   const toolsRef = useRef(null);
-  const { user, signOut, isAuthenticated } = useAuth();
+  const { user, firstName, avatarUrl, signOut, isAuthenticated } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -108,10 +109,7 @@ const Header = () => {
 
   const isActive = (path) => location.pathname === path;
 
-  const displayName =
-    user?.user_metadata?.first_name ||
-    user?.email?.split('@')[0] ||
-    'User';
+  const displayName = firstName || 'User';
 
   const initial = displayName.charAt(0).toUpperCase();
   const isAuthPage = ['/login', '/register'].includes(location.pathname);
@@ -177,7 +175,7 @@ const Header = () => {
                   aria-haspopup="true"
                   aria-label={`User menu for ${displayName}`}
                 >
-                  <span className="user-avatar">{initial}</span>
+                  <Avatar url={avatarUrl} initial={initial} />
                   <span className="user-name">{displayName}</span>
                   <ChevronDown size={14} aria-hidden="true" />
                 </button>
@@ -273,7 +271,7 @@ const Header = () => {
 
               <div className="mobile-drawer-footer">
                 <div className="mobile-user-info">
-                  <span className="user-avatar">{initial}</span>
+                  <Avatar url={avatarUrl} initial={initial} />
                   <div>
                     <span className="mobile-user-name">{displayName}</span>
                     <span className="mobile-user-email">{user?.email}</span>

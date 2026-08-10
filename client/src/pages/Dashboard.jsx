@@ -33,7 +33,7 @@ const Dashboard = () => {
   const {
     resumes, loading, deleteResume, duplicateResume, createResume, updateResume,
   } = useResume();
-  const { user } = useAuth();
+  const { firstName } = useAuth();
   const [menuOpen, setMenuOpen] = useState(null);
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [deleting, setDeleting] = useState(false);
@@ -48,8 +48,7 @@ const Dashboard = () => {
   const triggerRefs = useRef({});
   const restoreFocusRef = useRef(null);
 
-  const displayName =
-    user?.user_metadata?.first_name || user?.email?.split('@')[0] || 'there';
+  const displayName = firstName || 'there';
 
   const refreshBilling = useCallback(() => {
     getCredits().then(setBilling).catch(() => {});
