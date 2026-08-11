@@ -590,54 +590,6 @@
   color: var(--success-fg);
 }
 
-/* Student band ------------------------------------------------------------ */
-
-.lp-student {
-  display: flex;
-  align-items: center;
-  gap: var(--space-5);
-  margin-top: var(--space-6);
-  padding: var(--space-5) var(--space-6);
-  background: var(--surface-raised);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-2xl);
-  box-shadow: var(--shadow-card);
-}
-
-.lp-student-icon {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 42px;
-  height: 42px;
-  flex-shrink: 0;
-  color: var(--accent-fg);
-  background: var(--accent-bg);
-  border: 1px solid var(--accent-border);
-  border-radius: var(--radius-lg);
-}
-
-.lp-student > div { flex: 1; }
-
-.lp-student-title {
-  font-family: var(--font-display);
-  font-size: var(--text-md);
-  font-weight: var(--weight-bold);
-  letter-spacing: var(--tracking-heading);
-  color: var(--text-primary);
-}
-
-.lp-student-desc {
-  margin-top: 2px;
-  font-size: var(--text-sm);
-  color: var(--text-tertiary);
-}
-
-@media (max-width: 700px) {
-  .lp-student { flex-direction: column; align-items: flex-start; }
-  .lp-student > .btn { width: 100%; }
-}
-
 /* ============================================================================
    CLOSING CTA
    ========================================================================= */

@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Check, Minus, ArrowRight, GraduationCap, ShieldCheck } from 'lucide-react';
+import { Check, Minus, ArrowRight, ShieldCheck } from 'lucide-react';
 import toast from 'react-hot-toast';
 import Seo from '../components/common/Seo';
 import { startCheckout, getBillingPlans } from '../services/api';
@@ -218,20 +218,6 @@ const Pricing = () => {
             </>
           )}
         </div>
-      </section>
-
-      {/* ---------------- Student ---------------- */}
-      <section className="pr-student">
-        <span className="pr-student-icon">
-          <GraduationCap size={20} aria-hidden="true" />
-        </span>
-        <div>
-          <h2 className="pr-student-title">Students get Pro free for six months</h2>
-          <p className="pr-student-desc">
-            Verify a .edu address from your account and Pro unlocks straight away. No card.
-          </p>
-        </div>
-        <Link to="/register" className="btn btn-secondary">Get started</Link>
       </section>
 
       {/* ---------------- Comparison ---------------- */}

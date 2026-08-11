@@ -1,25 +1,21 @@
 /**
- * Resolve a user's effective plan from their profile row.
+ * Resolve a user's plan from their profile row, defaulting to 'free'.
  *
- * An expired student grant falls back to 'free' — UNLESS the plan is a genuine
- * upgrade that the student program could not have produced. The student program
- * only ever grants 'pro', so an explicit 'premium' plan (or any plan backed by a
- * paid Stripe subscription) is a real upgrade and survives student-grant expiry.
- * This also covers manual DB upgrades, which set plan but have no Stripe sub.
+ * This used to reconcile expired .edu student grants against real upgrades.
+ * That program is gone, so the rule is now simply "whatever the profile says",
+ * with a missing profile treated as free — a user who has never hit an
+ * authenticated route has no row at all (profiles are created lazily by the
+ * credits middleware, not by a trigger).
  *
- * @param {{plan?: string, is_student?: boolean, student_expires_at?: string, stripe_subscription_id?: string|null}} profile
+ * Kept as a shared helper rather than inlined so the credits, template and plan
+ * middleware cannot drift on what an absent profile means.
+ *
+ * @param {{plan?: string}} profile
  * @returns {'free'|'pro'|'premium'|string}
  */
 function effectivePlan(profile) {
   if (!profile) return 'free';
-  const plan = profile.plan || 'free';
-  if (plan === 'premium' || profile.stripe_subscription_id) return plan;
-  const studentExpired =
-    profile.is_student &&
-    profile.student_expires_at &&
-    new Date(profile.student_expires_at) < new Date();
-  if (studentExpired) return 'free';
-  return plan;
+  return profile.plan || 'free';
 }
 
 module.exports = { effectivePlan };

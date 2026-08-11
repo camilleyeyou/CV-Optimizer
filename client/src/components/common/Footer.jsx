@@ -35,7 +35,6 @@ const PUBLIC_COLUMNS = [
     links: [
       { to: '/register', label: 'Create an account' },
       { to: '/login', label: 'Sign in' },
-      { to: '/register', label: 'Student discount' },
     ],
   },
   LEGAL_COLUMN,

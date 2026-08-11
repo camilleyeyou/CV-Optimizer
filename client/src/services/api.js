@@ -99,9 +99,6 @@ export const createShare = (resumeId) => api.post('/api/share/create', { resumeI
 export const getShareByToken = (token) => api.get(`/api/share/${token}`).then((r) => r.data);
 export const deleteShare = (shareId) => api.delete(`/api/share/${shareId}`).then((r) => r.data);
 
-// Student verification
-export const verifyStudent = () => api.post('/api/student/verify').then((r) => r.data);
-
 // Credits
 export const getCredits = () => api.get('/api/credits').then((r) => r.data);
 

@@ -196,9 +196,9 @@
 }
 
 /* --- Context banner ------------------------------------------------------- */
-/* A template carried through from a "Use this template" click, or the student
-   plan notice. Both answer the same question: what am I actually signing up
-   for? Kept inside the card so the answer travels with the form. */
+/* A template carried through from a "Use this template" click. It answers the
+   question "what am I actually signing up for?", so it is kept inside the card
+   where the answer travels with the form. */
 
 .au-banner {
   display: flex;

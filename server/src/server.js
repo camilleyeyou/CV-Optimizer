@@ -114,7 +114,6 @@ app.use('/api/ai', require('./routes/ai'));
 app.use('/api/pdf', require('./routes/pdf'));
 app.use('/api/ats', require('./routes/ats'));
 app.use('/api/share', require('./routes/share'));
-app.use('/api/student', require('./routes/student'));
 app.use('/api/billing', require('./routes/billing'));
 app.use('/api/account', require('./routes/account'));
 

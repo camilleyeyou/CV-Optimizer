@@ -156,11 +156,6 @@ export const FAQ = [
       + 'in your account.',
   },
   {
-    q: 'Do you offer a student discount?',
-    a: 'Verify a .edu address from your account and Pro unlocks free for six months. '
-      + 'No card required.',
-  },
-  {
     q: 'Is the ATS score tied to a specific system?',
     a: 'No. It estimates how applicant tracking systems commonly parse and rank a '
       + 'resume — keyword coverage, section structure, date consistency and '

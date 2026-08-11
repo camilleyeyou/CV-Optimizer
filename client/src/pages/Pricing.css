@@ -144,55 +144,6 @@
   color: var(--text-tertiary);
 }
 
-/* --- Student band -------------------------------------------------------- */
-
-.pr-student {
-  display: flex;
-  align-items: center;
-  gap: var(--space-5);
-  max-width: 880px;
-  margin: var(--space-6) auto 0;
-  padding: var(--space-5) var(--space-6);
-  background: var(--surface-raised);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-2xl);
-  box-shadow: var(--shadow-card);
-}
-
-.pr-student-icon {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 42px;
-  height: 42px;
-  flex-shrink: 0;
-  color: var(--accent-fg);
-  background: var(--accent-bg);
-  border: 1px solid var(--accent-border);
-  border-radius: var(--radius-lg);
-}
-
-.pr-student > div { flex: 1; }
-
-.pr-student-title {
-  font-family: var(--font-display);
-  font-size: var(--text-md);
-  font-weight: var(--weight-bold);
-  letter-spacing: var(--tracking-heading);
-  color: var(--text-primary);
-}
-
-.pr-student-desc {
-  margin-top: 2px;
-  font-size: var(--text-sm);
-  color: var(--text-tertiary);
-}
-
-@media (max-width: 700px) {
-  .pr-student { flex-direction: column; align-items: flex-start; }
-  .pr-student > .btn { width: 100%; }
-}
-
 /* --- Comparison table ---------------------------------------------------- */
 
 .pr-compare { margin-top: var(--section-y); }

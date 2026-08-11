@@ -10,9 +10,8 @@ const supabase = createClient(
  * Server-side paywall for plan-restricted features. UI hiding is bypassable, so
  * any feature advertised as Pro/Premium must also be enforced here.
  *
- * Resolves the effective plan exactly like the credits/template middleware:
- * an expired student plan is treated as free. Fails closed if the plan can't
- * be verified.
+ * Resolves the plan exactly like the credits/template middleware. Fails closed
+ * if the plan can't be verified.
  *
  * @param {string[]} allowedPlans e.g. ['pro','premium'] or ['premium']
  */
@@ -24,7 +23,7 @@ const requirePlan = (allowedPlans) => async (req, res, next) => {
   try {
     const { data: profile } = await supabase
       .from('user_profiles')
-      .select('plan, is_student, student_expires_at, stripe_subscription_id')
+      .select('plan')
       .eq('id', req.user.id)
       .single();
 

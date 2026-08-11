@@ -22,8 +22,6 @@ const mockProfile = {
   id: 'user-1',
   plan: 'free',
   ai_credits: 1,
-  is_student: false,
-  student_expires_at: null,
   credits_reset_at: new Date().toISOString(), // recent -> no monthly reset
 };
 

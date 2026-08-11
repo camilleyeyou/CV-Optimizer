@@ -1,12 +1,7 @@
 import { createContext, useContext, useState, useEffect } from 'react';
 import { supabase } from '../config/supabase';
-import { verifyStudent } from '../services/api';
 
 const AuthContext = createContext(null);
-
-/* Loose on purpose: the server owns the real list (see studentController) and
-   rejects anything else. This only avoids pointless calls. */
-const EDU_DOMAIN = /\.(edu|ac)(\.[a-z]{2})?(\.[a-z]{2})?$/i;
 
 /**
  * A first name to greet the user by, or null when nothing usable exists.
@@ -70,41 +65,6 @@ export const AuthProvider = ({ children }) => {
 
     return () => subscription.unsubscribe();
   }, []);
-
-  /**
-   * Grant the student plan once a .edu address is confirmed.
-   *
-   * This deliberately does not live on the signup form. The server requires
-   * `email_confirmed_at` before granting (see studentController), and that is
-   * not set at the moment signUp resolves on any project that requires email
-   * confirmation — so calling it there silently does nothing. It also cannot
-   * live on a single page: a student may well arrive through Google, since
-   * universities run on Workspace, and never touch the register route.
-   *
-   * The route allows five attempts an hour per IP, so this is capped at one per
-   * browser session rather than one per page load. The server is idempotent
-   * (409 once a grant is active) and every outcome here is non-blocking.
-   */
-  useEffect(() => {
-    if (!user?.email) return;
-    if (!(user.email_confirmed_at || user.confirmed_at)) return;
-    if (!EDU_DOMAIN.test(user.email.split('@')[1] || '')) return;
-
-    // sessionStorage is unavailable in some privacy modes. Falling back to one
-    // attempt per mount is fine given the server is idempotent.
-    let triedAlready = false;
-    try {
-      const key = `cvo:student-check:${user.id}`;
-      triedAlready = !!sessionStorage.getItem(key);
-      if (!triedAlready) sessionStorage.setItem(key, '1');
-    } catch { /* no storage — try once for this mount */ }
-    if (triedAlready) return;
-
-    verifyStudent().catch(() => {
-      /* Not eligible, already granted, already paying, or rate limited. All of
-         those are fine and none should reach the user. */
-    });
-  }, [user]);
 
   const signUp = async (email, password, metadata = {}) => {
     const { data, error } = await supabase.auth.signUp({

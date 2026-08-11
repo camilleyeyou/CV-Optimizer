@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import {
-  Mail, User, ArrowRight, GraduationCap, AlertCircle, Check, Circle, MailCheck,
+  Mail, User, ArrowRight, AlertCircle, Check, Circle, MailCheck,
 } from 'lucide-react';
 import Seo from '../components/common/Seo';
 import AuthShell from '../components/auth/AuthShell';
@@ -13,7 +13,6 @@ import { isTemplateSlug } from '../config/templateContent';
 import { getTemplate } from '../config/templates';
 
 const MIN_PASSWORD = 8;
-const STUDENT_DOMAIN = /\.(edu|ac\.[a-z]{2})$/i;
 
 const Register = () => {
   const [formData, setFormData] = useState({
@@ -128,7 +127,6 @@ const Register = () => {
     }
   };
 
-  const isStudent = STUDENT_DOMAIN.test(formData.email.split('@')[1] || '');
   const longEnough = formData.password.length >= MIN_PASSWORD;
   const matches = formData.confirmPassword.length > 0
     && formData.password === formData.confirmPassword;
@@ -152,12 +150,6 @@ const Register = () => {
               <strong>{formData.email}</strong> to activate it
               {preselected && <> — your {getTemplate(preselected).name} template is waiting</>}.
             </p>
-            {isStudent && (
-              <p>
-                Six months of Pro will be applied to this <strong>.edu</strong> address
-                once it is confirmed.
-              </p>
-            )}
           </div>
         </AuthShell>
       </>
@@ -193,21 +185,6 @@ const Register = () => {
             <div className="au-banner-text">
               <p className="au-banner-title">{getTemplate(preselected).name} template</p>
               <p className="au-banner-desc">Opens in the builder as soon as you sign up.</p>
-            </div>
-          </div>
-        )}
-
-        {/* Above the form, not below the button: the offer is only useful if it
-            is read before the decision, and a .edu address is worth six months
-            of Pro. */}
-        {isStudent && (
-          <div className="au-banner">
-            <span className="au-banner-icon">
-              <GraduationCap size={17} aria-hidden="true" />
-            </span>
-            <div className="au-banner-text">
-              <p className="au-banner-title">Student email recognised</p>
-              <p className="au-banner-desc">Pro is free for six months on this address.</p>
             </div>
           </div>
         )}

@@ -17,8 +17,8 @@ const PAYWALL_ENABLED = process.env.TEMPLATE_PAYWALL_ENABLED === 'true';
 
 /**
  * Server-side enforcement of the premium-template paywall.
- * Free templates pass through. Premium templates require a pro/premium plan
- * (expired student plans are treated as free, matching the credits middleware).
+ * Free templates pass through. Premium templates require a pro/premium plan,
+ * resolved the same way as the credits middleware.
  */
 const enforceTemplateAccess = async (req, res, next) => {
   if (!PAYWALL_ENABLED) return next();
@@ -33,7 +33,7 @@ const enforceTemplateAccess = async (req, res, next) => {
   try {
     const { data: profile } = await supabase
       .from('user_profiles')
-      .select('plan, is_student, student_expires_at, stripe_subscription_id')
+      .select('plan')
       .eq('id', req.user.id)
       .single();
 

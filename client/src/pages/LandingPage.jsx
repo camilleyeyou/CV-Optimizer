@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import {
   Target, PenTool, Briefcase, MessageSquare, Mail, Globe, Check, ArrowRight,
-  Loader, Sparkles, GraduationCap, Wand2, ListChecks, LineChart, FileDown,
+  Loader, Sparkles, Wand2, ListChecks, LineChart, FileDown,
   Link2, ShieldCheck, Lock,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
@@ -460,21 +460,6 @@ const LandingPage = () => {
         <p className="lp-plans-more">
           <Link to="/pricing">Compare plans in full, and see weekly and monthly rates</Link>
         </p>
-
-        <div className="lp-student">
-          <span className="lp-student-icon">
-            <GraduationCap size={20} aria-hidden="true" />
-          </span>
-          <div>
-            <h3 className="lp-student-title">Students get Pro free for six months</h3>
-            <p className="lp-student-desc">
-              Verify a .edu address from your account and Pro unlocks straight away.
-            </p>
-          </div>
-          <Link to="/register" className="btn btn-secondary">
-            Verify a .edu address
-          </Link>
-        </div>
       </section>
 
       {/* ================= CLOSING CTA ================= */}
