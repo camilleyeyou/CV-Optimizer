@@ -144,6 +144,23 @@
    touch it. Hide it explicitly, or the G sits beside the spinner. */
 .au-social[data-loading='true'] svg { visibility: hidden; }
 
+/* Google Identity Services draws into an iframe this app cannot style. All that
+   is left to control is where it sits and how much room it reserves — the
+   min-height holds the row while the script loads so the form below does not
+   jump once the button appears. */
+.au-gis {
+  display: flex;
+  justify-content: center;
+  min-height: 44px;
+}
+
+.au-gis[data-pending='true'] {
+  pointer-events: none;
+  opacity: 0.6;
+}
+
+.au-gis iframe { max-width: 100% !important; }
+
 .au-divider {
   display: flex;
   align-items: center;

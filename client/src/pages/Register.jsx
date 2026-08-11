@@ -196,12 +196,15 @@ const Register = () => {
           </div>
         )}
 
-        {/* Returns to this page rather than the dashboard when a template is in
-            play, so the effect above can spend it. `preselected` is validated
-            against the registry, so it is safe to put in the URL. */}
+        {/* No onSignedIn: the effect above already reacts to a session appearing
+            and knows how to spend a preselected template, so passing one would
+            navigate twice. `next` is for the redirect fallback only, and returns
+            here rather than to the dashboard when a template is in play so that
+            same effect gets its turn. `preselected` is validated against the
+            registry, so it is safe to put in the URL. */}
         <GoogleButton
+          mode="signup"
           next={preselected ? `/register?template=${preselected}` : '/dashboard'}
-          label="Sign up with Google"
           onError={setError}
         />
         <div className="au-divider">or</div>

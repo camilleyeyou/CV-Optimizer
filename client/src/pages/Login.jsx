@@ -52,10 +52,15 @@ const Login = () => {
           </div>
         )}
 
-        {/* Carries `from` through the round-trip so a user bounced here by
-            PrivateRoute lands back where they were headed, exactly as the email
-            form below does. */}
-        <GoogleButton next={from} label="Sign in with Google" onError={setError} />
+        {/* `next` covers the redirect fallback, `onSignedIn` the in-page path.
+            Both send a user bounced here by PrivateRoute back to where they were
+            headed, exactly as the email form below does. */}
+        <GoogleButton
+          mode="signin"
+          next={from}
+          onError={setError}
+          onSignedIn={() => navigate(from, { replace: true })}
+        />
         <div className="au-divider">or</div>
 
         <form className="au-form" onSubmit={handleSubmit} noValidate={false}>

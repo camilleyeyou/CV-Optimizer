@@ -118,6 +118,27 @@ export const AuthProvider = ({ children }) => {
     if (error) throw error;
   };
 
+  /**
+   * Complete a Google sign-in from an ID token obtained in-page.
+   *
+   * The counterpart to signInWithGoogle: same identity and same auth.users row,
+   * reached without ever leaving the app. Preferred where Google Identity
+   * Services works, because the consent screen then belongs to this origin and
+   * names this app rather than the Supabase project host.
+   *
+   * `nonce` must be the raw value whose hash was given to Google — see
+   * createNonce in hooks/useGoogleIdentity.
+   */
+  const signInWithGoogleCredential = async (token, nonce) => {
+    const { data, error } = await supabase.auth.signInWithIdToken({
+      provider: 'google',
+      token,
+      nonce,
+    });
+    if (error) throw error;
+    return data;
+  };
+
   const signOut = async () => {
     const { error } = await supabase.auth.signOut();
     if (error) throw error;
@@ -150,6 +171,7 @@ export const AuthProvider = ({ children }) => {
     signUp,
     signIn,
     signInWithGoogle,
+    signInWithGoogleCredential,
     signOut,
     resetPassword,
     updatePassword,
