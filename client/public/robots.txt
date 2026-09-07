@@ -15,4 +15,6 @@ Disallow: /tracker
 Disallow: /interview-prep
 Disallow: /analytics
 
-Sitemap: https://cv-optimizer.vercel.app/sitemap.xml
+# Default only — scripts/prerender.mjs rewrites this line at build time to the
+# deployment's own origin, so previews never advertise the production sitemap.
+Sitemap: https://cvoptimizers.com/sitemap.xml

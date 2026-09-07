@@ -11,6 +11,7 @@ import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createRequire } from 'node:module';
 import { resolveSiteOrigin } from './site-origin.mjs';
+import { homepageJsonLd } from '../src/config/structuredData.mjs';
 
 const require = createRequire(import.meta.url);
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
@@ -43,13 +44,22 @@ const { templateContent, templateFacts } = (new Function(
   `${contentSrc}\nreturn { templateContent, templateFacts };`,
 ))(getTemplate, TEMPLATES);
 
+const HOME_DESC = `Score your resume against applicant tracking systems, fix what they flag, and export a clean PDF or DOCX. 11 AI tools and ${TEMPLATES.length} templates, free to start.`;
+
 const routes = [
   {
     out: ['index.html'],
     path: '/',
     title: 'CV Optimizer — Build ATS-Optimized Resumes with AI',
-    description:
-      `Score your resume against applicant tracking systems, fix what they flag, and export a clean PDF or DOCX. 11 AI tools and ${TEMPLATES.length} templates, free to start.`,
+    description: HOME_DESC,
+    // Same builder LandingPage.jsx hands to <Seo>, so the crawler HTML and the
+    // hydrated DOM carry identical structured data.
+    jsonLd: homepageJsonLd({
+      siteUrl: SITE_URL,
+      description: HOME_DESC,
+      freeTemplateCount: TEMPLATES.filter((t) => !t.premium).length,
+      templateCount: TEMPLATES.length,
+    }),
     // Must mirror the hero in LandingPage.jsx — same copy, same class names.
     // A crawler that does not run JS sees only this, so drift here means the
     // indexed page and the real page make different promises.
@@ -321,6 +331,20 @@ ${[...new Set(sitemapPaths)].map((p) => `  <url>
 </urlset>
 `;
 writeFileSync(join(BUILD, 'sitemap.xml'), sitemap);
+
+// ---- robots.txt ------------------------------------------------------------
+// The file ships from public/ with a default Sitemap line, but that line is an
+// absolute URL and public/ is static — it once pointed crawlers at
+// cv-optimizer.vercel.app, a different site entirely. Pin it to the origin
+// this build resolved, same as every canonical above.
+{
+  const robotsFile = join(BUILD, 'robots.txt');
+  const robots = readFileSync(robotsFile, 'utf8');
+  if (!/^Sitemap: .+$/m.test(robots)) {
+    throw new Error('prerender: robots.txt has no Sitemap line to rewrite');
+  }
+  writeFileSync(robotsFile, robots.replace(/^Sitemap: .+$/m, `Sitemap: ${SITE_URL}/sitemap.xml`));
+}
 
 console.log(`prerender: wrote ${files} HTML file(s) across ${routes.length} public routes (site: ${SITE_URL})`);
 

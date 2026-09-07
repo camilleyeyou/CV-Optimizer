@@ -14,11 +14,17 @@ import { createRequire } from 'node:module';
 import fs from 'node:fs';
 import path from 'node:path';
 
+import { resolveSiteOrigin } from '../client/scripts/site-origin.mjs';
+
 const require = createRequire(import.meta.url);
 const REPO = path.resolve(new URL('..', import.meta.url).pathname);
 const BUILD = path.join(REPO, 'client/build');
 const PORT = Number(process.env.SEO_PORT || 4190);
-const SITE = 'https://cv-optimizer.vercel.app';
+// Same resolver the build itself uses (vite.config.js + prerender.mjs), so the
+// gate checks against whatever origin the build was made for. Run this with
+// the same environment as the build: a VITE_SITE_URL that differs between the
+// two will fail here, which is exactly the drift this gate exists to catch.
+const SITE = resolveSiteOrigin();
 
 const { listTemplates } = require(`${REPO}/server/src/templateRegistry`);
 const { chromium } = require(`${REPO}/client/node_modules/playwright`);
@@ -78,6 +84,23 @@ for (const t of templates) {
 check(`structured data: all ${templates.length} template pages carry valid SoftwareApplication + FAQPage, no invented ratings`,
   ldBad.length === 0, ldBad.slice(0, 4).join(' | '));
 
+// The homepage carries WebSite + SoftwareApplication, under the same no
+// invented data rule as the template pages.
+{
+  const html = readBuilt('index.html') || '';
+  const blocks = [...html.matchAll(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/g)]
+    .map((m) => { try { return JSON.parse(m[1].replace(/\\u003c/g, '<')); } catch { return {}; } });
+  const types = blocks.map((b) => b['@type']);
+  const app = blocks.find((b) => b['@type'] === 'SoftwareApplication');
+  const bad = [];
+  if (!types.includes('WebSite')) bad.push('no WebSite');
+  if (!app) bad.push('no SoftwareApplication');
+  if (app && (app.aggregateRating || app.review)) bad.push('fabricated rating/review markup');
+  if (app && !(app.offers?.length >= 2)) bad.push('SoftwareApplication missing free/pro offers');
+  check('structured data: homepage carries WebSite + SoftwareApplication with offers, no invented ratings',
+    bad.length === 0, bad.join(' | '));
+}
+
 // ---- 3. assets -------------------------------------------------------------
 const missingImg = templates.flatMap((t) => [
   fs.existsSync(path.join(BUILD, `template-previews/${t.id}.png`)) ? null : `${t.id}.png`,
@@ -87,6 +110,11 @@ check(`preview images: ${templates.length * 2} files present in the build`, miss
 
 const robots = readBuilt('robots.txt') || '';
 check('robots.txt no longer disallows /templates', !/^\s*Disallow:\s*\/templates\s*$/m.test(robots));
+// The Sitemap line is an absolute URL, so it must name THIS site — it once
+// pointed at cv-optimizer.vercel.app, which serves someone else's project.
+check('robots.txt Sitemap line points at this deployment',
+  robots.includes(`Sitemap: ${SITE}/sitemap.xml`),
+  robots.match(/^Sitemap: .*$/m)?.[0] || 'no Sitemap line');
 const sitemap = readBuilt('sitemap.xml') || '';
 const missingFromSitemap = templates.filter((t) => !sitemap.includes(`${SITE}/templates/${t.id}<`));
 check(`sitemap lists /templates and all ${templates.length} template pages`,

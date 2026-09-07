@@ -7,6 +7,8 @@ import {
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import Seo from '../components/common/Seo';
+import { SITE_URL } from '../config/site';
+import { homepageJsonLd } from '../config/structuredData.mjs';
 import api, { startCheckout } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import HeroProductVisual from '../components/landing/HeroProductVisual';
@@ -20,6 +22,18 @@ import './LandingPage.css';
    derive two integers is not a trade worth making.
    ------------------------------------------------------------------------ */
 const TEMPLATE_COUNT = __TEMPLATE_COUNT__;
+const FREE_TEMPLATE_COUNT = __FREE_TEMPLATE_COUNT__;
+
+const SEO_DESCRIPTION = `Score your resume against applicant tracking systems, fix what they flag, and export a clean PDF or DOCX. 11 AI tools and ${TEMPLATE_COUNT} templates, free to start.`;
+
+// Built once at module scope: same inputs as the prerenderer's copy, so the
+// blocks <Seo> writes after hydration are identical to the ones already there.
+const SEO_JSON_LD = homepageJsonLd({
+  siteUrl: SITE_URL,
+  description: SEO_DESCRIPTION,
+  freeTemplateCount: FREE_TEMPLATE_COUNT,
+  templateCount: TEMPLATE_COUNT,
+});
 
 /* ---------------------------------------------------------------------------
    SOCIAL PROOF — intentionally empty.
@@ -147,8 +161,9 @@ const LandingPage = () => {
     <div className="lp">
       <Seo
         title="CV Optimizer — Build ATS-Optimized Resumes with AI"
-        description={`Score your resume against applicant tracking systems, fix what they flag, and export a clean PDF or DOCX. 11 AI tools and ${TEMPLATE_COUNT} templates, free to start.`}
+        description={SEO_DESCRIPTION}
         path="/"
+        jsonLd={SEO_JSON_LD}
       />
 
       {/* ================= HERO ================= */}
