@@ -1,0 +1,71 @@
+/* Form + result styles for the shared public ATS checker. Moved here from
+   LandingPage.css when the form was extracted, so every page that renders
+   <AtsQuickCheck> gets them without importing the landing bundle's styles.
+   Class names keep the lp-ats- prefix the prerendered HTML already uses. */
+
+.lp-ats-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  padding: var(--space-5);
+  background: var(--surface-raised);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-2xl);
+}
+
+/* .form-group owns its own spacing inside this flex column */
+.lp-ats-form .form-group + .form-group { margin-top: 0; }
+
+.lp-ats-textarea { min-height: 148px; }
+
+.lp-ats-result {
+  padding-top: var(--space-5);
+  border-top: 1px solid var(--border-subtle);
+  text-align: center;
+}
+
+.lp-ats-score {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 2px;
+  font-family: var(--font-display);
+  font-weight: var(--weight-black);
+  letter-spacing: var(--tracking-display);
+  line-height: 1;
+}
+
+.lp-ats-score-value { font-size: var(--display-md); }
+.lp-ats-score-max { font-size: var(--text-xl); color: var(--text-tertiary); }
+
+.lp-ats-score.is-high .lp-ats-score-value { color: var(--success-fg); }
+.lp-ats-score.is-mid .lp-ats-score-value { color: var(--warning-fg); }
+.lp-ats-score.is-low .lp-ats-score-value { color: var(--error-fg); }
+
+.lp-ats-score-label {
+  margin-top: var(--space-2);
+  font-size: var(--text-sm);
+  color: var(--text-tertiary);
+}
+
+.lp-ats-missing {
+  margin-top: var(--space-5);
+  text-align: left;
+}
+
+.lp-ats-missing-label {
+  margin-bottom: var(--space-2);
+  font-size: var(--text-xs);
+  color: var(--text-tertiary);
+}
+
+.lp-ats-keywords {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin-bottom: var(--space-5);
+}
+
+@media (max-width: 560px) {
+  .lp-ats-form { padding: var(--space-4); }
+}

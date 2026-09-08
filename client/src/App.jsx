@@ -25,6 +25,7 @@ const Register = lazy(() => import('./pages/Register'));
 const ForgotPassword = lazy(() => import('./pages/ForgotPassword'));
 const ResetPassword = lazy(() => import('./pages/ResetPassword'));
 const ATSChecker = lazy(() => import('./pages/ATSChecker'));
+const FreeAtsChecker = lazy(() => import('./pages/FreeAtsChecker'));
 const AICreator = lazy(() => import('./pages/AICreator'));
 const CoverLetter = lazy(() => import('./pages/CoverLetter'));
 const Tracker = lazy(() => import('./pages/Tracker'));
@@ -94,6 +95,10 @@ function App() {
                         password. */}
                     <Route path="/reset-password" element={<ResetPassword />} />
                     <Route path="/share/:token" element={<SharedResume />} />
+                    {/* Deliberately not behind PublicRoute: the free checker is
+                        a marketing page, but a signed-in user pasting a friend's
+                        resume is a fine use of it. */}
+                    <Route path="/free-ats-resume-checker" element={<FreeAtsChecker />} />
                     <Route path="/privacy" element={<Privacy />} />
                     <Route path="/terms" element={<Terms />} />
                     <Route path="/refund" element={<Refund />} />

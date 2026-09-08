@@ -330,67 +330,12 @@
   color: var(--success-fg);
 }
 
-.lp-ats-form {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-4);
-  padding: var(--space-5);
-  background: var(--surface-raised);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-2xl);
-}
+/* Form and result styles live with the shared component —
+   components/landing/AtsQuickCheck.css — since the checker also renders on
+   /free-ats-resume-checker without this stylesheet. */
 
-/* .form-group owns its own spacing inside this flex column */
-.lp-ats-form .form-group + .form-group { margin-top: 0; }
-
-.lp-ats-textarea { min-height: 148px; }
-
-.lp-ats-result {
-  padding-top: var(--space-5);
-  border-top: 1px solid var(--border-subtle);
-  text-align: center;
-}
-
-.lp-ats-score {
-  display: flex;
-  align-items: baseline;
-  justify-content: center;
-  gap: 2px;
-  font-family: var(--font-display);
-  font-weight: var(--weight-black);
-  letter-spacing: var(--tracking-display);
-  line-height: 1;
-}
-
-.lp-ats-score-value { font-size: var(--display-md); }
-.lp-ats-score-max { font-size: var(--text-xl); color: var(--text-tertiary); }
-
-.lp-ats-score.is-high .lp-ats-score-value { color: var(--success-fg); }
-.lp-ats-score.is-mid .lp-ats-score-value { color: var(--warning-fg); }
-.lp-ats-score.is-low .lp-ats-score-value { color: var(--error-fg); }
-
-.lp-ats-score-label {
-  margin-top: var(--space-2);
+.lp-ats-more {
   font-size: var(--text-sm);
-  color: var(--text-tertiary);
-}
-
-.lp-ats-missing {
-  margin-top: var(--space-5);
-  text-align: left;
-}
-
-.lp-ats-missing-label {
-  margin-bottom: var(--space-2);
-  font-size: var(--text-xs);
-  color: var(--text-tertiary);
-}
-
-.lp-ats-keywords {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-2);
-  margin-bottom: var(--space-5);
 }
 
 @media (max-width: 900px) {
@@ -402,7 +347,6 @@
 
 @media (max-width: 560px) {
   .lp-ats-card { padding: var(--space-5) var(--space-4); border-radius: var(--radius-2xl); }
-  .lp-ats-form { padding: var(--space-4); }
 }
 
 /* ============================================================================

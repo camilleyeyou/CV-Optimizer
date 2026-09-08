@@ -12,6 +12,16 @@ import { fileURLToPath } from 'node:url';
 import { createRequire } from 'node:module';
 import { resolveSiteOrigin } from './site-origin.mjs';
 import { homepageJsonLd } from '../src/config/structuredData.mjs';
+import {
+  ATS_CHECKER_PATH,
+  ATS_CHECKER_TITLE,
+  ATS_CHECKER_DESCRIPTION,
+  SCORE_FACTORS,
+  ATS_EXPLAINER,
+  IMPROVE_TIPS,
+  ATS_CHECKER_FAQS,
+  atsCheckerJsonLd,
+} from '../src/config/atsCheckerContent.mjs';
 
 const require = createRequire(import.meta.url);
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
@@ -131,6 +141,53 @@ const routes = [
       </section>`,
   },
 ];
+
+// ---- Free ATS checker ------------------------------------------------------
+// The copy is imported from the same module FreeAtsChecker.jsx renders, so the
+// crawler HTML below and the hydrated page cannot drift. The interactive form
+// is client-side only; what matters to search is the content around it.
+routes.push({
+  out: ['free-ats-resume-checker.html', 'free-ats-resume-checker/index.html'],
+  path: ATS_CHECKER_PATH,
+  title: ATS_CHECKER_TITLE,
+  description: ATS_CHECKER_DESCRIPTION,
+  jsonLd: atsCheckerJsonLd(SITE_URL),
+  hero: `
+      <div class="fac">
+        <section class="fac-hero">
+          <div class="fac-hero-copy">
+            <h1 class="display-2">Free ATS resume checker</h1>
+            <p class="lead">Paste your resume, name the role you want, and get a compatibility score out of 100 — plus the keywords the posting expects that your resume does not mention. No account, no card, nothing saved.</p>
+          </div>
+        </section>
+        <section class="fac-section">
+          <h2>What the score measures</h2>
+          <p>Four weighted checks, mirroring how applicant tracking systems read a resume when a target role is given:</p>
+          <dl class="fac-factors">
+            ${SCORE_FACTORS.map(({ name, weight, detail }) => `<div class="fac-factor card"><dt>${esc(name)} <span class="fac-weight mono">${esc(weight)}</span></dt><dd>${esc(detail)}</dd></div>`).join('\n            ')}
+          </dl>
+        </section>
+        <section class="fac-section">
+          <h2>What is an ATS, and why it filters you out</h2>
+          ${ATS_EXPLAINER.map((p) => `<p>${esc(p)}</p>`).join('\n          ')}
+        </section>
+        <section class="fac-section">
+          <h2>How to raise your score</h2>
+          <ol class="fac-tips">
+            ${IMPROVE_TIPS.map(({ title, detail }) => `<li><h3>${esc(title)}</h3><p>${esc(detail)}</p></li>`).join('\n            ')}
+          </ol>
+        </section>
+        <section class="fac-section">
+          <h2>Questions about the checker</h2>
+          ${ATS_CHECKER_FAQS.map(({ q, a }) => `<div class="fac-faq"><h3>${esc(q)}</h3><p>${esc(a)}</p></div>`).join('\n          ')}
+        </section>
+        <section class="fac-cta">
+          <h2>Scored below 70?</h2>
+          <p>Rebuild your resume in a template designed to parse cleanly, with AI that works the missing keywords in honestly. Free to start — unlimited PDF and DOCX export on the free plan.</p>
+          <p><a class="btn btn-primary btn-lg" href="/register">Start building — free</a> <a class="btn btn-secondary btn-lg" href="/templates">Browse ATS-friendly templates</a></p>
+        </section>
+      </div>`,
+});
 
 // ---- Public template pages -------------------------------------------------
 // These exist to be found in search, so the HTML a crawler receives without
@@ -307,7 +364,8 @@ for (const route of routes) {
 // Generated from the same route list, so a new template can never ship with a
 // page but no sitemap entry (or an entry pointing at a page that isn't built).
 const PRIORITY = {
-  '/': '1.0', '/templates': '0.9', '/register': '0.8', '/login': '0.5',
+  '/': '1.0', '/templates': '0.9', '/free-ats-resume-checker': '0.9',
+  '/register': '0.8', '/login': '0.5',
 };
 const FREQ = {
   '/': 'weekly', '/templates': 'weekly', '/privacy': 'yearly', '/terms': 'yearly',

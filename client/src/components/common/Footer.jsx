@@ -27,7 +27,7 @@ const PUBLIC_COLUMNS = [
       { href: '/#features', label: 'Features' },
       { to: '/templates', label: 'Templates' },
       { to: '/pricing', label: 'Pricing' },
-      { href: '/#ats-checker', label: 'Free ATS check' },
+      { to: '/free-ats-resume-checker', label: 'Free ATS checker' },
     ],
   },
   {

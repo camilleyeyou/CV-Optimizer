@@ -1,0 +1,141 @@
+/* /free-ats-resume-checker — token-driven, inherits the app-wide theme.
+   Content column stays narrow (prose page, not a marketing grid); the hero
+   reuses the shared AtsQuickCheck form styles. */
+
+.fac {
+  width: 100%;
+  max-width: var(--container-max);
+  margin-inline: auto;
+  padding: calc(var(--section-y) / 2) var(--gutter) var(--section-y);
+}
+
+.fac-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 460px);
+  gap: clamp(2rem, 1rem + 4vw, 4rem);
+  align-items: center;
+  padding-bottom: calc(var(--section-y) / 2);
+}
+
+.fac-hero-copy {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.fac-section {
+  max-width: 68ch;
+  margin-inline: auto;
+  padding-top: calc(var(--section-y) / 2);
+}
+
+.fac-section h2 {
+  margin-bottom: var(--space-4);
+}
+
+.fac-section > p {
+  color: var(--text-secondary);
+  margin-bottom: var(--space-4);
+}
+
+.fac-factors {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-4);
+}
+
+.fac-factor {
+  padding: var(--space-5);
+}
+
+.fac-factor dt {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-3);
+  font-weight: var(--weight-semibold);
+  margin-bottom: var(--space-2);
+}
+
+.fac-weight {
+  font-size: var(--text-xs);
+  color: var(--text-tertiary);
+}
+
+.fac-factor dd {
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+}
+
+.fac-tips {
+  list-style: none;
+  counter-reset: fac-tip;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+}
+
+.fac-tips li {
+  counter-increment: fac-tip;
+  padding-left: var(--space-7);
+  position: relative;
+}
+
+.fac-tips li::before {
+  content: counter(fac-tip, decimal-leading-zero);
+  position: absolute;
+  left: 0;
+  top: 2px;
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--text-tertiary);
+}
+
+.fac-tips h3 {
+  font-size: var(--text-base);
+  margin-bottom: var(--space-1);
+}
+
+.fac-tips p,
+.fac-faq p {
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+}
+
+.fac-faq + .fac-faq {
+  margin-top: var(--space-5);
+}
+
+.fac-faq h3 {
+  font-size: var(--text-base);
+  margin-bottom: var(--space-1);
+}
+
+.fac-cta {
+  max-width: 68ch;
+  margin-inline: auto;
+  margin-top: var(--section-y);
+  padding: clamp(1.75rem, 1rem + 3vw, 3rem);
+  text-align: center;
+  background: var(--surface-base);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-3xl);
+  box-shadow: var(--highlight-top), var(--shadow-lg);
+}
+
+.fac-cta p {
+  color: var(--text-secondary);
+  margin: var(--space-3) 0 var(--space-5);
+}
+
+.fac-cta-actions {
+  display: flex;
+  justify-content: center;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+}
+
+@media (max-width: 900px) {
+  .fac-hero { grid-template-columns: minmax(0, 1fr); }
+  .fac-factors { grid-template-columns: minmax(0, 1fr); }
+}

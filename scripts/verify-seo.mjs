@@ -43,6 +43,7 @@ const staticRoutes = [
   ['index.html', '/'],
   ['login/index.html', '/login'],
   ['register/index.html', '/register'],
+  ['free-ats-resume-checker/index.html', '/free-ats-resume-checker'],
   ['templates/index.html', '/templates'],
   ...templates.map((t) => [`templates/${t.id}/index.html`, `/templates/${t.id}`]),
 ];
@@ -143,7 +144,7 @@ try {
   }));
 
   const domBad = [];
-  const sample = ['/', '/templates', '/templates/modern', '/templates/ats-max', '/templates/europass'];
+  const sample = ['/', '/free-ats-resume-checker', '/templates', '/templates/modern', '/templates/ats-max', '/templates/europass'];
   for (const route of sample) {
     const page = await browser.newPage();
     const errs = [];
