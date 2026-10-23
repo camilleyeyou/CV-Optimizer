@@ -162,6 +162,7 @@ const Register = () => {
         title="Create Your Free Account — CV Optimizer"
         description="Create a free CV Optimizer account and build an ATS-optimized resume with AI — free to start, no credit card required."
         path="/register"
+        noindex
       />
       <AuthShell
         title="Create your account"

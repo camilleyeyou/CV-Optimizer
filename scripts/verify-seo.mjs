@@ -45,6 +45,10 @@ const staticRoutes = [
   ['register/index.html', '/register'],
   ['free-ats-resume-checker/index.html', '/free-ats-resume-checker'],
   ['templates/index.html', '/templates'],
+  ['pricing/index.html', '/pricing'],
+  ['privacy/index.html', '/privacy'],
+  ['terms/index.html', '/terms'],
+  ['refund/index.html', '/refund'],
   ...templates.map((t) => [`templates/${t.id}/index.html`, `/templates/${t.id}`]),
 ];
 
@@ -62,6 +66,24 @@ for (const [file, route] of staticRoutes) {
 }
 check(`static HTML: ${staticRoutes.length} routes have exactly one correct canonical, a title and real content`,
   staticBad.length === 0, staticBad.slice(0, 4).join(' | '));
+
+// Without JS the homepage once linked to /register only, so Google found the
+// rest through the sitemap alone and left them "Discovered – not indexed".
+{
+  const home = readBuilt('index.html') || '';
+  const want = ['/templates', '/free-ats-resume-checker', '/pricing', '/privacy', '/terms', '/refund'];
+  const missing = want.filter((p) => !home.includes(`href="${p}"`));
+  check('static HTML: homepage links to every public section without JS', missing.length === 0, missing.join(', '));
+}
+
+const isNoindex = (html) => /<meta[^>]*name="robots"[^>]*content="noindex"/.test(html || '');
+{
+  const bad = [
+    ...['login/index.html', 'register/index.html', '404.html'].filter((f) => !isNoindex(readBuilt(f))),
+    ...staticRoutes.filter(([f, r]) => r !== '/login' && r !== '/register' && isNoindex(readBuilt(f))).map(([f]) => `${f} is noindex`),
+  ];
+  check('static HTML: login, register and 404 are noindex; content pages are not', bad.length === 0, bad.join(', '));
+}
 
 // ---- 2. structured data ----------------------------------------------------
 const ldBad = [];
@@ -121,6 +143,14 @@ const missingFromSitemap = templates.filter((t) => !sitemap.includes(`${SITE}/te
 check(`sitemap lists /templates and all ${templates.length} template pages`,
   sitemap.includes(`${SITE}/templates<`) && missingFromSitemap.length === 0,
   missingFromSitemap.map((t) => t.id).join(', '));
+{
+  const listed = [...sitemap.matchAll(/<loc>([^<]+)<\/loc>/g)].map((m) => m[1]);
+  const noindexListed = listed.filter((u) => {
+    const rel = u.slice(SITE.length).replace(/^\//, '');
+    return isNoindex(readBuilt(rel ? `${rel}/index.html` : 'index.html'));
+  });
+  check('sitemap lists no noindex URLs', noindexListed.length === 0, noindexListed.join(', '));
+}
 
 // ---- 4. rendered DOM + SPA navigation --------------------------------------
 const preview = spawn('npx', ['vite', 'preview', '--port', String(PORT), '--strictPort'], {

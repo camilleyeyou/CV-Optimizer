@@ -110,6 +110,9 @@ const routes = [
   {
     out: ['login.html', 'login/index.html'],
     path: '/login',
+    // A sign-in form has nothing to rank for; it only competes with the
+    // homepage for the brand query.
+    noindex: true,
     title: 'Sign In — CV Optimizer',
     description: 'Sign in to CV Optimizer to build, score, and tailor your ATS-optimized resume.',
     hero: `
@@ -126,6 +129,7 @@ const routes = [
   {
     out: ['register.html', 'register/index.html'],
     path: '/register',
+    noindex: true,
     title: 'Create Your Free Account — CV Optimizer',
     description:
       'Create a free CV Optimizer account and build an ATS-optimized resume with AI — free to start, no credit card required.',
@@ -141,6 +145,47 @@ const routes = [
       </section>`,
   },
 ];
+
+// ---- Legal pages -----------------------------------------------------------
+// These used to fall through to the SPA fallback, which served the homepage's
+// HTML — canonical "/" and all — so to a crawler they were duplicates of the
+// homepage. Titles and descriptions mirror pages/legal/*.jsx; the full policy
+// text renders client-side.
+for (const { slug, title, description, summary } of [
+  {
+    slug: 'privacy',
+    title: 'Privacy Policy',
+    description: 'How CV Optimizer collects, uses, and protects your personal data.',
+    summary: 'What we collect when you build a resume with CV Optimizer, the providers we share it with (Supabase, Stripe, OpenAI, Vercel), and how to export or delete your data.',
+  },
+  {
+    slug: 'terms',
+    title: 'Terms of Service',
+    description: 'The terms that govern your use of CV Optimizer.',
+    summary: 'The terms that govern your use of CV Optimizer, including accounts, subscriptions, acceptable use and AI-generated content.',
+  },
+  {
+    slug: 'refund',
+    title: 'Refund &amp; Cancellation Policy',
+    description: 'Cancellation and refund terms for CV Optimizer subscriptions.',
+    summary: 'How to cancel a CV Optimizer Pro subscription and when a payment can be refunded.',
+  },
+]) {
+  routes.push({
+    out: [`${slug}.html`, `${slug}/index.html`],
+    path: `/${slug}`,
+    title: `${text(title).replace('&amp;', '&')} — CV Optimizer`,
+    description,
+    hero: `
+      <div class="legal-page">
+        <article class="legal-prose">
+          <h1>${title}</h1>
+          <p>${esc(summary)}</p>
+          <p class="legal-nav"><a href="/privacy">Privacy</a> · <a href="/terms">Terms</a> · <a href="/refund">Refunds</a></p>
+        </article>
+      </div>`,
+  });
+}
 
 // ---- Free ATS checker ------------------------------------------------------
 // The copy is imported from the same module FreeAtsChecker.jsx renders, so the
@@ -314,7 +359,7 @@ for (const t of TEMPLATES) {
 // Every tag carries data-rh so react-helmet-async takes ownership on mount and
 // *replaces* it. Without that the page ends up with the prerendered tag and the
 // React one side by side - two titles, two descriptions, two canonicals.
-function seoBlock({ title, description, path, image = OG_IMAGE, jsonLd }) {
+function seoBlock({ title, description, path, image = OG_IMAGE, jsonLd, noindex }) {
   const url = `${SITE_URL}${path}`;
   const ld = (jsonLd ? [].concat(jsonLd) : [])
     .map((block) => `\n    <script type="application/ld+json">${
@@ -324,7 +369,8 @@ function seoBlock({ title, description, path, image = OG_IMAGE, jsonLd }) {
   return `<!--SEO-START-->
     <title data-rh="true">${esc(title)}</title>
     <meta data-rh="true" name="description" content="${esc(description)}" />
-    <link data-rh="true" rel="canonical" href="${url}" />
+    <link data-rh="true" rel="canonical" href="${url}" />${noindex ? `
+    <meta data-rh="true" name="robots" content="noindex" />` : ''}
     <meta data-rh="true" property="og:type" content="website" />
     <meta data-rh="true" property="og:site_name" content="CV Optimizer" />
     <meta data-rh="true" property="og:title" content="${esc(title)}" />
@@ -347,11 +393,62 @@ if (!SEO_RE.test(base) || !base.includes('<div id="root"></div>')) {
   throw new Error('prerender: expected SEO markers and an empty #root in build/index.html');
 }
 
+// ---- Site chrome -----------------------------------------------------------
+// Header and footer mirror the signed-out Header.jsx and Footer.jsx. They live
+// inside #root in the app, so without this the crawler HTML of the homepage
+// linked to /register and nothing else: every other page was reachable only
+// through the sitemap, which Google treats as a weak hint and left 27 of them
+// "Discovered – currently not indexed".
+const FOOTER_COLUMNS = [
+  ['Product', [['/#features', 'Features'], ['/templates', 'Templates'], ['/pricing', 'Pricing'], ['/free-ats-resume-checker', 'Free ATS checker']]],
+  ['Get started', [['/register', 'Create an account'], ['/login', 'Sign in']]],
+  ['Legal', [['/privacy', 'Privacy'], ['/terms', 'Terms'], ['/refund', 'Refunds']]],
+];
+
+const withChrome = (path, body) => {
+  const isAuthPage = path === '/login' || path === '/register';
+  return `<div class="app">
+      <a href="#main" class="skip-link">Skip to content</a>
+      <header class="header">
+        <div class="header-inner">
+          <a href="/" class="header-logo"><img src="/logo-mark.svg" width="24" height="24" alt="" /><span>CV Optimizer</span></a>
+          ${isAuthPage ? '' : '<div class="header-auth"><a href="/login" class="btn btn-ghost">Log in</a> <a href="/register" class="btn btn-primary">Sign up</a></div>'}
+        </div>
+      </header>
+      <main class="main-content" id="main">${body}</main>
+      <footer class="ft">
+        <div class="ft-inner">
+          <nav class="ft-columns" aria-label="Footer">
+            ${FOOTER_COLUMNS.map(([heading, links]) => `<div class="ft-column"><h2 class="ft-heading">${heading}</h2><ul>${links.map(([href, label]) => `<li><a href="${href}">${label}</a></li>`).join('')}</ul></div>`).join('\n            ')}
+          </nav>
+        </div>
+      </footer>
+    </div>`;
+};
+
+// Served by Vercel, with a real 404 status, for any URL that is neither a file
+// nor one of the app routes rewritten in vercel.json. It used to be the
+// homepage with a 200, so every mistyped link was a duplicate homepage.
+routes.push({
+  out: ['404.html'],
+  path: '/404',
+  noindex: true,
+  sitemap: false,
+  title: 'Page not found — CV Optimizer',
+  description: "The page you were looking for doesn't exist.",
+  hero: `
+      <section class="au">
+        <h1>Page not found</h1>
+        <p>The page you're looking for doesn't exist or may have moved.</p>
+        <p><a class="btn btn-primary btn-lg" href="/">Back to home</a> <a class="btn btn-secondary btn-lg" href="/templates">Browse templates</a></p>
+      </section>`,
+});
+
 let files = 0;
 for (const route of routes) {
   const html = base
     .replace(SEO_RE, seoBlock(route))
-    .replace('<div id="root"></div>', `<div id="root">${route.hero}</div>`);
+    .replace('<div id="root"></div>', `<div id="root">${withChrome(route.path, route.hero)}</div>`);
   for (const out of route.out) {
     const file = join(BUILD, out);
     mkdirSync(dirname(file), { recursive: true });
@@ -365,19 +462,15 @@ for (const route of routes) {
 // page but no sitemap entry (or an entry pointing at a page that isn't built).
 const PRIORITY = {
   '/': '1.0', '/templates': '0.9', '/free-ats-resume-checker': '0.9',
-  '/register': '0.8', '/login': '0.5',
 };
 const FREQ = {
   '/': 'weekly', '/templates': 'weekly', '/privacy': 'yearly', '/terms': 'yearly',
   '/refund': 'yearly',
 };
 
-const sitemapPaths = [
-  ...routes.map((r) => r.path),
-  // Legal pages are served by the SPA fallback rather than prerendered, but
-  // they are indexable and carry their own canonical.
-  '/privacy', '/terms', '/refund',
-];
+// A noindex URL in the sitemap is a contradiction Search Console reports as an
+// error, so only indexable routes are listed.
+const sitemapPaths = routes.filter((r) => !r.noindex && r.sitemap !== false).map((r) => r.path);
 
 const sitemap = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">

@@ -3,11 +3,24 @@
   "outputDirectory": "client/build",
   "installCommand": "npm install && cd server && npm install && cd ../client && npm install",
   "rewrites": [
-    { "source": "/api/(.*)", "destination": "/api" },
-    { "source": "/((?!api/).*)", "destination": "/index.html" }
+    {
+      "source": "/api/(.*)",
+      "destination": "/api"
+    },
+    {
+      "source": "/(dashboard|builder|ats-checker|ai-creator|cover-letter|tracker|interview-prep|emails|analytics|account|forgot-password|reset-password)",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/(builder|share|dev)/:path*",
+      "destination": "/index.html"
+    }
   ],
   "crons": [
-    { "path": "/api/cron/keepalive", "schedule": "0 9 */3 * *" }
+    {
+      "path": "/api/cron/keepalive",
+      "schedule": "0 9 */3 * *"
+    }
   ],
   "functions": {
     "api/index.js": {

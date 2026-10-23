@@ -39,6 +39,7 @@ const Login = () => {
         title="Sign In — CV Optimizer"
         description="Sign in to CV Optimizer to build, score, and tailor your ATS-optimized resume."
         path="/login"
+        noindex
       />
       <AuthShell
         title="Welcome back"
