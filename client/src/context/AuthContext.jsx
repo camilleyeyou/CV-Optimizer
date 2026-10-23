@@ -3,6 +3,9 @@ import { supabase } from '../config/supabase';
 
 const AuthContext = createContext(null);
 
+// How long protected routes wait on session restore before giving up on it.
+const INITIAL_SESSION_TIMEOUT_MS = 5000;
+
 /**
  * A first name to greet the user by, or null when nothing usable exists.
  *
@@ -51,11 +54,19 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Get initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(session?.user ?? null);
-      setLoading(false);
-    });
+    // Get initial session. With an expired stored token this is a network
+    // refresh that supabase-js retries for up to ~30s when Supabase is
+    // unreachable (or paused), so the wait is capped: past it the app proceeds
+    // signed-out, and the listener below still signs the user in if the
+    // refresh eventually lands.
+    const timeout = setTimeout(() => setLoading(false), INITIAL_SESSION_TIMEOUT_MS);
+    supabase.auth.getSession()
+      .then(({ data: { session } }) => setUser(session?.user ?? null))
+      .catch((err) => console.error('Failed to restore session:', err))
+      .finally(() => {
+        clearTimeout(timeout);
+        setLoading(false);
+      });
 
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {

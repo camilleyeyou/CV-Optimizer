@@ -24,3 +24,19 @@ describe('404 handling', () => {
     expect(res.body.error).toBe('Route not found');
   });
 });
+
+describe('GET /api/cron/keepalive', () => {
+  it('rejects calls without the cron secret', async () => {
+    process.env.CRON_SECRET = 'cron-test-secret';
+    const res = await request(app).get('/api/cron/keepalive');
+    expect(res.status).toBe(401);
+  });
+
+  it('stays closed when no secret is configured', async () => {
+    delete process.env.CRON_SECRET;
+    const res = await request(app)
+      .get('/api/cron/keepalive')
+      .set('Authorization', 'Bearer undefined');
+    expect(res.status).toBe(401);
+  });
+});

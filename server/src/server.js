@@ -116,6 +116,7 @@ app.use('/api/ats', require('./routes/ats'));
 app.use('/api/share', require('./routes/share'));
 app.use('/api/billing', require('./routes/billing'));
 app.use('/api/account', require('./routes/account'));
+app.use('/api/cron', require('./routes/cron'));
 
 // 404
 app.use((req, res) => {
